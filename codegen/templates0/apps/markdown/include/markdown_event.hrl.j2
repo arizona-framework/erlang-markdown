@@ -1,0 +1,33 @@
+%%%-----------------------------------------------------------------------------
+%%% Copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Copyright (c) WhatsApp LLC
+%%%
+%%% This source code is licensed under the MIT license found in the
+%%% LICENSE.md file in the root directory of this source tree.
+%%%
+%%% @author Andrew Bennett <potatosaladx@meta.com>
+%%% @copyright (c) Meta Platforms, Inc. and affiliates.
+%%% @doc
+%%%
+%%% @end
+%%% Created :  04 Mar 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%%-----------------------------------------------------------------------------
+%%% % @format
+%% @oncall whatsapp_clr
+-ifndef(MARKDOWN_EVENT_HRL).
+-define(MARKDOWN_EVENT_HRL, 1).
+
+%% Macros
+-define(is_markdown_event_name(X),
+(<<{% set name_macro_continue = joiner(" orelse ") %}>>
+<<{% for name in ctx.event.name_list %}>>
+    <<{{ name_macro_continue() }}>>(X) =:= <<{{ name.key }}>>
+<<{% endfor %}>>)).
+
+-define(is_markdown_event_void(X),
+(<<{% set void_macro_continue = joiner(" orelse ") %}>>
+<<{% for void in ctx.event.void_list %}>>
+    <<{{ void_macro_continue() }}>>(X) =:= <<{{ void.key }}>>
+<<{% endfor %}>>)).
+
+-endif.

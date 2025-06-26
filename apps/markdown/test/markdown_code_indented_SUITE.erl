@@ -1,0 +1,401 @@
+%%%-----------------------------------------------------------------------------
+%%% Copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Copyright (c) WhatsApp LLC
+%%%
+%%% This source code is licensed under the MIT license found in the
+%%% LICENSE.md file in the root directory of this source tree.
+%%%
+%%% @author Andrew Bennett <potatosaladx@meta.com>
+%%% @copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Created :  08 Apr 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%%-----------------------------------------------------------------------------
+%%% % @format
+-module(markdown_code_indented_SUITE).
+-author("potatosaladx@meta.com").
+-oncall("whatsapp_clr").
+
+-behaviour(ct_suite).
+
+-include_lib("stdlib/include/assert.hrl").
+
+%% ct_suite callbacks
+-export([
+    all/0,
+    groups/0,
+    init_per_suite/1,
+    end_per_suite/1,
+    init_per_group/2,
+    end_per_group/2,
+    init_per_testcase/2,
+    end_per_testcase/2
+]).
+
+%% Test Cases
+-export([
+    test_code_indented_case_1/1,
+    test_code_indented_case_2/1,
+    test_code_indented_case_3/1,
+    test_code_indented_case_4/1,
+    test_code_indented_case_5/1,
+    test_code_indented_case_6/1,
+    test_code_indented_case_7/1,
+    test_code_indented_case_8/1,
+    test_code_indented_case_9/1,
+    test_code_indented_case_10/1,
+    test_code_indented_case_11/1,
+    test_code_indented_case_12/1,
+    test_code_indented_case_13/1,
+    test_code_indented_case_14/1,
+    test_code_indented_case_15/1,
+    test_code_indented_case_16/1,
+    test_code_indented_case_17/1,
+    test_code_indented_case_18/1,
+    test_code_indented_case_19/1,
+    test_code_indented_case_20/1,
+    test_code_indented_case_21/1,
+    test_code_indented_case_22/1,
+    test_code_indented_case_23/1,
+    test_code_indented_case_24/1,
+    test_code_indented_case_25/1,
+    test_code_indented_case_26/1,
+    test_code_indented_case_27/1,
+    test_code_indented_case_28/1,
+    test_code_indented_case_29/1
+]).
+
+%% Macros
+-define(OFF(),
+    markdown_options:new(#{parse => #{constructs => #{code_indented => false}}})
+).
+-define(OFF_DANGER(),
+    markdown_options:new(#{
+        compile => #{allow_dangerous_html => true}, parse => #{constructs => #{code_indented => false}}
+    })
+).
+
+%%%=============================================================================
+%%% ct_suite callbacks
+%%%=============================================================================
+
+-spec all() -> [TestDef :: ct_suite:ct_test_def()] | {skip, Reason :: term()}.
+all() ->
+    [
+        {group, static}
+    ].
+
+-spec groups() -> [GroupDef :: ct_suite:ct_group_def()].
+groups() ->
+    [
+        {static, [parallel], [
+            test_code_indented_case_1,
+            test_code_indented_case_2,
+            test_code_indented_case_3,
+            test_code_indented_case_4,
+            test_code_indented_case_5,
+            test_code_indented_case_6,
+            test_code_indented_case_7,
+            test_code_indented_case_8,
+            test_code_indented_case_9,
+            test_code_indented_case_10,
+            test_code_indented_case_11,
+            test_code_indented_case_12,
+            test_code_indented_case_13,
+            test_code_indented_case_14,
+            test_code_indented_case_15,
+            test_code_indented_case_16,
+            test_code_indented_case_17,
+            test_code_indented_case_18,
+            test_code_indented_case_19,
+            test_code_indented_case_20,
+            test_code_indented_case_21,
+            test_code_indented_case_22,
+            test_code_indented_case_23,
+            test_code_indented_case_24,
+            test_code_indented_case_25,
+            test_code_indented_case_26,
+            test_code_indented_case_27,
+            test_code_indented_case_28,
+            test_code_indented_case_29
+        ]}
+    ].
+
+-spec init_per_suite(Config :: ct_suite:ct_config()) ->
+    NewConfig ::
+        ct_suite:ct_config()
+        | {skip, Reason :: term()}
+        | {skip_and_save, Reason :: term(), SaveConfig :: ct_suite:ct_config()}.
+init_per_suite(Config) ->
+    Config.
+
+-spec end_per_suite(Config :: ct_suite:ct_config()) ->
+    term()
+    | {save_config, SaveConfig :: ct_suite:ct_config()}.
+end_per_suite(_Config) ->
+    ok.
+
+-spec init_per_group(GroupName :: ct_suite:ct_groupname(), Config :: ct_suite:ct_config()) ->
+    NewConfig ::
+        ct_suite:ct_config()
+        | {skip, Reason :: term()}.
+init_per_group(_Group, Config) ->
+    Config.
+
+-spec end_per_group(GroupName :: ct_suite:ct_groupname(), Config :: ct_suite:ct_config()) ->
+    term()
+    | {return_group_result, Status :: ct_suite:ct_status()}.
+end_per_group(_Group, _Config) ->
+    ok.
+
+-spec init_per_testcase(TestCase :: ct_suite:ct_testname(), Config :: ct_suite:ct_config()) ->
+    NewConfig ::
+        ct_suite:ct_config()
+        | {fail, Reason :: term()}
+        | {skip, Reason :: term()}.
+init_per_testcase(_TestCase, Config) ->
+    Config.
+
+-spec end_per_testcase(TestCase :: ct_suite:ct_testname(), Config :: ct_suite:ct_config()) ->
+    term()
+    | {fail, Reason :: term()}
+    | {save_config, SaveConfig :: ct_suite:ct_config()}.
+end_per_testcase(_TestCase, _Config) ->
+    ok.
+
+%%%=============================================================================
+%%% Test Cases
+%%%=============================================================================
+
+test_code_indented_case_1(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>a simple\n  indented code block\n</code></pre>"/utf8>>},
+        markdown:to_html(<<"    a simple\n      indented code block"/utf8>>),
+        "should support indented code"
+    ),
+    ok.
+
+test_code_indented_case_2(_Config) ->
+    ?assertMatch(
+        {ok, <<"<ul>\n<li>\n<p>foo</p>\n<p>bar</p>\n</li>\n</ul>"/utf8>>},
+        markdown:to_html(<<"  - foo\n\n    bar"/utf8>>),
+        "should prefer list item content over indented code (1)"
+    ),
+    ok.
+
+test_code_indented_case_3(_Config) ->
+    ?assertMatch(
+        {ok, <<"<ol>\n<li>\n<p>foo</p>\n<ul>\n<li>bar</li>\n</ul>\n</li>\n</ol>"/utf8>>},
+        markdown:to_html(<<"1.  foo\n\n    - bar"/utf8>>),
+        "should prefer list item content over indented code (2)"
+    ),
+    ok.
+
+test_code_indented_case_4(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>&lt;a/&gt;\n*hi*\n\n- one\n</code></pre>"/utf8>>},
+        markdown:to_html(<<"    <a/>\n    *hi*\n\n    - one"/utf8>>),
+        "should support blank lines in indented code (1)"
+    ),
+    ok.
+
+test_code_indented_case_5(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>chunk1\n\nchunk2\n\n\n\nchunk3\n</code></pre>"/utf8>>},
+        markdown:to_html(<<"    chunk1\n\n    chunk2\n  \n \n \n    chunk3"/utf8>>),
+        "should support blank lines in indented code (2)"
+    ),
+    ok.
+
+test_code_indented_case_6(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>chunk1\n  \n  chunk2\n</code></pre>"/utf8>>},
+        markdown:to_html(<<"    chunk1\n      \n      chunk2"/utf8>>),
+        "should support blank lines in indented code (3)"
+    ),
+    ok.
+
+test_code_indented_case_7(_Config) ->
+    ?assertMatch(
+        {ok, <<"<p>Foo\nbar</p>"/utf8>>},
+        markdown:to_html(<<"Foo\n    bar"/utf8>>),
+        "should not support interrupting paragraphs"
+    ),
+    ok.
+
+test_code_indented_case_8(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>foo\n</code></pre>\n<p>bar</p>"/utf8>>},
+        markdown:to_html(<<"    foo\nbar"/utf8>>),
+        "should support paragraphs directly after indented code"
+    ),
+    ok.
+
+test_code_indented_case_9(_Config) ->
+    ?assertMatch(
+        {ok,
+            <<"<h1>Heading</h1>\n<pre><code>foo\n</code></pre>\n<h2>Heading</h2>\n<pre><code>foo\n</code></pre>\n<hr />"/utf8>>},
+        markdown:to_html(<<"# Heading\n    foo\nHeading\n------\n    foo\n----"/utf8>>),
+        "should mix w/ other content"
+    ),
+    ok.
+
+test_code_indented_case_10(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>    foo\nbar\n</code></pre>"/utf8>>},
+        markdown:to_html(<<"        foo\n    bar"/utf8>>),
+        "should support extra whitespace on the first line"
+    ),
+    ok.
+
+test_code_indented_case_11(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>foo\n</code></pre>"/utf8>>},
+        markdown:to_html(<<"\n    \n    foo\n    "/utf8>>),
+        "should not support initial blank lines"
+    ),
+    ok.
+
+test_code_indented_case_12(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>foo  \n</code></pre>"/utf8>>},
+        markdown:to_html(<<"    foo  "/utf8>>),
+        "should support trailing whitespace"
+    ),
+    ok.
+
+test_code_indented_case_13(_Config) ->
+    ?assertMatch(
+        {ok, <<"<blockquote>\n<pre><code>a\n</code></pre>\n</blockquote>\n<p>b</p>"/utf8>>},
+        markdown:to_html(<<">     a\nb"/utf8>>),
+        "should not support lazyness (1)"
+    ),
+    ok.
+
+test_code_indented_case_14(_Config) ->
+    ?assertMatch(
+        {ok, <<"<blockquote>\n<p>a\nb</p>\n</blockquote>"/utf8>>},
+        markdown:to_html(<<"> a\n    b"/utf8>>),
+        "should not support lazyness (2)"
+    ),
+    ok.
+
+test_code_indented_case_15(_Config) ->
+    ?assertMatch(
+        {ok, <<"<blockquote>\n<p>a\nb</p>\n</blockquote>"/utf8>>},
+        markdown:to_html(<<"> a\n     b"/utf8>>),
+        "should not support lazyness (3)"
+    ),
+    ok.
+
+test_code_indented_case_16(_Config) ->
+    ?assertMatch(
+        {ok, <<"<blockquote>\n<p>a\nb</p>\n</blockquote>"/utf8>>},
+        markdown:to_html(<<"> a\n      b"/utf8>>),
+        "should not support lazyness (4)"
+    ),
+    ok.
+
+test_code_indented_case_17(_Config) ->
+    ?assertMatch(
+        {ok, <<"<blockquote>\n<pre><code>a\n</code></pre>\n</blockquote>\n<pre><code>b\n</code></pre>"/utf8>>},
+        markdown:to_html(<<">     a\n    b"/utf8>>),
+        "should not support lazyness (5)"
+    ),
+    ok.
+
+test_code_indented_case_18(_Config) ->
+    ?assertMatch(
+        {ok, <<"<blockquote>\n<pre><code>a\n</code></pre>\n</blockquote>\n<pre><code> b\n</code></pre>"/utf8>>},
+        markdown:to_html(<<">     a\n     b"/utf8>>),
+        "should not support lazyness (6)"
+    ),
+    ok.
+
+test_code_indented_case_19(_Config) ->
+    ?assertMatch(
+        {ok, <<"<blockquote>\n<pre><code>a\n</code></pre>\n</blockquote>\n<pre><code>  b\n</code></pre>"/utf8>>},
+        markdown:to_html(<<">     a\n      b"/utf8>>),
+        "should not support lazyness (7)"
+    ),
+    ok.
+
+test_code_indented_case_20(_Config) ->
+    ?assertMatch(
+        {ok, <<"<p>a</p>"/utf8>>},
+        markdown:to_html_with_options(<<"    a"/utf8>>, ?OFF()),
+        "should support turning off code (indented, 1)"
+    ),
+    ok.
+
+test_code_indented_case_21(_Config) ->
+    ?assertMatch(
+        {ok, <<"<blockquote>\n<p>a\nb</p>\n</blockquote>"/utf8>>},
+        markdown:to_html_with_options(<<"> a\n    b"/utf8>>, ?OFF()),
+        "should support turning off code (indented, 2)"
+    ),
+    ok.
+
+test_code_indented_case_22(_Config) ->
+    ?assertMatch(
+        {ok, <<"<ul>\n<li>a\nb</li>\n</ul>"/utf8>>},
+        markdown:to_html_with_options(<<"- a\n    b"/utf8>>, ?OFF()),
+        "should support turning off code (indented, 3)"
+    ),
+    ok.
+
+test_code_indented_case_23(_Config) ->
+    ?assertMatch(
+        {ok, <<"<ul>\n<li>a\n<ul>\n<li>b</li>\n</ul>\n</li>\n</ul>"/utf8>>},
+        markdown:to_html_with_options(<<"- a\n    - b"/utf8>>, ?OFF()),
+        "should support turning off code (indented, 4)"
+    ),
+    ok.
+
+test_code_indented_case_24(_Config) ->
+    ?assertMatch(
+        {ok, <<"<ul>\n<li>a\n<ul>\n<li>b</li>\n</ul>\n</li>\n</ul>"/utf8>>},
+        markdown:to_html_with_options(<<"- a\n    - b"/utf8>>, ?OFF()),
+        "should support turning off code (indented, 5)"
+    ),
+    ok.
+
+test_code_indented_case_25(_Config) ->
+    ?assertMatch(
+        {ok, <<"<pre><code>a\n</code></pre>"/utf8>>},
+        markdown:to_html_with_options(<<"```\na\n    ```"/utf8>>, ?OFF()),
+        "should support turning off code (indented, 6)"
+    ),
+    ok.
+
+test_code_indented_case_26(_Config) ->
+    ?assertMatch(
+        {ok, <<"<p>a <?\n?></p>"/utf8>>},
+        markdown:to_html_with_options(<<"a <?\n    ?>"/utf8>>, ?OFF_DANGER()),
+        "should support turning off code (indented, 7)"
+    ),
+    ok.
+
+test_code_indented_case_27(_Config) ->
+    ?assertMatch(
+        {ok, <<"<ul>\n<li>Foo</li>\n</ul>\n<hr />"/utf8>>},
+        markdown:to_html_with_options(<<"- Foo\n---"/utf8>>, ?OFF()),
+        "should support turning off code (indented, 8)"
+    ),
+    ok.
+
+test_code_indented_case_28(_Config) ->
+    ?assertMatch(
+        {ok, <<"<ul>\n<li>\n<h2>Foo</h2>\n</li>\n</ul>"/utf8>>},
+        markdown:to_html_with_options(<<"- Foo\n     ---"/utf8>>, ?OFF()),
+        "should support turning off code (indented, 9)"
+    ),
+    ok.
+
+test_code_indented_case_29(_Config) ->
+    % ?assertMatch({ok, <<&Default::default()
+    %     )?/utf8>>}, markdown:to_html(<<to_mdast(
+    %         "\tconsole.log(1)\n    console.log(2)\n"/utf8>>), Node::Root(Root {
+    %         children: vec![Node::Code(Code {
+    %             lang: None,
+    %             meta: None,
+    %             value: "console.log(1)\nconsole.log(2)".into(),
+    ok.

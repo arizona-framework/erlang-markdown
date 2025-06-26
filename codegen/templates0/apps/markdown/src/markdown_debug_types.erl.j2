@@ -1,0 +1,81 @@
+%%%-----------------------------------------------------------------------------
+%%% Copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Copyright (c) WhatsApp LLC
+%%%
+%%% This source code is licensed under the MIT license found in the
+%%% LICENSE.md file in the root directory of this source tree.
+%%%
+%%% @author Andrew Bennett <potatosaladx@meta.com>
+%%% @copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Created :  04 Mar 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%%-----------------------------------------------------------------------------
+%%% % @format
+-module(markdown_debug_types).
+-moduledoc """
+Debugging utilities for types.
+""".
+-compile(warn_missing_spec_all).
+-oncall("whatsapp_clr").
+
+-include_lib("markdown/include/markdown_debug_types.hrl").
+-include_lib("markdown/include/markdown_html.hrl").
+-include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_vec.hrl").
+
+%% API
+-export([
+    is_record/2,
+    record_fields/1,
+    record_rust_name/1,
+    record_size/1
+]).
+
+%% Types
+-type record_name() ::
+<<{% set record_name_type_continue = joiner("| ") %}>>
+<<{% for record in ctx.records.record_list %}>>
+    <<{{ record_name_type_continue() }}>><<{{ record.name }}>>
+<<{% endfor %}>>.
+
+-export_type([
+    record_name/0
+]).
+
+%%%=============================================================================
+%%% API functions
+%%%=============================================================================
+
+-spec is_record(RecordName | OtherRecordName, RecordSize) -> boolean() when RecordName :: record_name(), OtherRecordName :: atom(), RecordSize :: non_neg_integer().
+<<{% for record in ctx.records.record_list %}>>
+<<{% if record.static %}>>
+is_record(<<{{ record.name }}>>, <<{{ record.size }}>>) -> true;
+<<{% endif %}>>
+<<{% endfor %}>>
+is_record(RecordName, RecordSize) when ?is_markdown_record_name(RecordName) andalso is_integer(RecordSize) andalso RecordSize >= 0 ->
+    case record_size(RecordName) of
+        RecordSize ->
+            true;
+        _OtherRecordSize ->
+            false
+    end;
+is_record(_OtherRecordName, _RecordSize) ->
+    false.
+
+-spec record_fields(RecordName) -> Fields when RecordName :: record_name(), Fields :: [Field], Field :: atom().
+<<{% set record_fields_fun_continue = joiner(";") %}>>
+<<{% for record in ctx.records.record_list %}>>
+<<{{ record_fields_fun_continue() }}>>record_fields(<<{{ record.name }}>>) -> <<{% if record.static %}>><<{{ record.fields_string }}>><<{% else %}>>record_info(fields, <<{{ record.name }}>>)<<{% endif %}>>
+<<{% endfor %}>>.
+
+-spec record_rust_name(RecordName) -> RustName when RecordName :: record_name(), RustName :: binary().
+<<{% set record_rust_name_continue = joiner(";") %}>>
+<<{% for record in ctx.records.record_list %}>>
+<<{{ record_rust_name_continue() }}>>record_rust_name(<<{{ record.name }}>>) -> <<"<<{{ record.rust_name }}>>">>
+<<{% endfor %}>>.
+
+-spec record_size(RecordName) -> RecordSize when RecordName :: record_name(), RecordSize :: non_neg_integer().
+<<{% set record_size_fun_continue = joiner(";") %}>>
+<<{% for record in ctx.records.record_list %}>>
+<<{{ record_size_fun_continue() }}>>record_size(<<{{ record.name }}>>) -> <<{% if record.static %}>><<{{ record.size }}>><<{% else %}>>record_info(size, <<{{ record.name }}>>) - 1<<{% endif %}>>
+<<{% endfor %}>>.

@@ -1,0 +1,153 @@
+%%%-----------------------------------------------------------------------------
+%%% Copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Copyright (c) WhatsApp LLC
+%%%
+%%% This source code is licensed under the MIT license found in the
+%%% LICENSE.md file in the root directory of this source tree.
+%%%
+%%% @author Andrew Bennett <potatosaladx@meta.com>
+%%% @copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Created :  04 Mar 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%%-----------------------------------------------------------------------------
+%%% % @format
+-module(markdown_state).
+-moduledoc """
+States of the state machine.
+""".
+-compile(warn_missing_spec_all).
+-oncall("whatsapp_clr").
+
+-include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_state.hrl").
+
+%% API
+-export([
+    error/1,
+    next/1,
+    nok/0,
+    ok/0,
+    retry/1,
+    to_result/1
+]).
+%% Call API
+-export([
+    call/2,
+<<{% set name_api_continue = joiner(",") %}>>
+<<{% for name in ctx.state.name_list %}>>
+    <<{{ name_api_continue() }}>><<{{ name.key }}>>/1
+<<{% endfor %}>>
+]).
+
+%% Types
+-doc """
+Syntax error.
+
+Only used by MDX.
+""".
+-type error() :: {error, dynamic()}.
+
+-doc "Names of states to move to.".
+-type name() ::
+<<{% set name_type_continue = joiner("| ") %}>>
+<<{% for name in ctx.state.name_list %}>>
+    <<{{ name_type_continue() }}>><<{{ name.key }}>>
+<<{% endfor %}>>.
+
+-doc "Move to `name()` next.".
+-type next() :: {next, name()}.
+
+-doc "The state is not successful.".
+-type nok() :: nok.
+
+-doc "The state is successful.".
+-type ok() :: ok.
+
+-doc "Retry in `name()`.".
+-type retry() :: {retry, name()}.
+
+-doc "Result of a state.".
+-type t() :: error() | next() | retry() | ok() | nok().
+
+-export_type([
+    error/0,
+    name/0,
+    next/0,
+    nok/0,
+    ok/0,
+    retry/0,
+    t/0
+]).
+
+%%%=============================================================================
+%%% API functions
+%%%=============================================================================
+
+-doc """
+Syntax error.
+
+Only used by MDX.
+""".
+-spec error(Message) -> State when Message :: markdown_message:t(), State :: t().
+-compile({inline, [error/1]}).
+error(Message = #markdown_message{}) -> {error, Message}.
+
+-doc "Move to `name()` next.".
+-spec next(Name) -> State when Name :: name(), State :: t().
+-compile({inline, [next/1]}).
+next(Name) when ?is_markdown_state_name(Name) -> {next, Name}.
+
+-doc "The state is not successful.".
+-spec nok() -> State when State :: t().
+-compile({inline, [nok/0]}).
+nok() -> nok.
+
+-doc "The state is successful.".
+-spec ok() -> State when State :: t().
+-compile({inline, [ok/0]}).
+ok() -> ok.
+
+-doc "Retry in `name()`.".
+-spec retry(Name) -> State when Name :: name(), State :: t().
+-compile({inline, [retry/1]}).
+retry(Name) when ?is_markdown_state_name(Name) -> {retry, Name}.
+
+-doc """
+Turn a final state into a result.
+
+This doesn’t work on future states ([`State::Next`], [`State::Retry`]),
+or on an attempt ([`State::Nok`]).
+
+But it turns the final result into an error if crashed.
+""".
+-spec to_result(State) -> ok | {error, Message} when State :: t(), Message :: markdown_message:t().
+-compile({inline, [to_result/1]}).
+to_result(ok) -> ok;
+to_result({error, Message = #markdown_message{}}) -> {error, Message}.
+
+%%%=============================================================================
+%%% Call API functions
+%%%=============================================================================
+
+-spec call(Tokenizer, Name) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), Name :: name(), State :: t().
+call(Tokenizer1 = #markdown_tokenizer{}, Name) when ?is_markdown_state_name(Name) ->
+    % TokenizerBeforeString = markdown_debug:rust_debug_string(Tokenizer1),
+    % io:format("\n\n[~w:~w] BEFORE state:~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Name)]),
+    {Tokenizer2, State} = ?MODULE:Name(Tokenizer1),
+    % TokenizerAfterString = markdown_debug:rust_debug_string(Tokenizer2),
+    % TokenizerString =
+    %     case TokenizerBeforeString =:= TokenizerAfterString of
+    %         true ->
+    %             <<"NO CHANGE">>;
+    %         false ->
+    %             TokenizerAfterString
+    %     end,
+    % io:format("\n\n[~w:~w] AFTER state:~ts\n~ts\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Name), markdown_debug:rust_debug_string(State), TokenizerString]),
+    {Tokenizer2, State}.
+
+<<{% for name in ctx.state.name_list %}>>
+-spec <<{{ name.key }}>>(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: t().
+-compile({inline, [<<{{ name.key }}>>/1]}).
+<<{{ name.key }}>>(Tokenizer = #markdown_tokenizer{}) ->
+    markdown_construct_<<{{ name.mod }}>>:'<<{{ name.fun }}>>'(Tokenizer).
+
+<<{% endfor %}>>

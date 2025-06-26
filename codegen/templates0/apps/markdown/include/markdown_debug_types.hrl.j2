@@ -1,0 +1,27 @@
+%%%-----------------------------------------------------------------------------
+%%% Copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Copyright (c) WhatsApp LLC
+%%%
+%%% This source code is licensed under the MIT license found in the
+%%% LICENSE.md file in the root directory of this source tree.
+%%%
+%%% @author Andrew Bennett <potatosaladx@meta.com>
+%%% @copyright (c) Meta Platforms, Inc. and affiliates.
+%%% @doc
+%%%
+%%% @end
+%%% Created :  04 Mar 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%%-----------------------------------------------------------------------------
+%%% % @format
+%% @oncall whatsapp_clr
+-ifndef(MARKDOWN_DEBUG_TYPES_HRL).
+-define(MARKDOWN_DEBUG_TYPES_HRL, 1).
+
+%% Macros
+-define(is_markdown_record_name(X),
+(<<{% set record_name_macro_continue = joiner(" orelse ") %}>>
+<<{% for record in ctx.records.record_list %}>>
+    <<{{ record_name_macro_continue() }}>>(X) =:= <<{{ record.name }}>>
+<<{% endfor %}>>)).
+
+-endif.

@@ -1,0 +1,42 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+[project]
+name = "erlang-markdown-codegen"
+version = "0.1.0"
+description = "Generate Erlang code from YAML configurations using Jinja2."
+authors = [
+    {name = "Andrew Bennett", email = "potatosaladx@meta.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "click (>=8.1.8,<9.0.0)",
+    "jinja2 (>=3.1.5,<4.0.0)",
+    "pyyaml (>=6.0.2,<7.0.0)"
+]
+
+[project.scripts]
+erlang_markdown_codegen = "erlang_markdown_codegen.__main__:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 132
+
+[tool.poetry]
+packages = [{include = "erlang_markdown_codegen", from = "src"}]
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+pytest = "^8.3.4"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

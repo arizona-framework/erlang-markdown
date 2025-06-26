@@ -1,0 +1,120 @@
+%%%-----------------------------------------------------------------------------
+%%% Copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Copyright (c) WhatsApp LLC
+%%%
+%%% This source code is licensed under the MIT license found in the
+%%% LICENSE.md file in the root directory of this source tree.
+%%%
+%%% @author Andrew Bennett <potatosaladx@meta.com>
+%%% @copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Created :  04 Mar 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%%-----------------------------------------------------------------------------
+%%% % @format
+-module(markdown_event).
+-moduledoc """
+Semantic labels of things happening.
+""".
+-compile(warn_missing_spec_all).
+-oncall("whatsapp_clr").
+
+-include_lib("markdown/include/markdown_event.hrl").
+-include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
+
+%% API
+-export([
+    is_void/1,
+    new/4
+]).
+%% Name API
+-export([
+<<{% set name_api_continue = joiner(",") %}>>
+<<{% for name in ctx.event.name_list %}>>
+    <<{{ name_api_continue() }}>><<{{ name.key }}>>/3
+<<{% endfor %}>>
+]).
+
+%% Types
+
+-doc "Embedded content type.".
+-type content() ::
+    %% Represents [flow content][crate::construct::flow].
+    flow
+    %% Represents [content][crate::construct::content].
+    | content
+    %% Represents [string content][crate::construct::string].
+    | string
+    %% Represents [text content][crate::construct::text].
+    | text.
+
+-doc "Event kinds.".
+-type kind() ::
+    %% The start of something.
+    enter
+    %% The end of something.
+    | exit.
+
+-doc "Semantic label of a span.".
+-type name() ::
+<<{% set name_type_continue = joiner("| ") %}>>
+<<{% for name in ctx.event.name_list %}>>
+    <<{{ name_type_continue() }}>><<{{ name.key }}>>
+<<{% endfor %}>>.
+
+-type t() :: #markdown_event{}.
+
+-export_type([
+    content/0,
+    kind/0,
+    name/0,
+    t/0
+]).
+
+%% Macros
+-define(is_kind(X), ((X) =:= enter orelse (X) =:= exit)).
+
+%%%=============================================================================
+%%% API functions
+%%%=============================================================================
+
+-spec is_void(Event | Name) -> boolean() when Event :: t(), Name :: name().
+is_void(#markdown_event{name = Name}) ->
+    is_void(Name);
+is_void(Name) when is_atom(Name) ->
+    ?is_markdown_event_void(Name).
+
+-spec new(Kind, Name, Point, OptionLink) -> Event when
+    Kind :: kind(),
+    Name :: name(),
+    Point :: markdown_point:t(),
+    OptionLink :: markdown_types:option(Link),
+    Link :: markdown_event_link:t(),
+    Event :: t().
+new(Kind, Name, Point = #markdown_point{}, OptionLink) when
+    ?is_kind(Kind) andalso ?is_markdown_event_name(Name) andalso ?is_option_record(OptionLink, markdown_event_link)
+->
+    #markdown_event{
+        kind = Kind,
+        name = Name,
+        point = Point,
+        link = OptionLink
+    }.
+
+%%%=============================================================================
+%%% Name API functions
+%%%=============================================================================
+
+<<{% for name in ctx.event.name_list %}>>
+-doc """
+<<{{ name.doc -}}>>
+""".
+-spec <<{{ name.key }}>>(Kind, Point, OptionLink) -> Event when
+    Kind :: kind(),
+    Point :: markdown_point:t(),
+    OptionLink :: markdown_types:option(Link),
+    Link :: markdown_event_link:t(),
+    Event :: t().
+<<{{ name.key }}>>(Kind, Point = #markdown_point{}, OptionLink) when ?is_kind(Kind) andalso ?is_option_record(OptionLink, markdown_event_link) ->
+    #markdown_event{kind = Kind, name = ?FUNCTION_NAME, point = Point, link = OptionLink}.
+
+<<{% endfor %}>>

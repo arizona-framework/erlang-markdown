@@ -1,0 +1,4971 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+event:
+  name:
+    - key: attention_sequence
+      doc: |
+        Attention sequence.
+        
+        > 👉 **Note**: this is used while parsing but compiled away.
+    - key: attribute_flow_list
+      doc: |
+        Attribute list (flow).
+        
+        ## Example
+        
+        ```markdown
+        > | {.red}
+            ^^^^^^
+        ```
+    - key: attribute_list_data
+      doc: |
+        Attribute list data.
+        
+        ## Example
+        
+        ```markdown
+        > | {.red}
+             ^^^^
+        ```
+    - key: attribute_list_marker
+      doc: |
+        Attribute list marker.
+        
+        ## Example
+        
+        ```markdown
+        > | {.red}
+            ^    ^
+        ```
+    - key: autolink
+      doc: |
+        Whole autolink.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`AutolinkEmail`][Name::AutolinkEmail],
+            [`AutolinkMarker`][Name::AutolinkMarker],
+            [`AutolinkProtocol`][Name::AutolinkProtocol]
+        *   **Construct**:
+            [`autolink`][crate::construct::autolink]
+        
+        ## Example
+        
+        ```markdown
+        > | <https://example.com> and <admin@example.com>
+            ^^^^^^^^^^^^^^^^^^^^^     ^^^^^^^^^^^^^^^^^^^
+        ```
+    - key: autolink_email
+      doc: |
+        Email autolink w/o markers.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Autolink`][Name::Autolink]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`autolink`][crate::construct::autolink]
+        
+        ## Example
+        
+        ```markdown
+        > | <admin@example.com>
+            ^^^^^^^^^^^^^^^^^
+        ```
+    - key: autolink_marker
+      doc: |
+        Marker of an autolink.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Autolink`][Name::Autolink]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`autolink`][crate::construct::autolink]
+        
+        ## Example
+        
+        ```markdown
+        > | <https://example.com>
+            ^                   ^
+        ```
+    - key: autolink_protocol
+      doc: |
+        Protocol autolink w/o markers.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Autolink`][Name::Autolink]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`autolink`][crate::construct::autolink]
+        
+        ## Example
+        
+        ```markdown
+        > | <https://example.com>
+            ^^^^^^^^^^^^^^^^^^^
+        ```
+    - key: blank_line_ending
+      doc: |
+        Line ending preceded only by whitespace or nothing at all.
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`blank_line`][crate::construct::blank_line]
+        
+        ## Example
+        
+        ```markdown
+        > | ␠␠␊
+              ^
+        ```
+    - key: block_quote
+      doc: |
+        Whole block quote.
+        
+        ## Info
+        
+        *   **Context**:
+            [document content][crate::construct::document]
+        *   **Content model**:
+            [`BlockQuotePrefix`][Name::BlockQuotePrefix],
+            [flow content][crate::construct::flow]
+        *   **Construct**:
+            [`block_quote`][crate::construct::block_quote]
+        
+        ## Example
+        
+        ```markdown
+        > | > a
+            ^^^
+        > | b
+            ^
+        ```
+    - key: block_quote_marker
+      doc: |
+        Block quote marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`BlockQuotePrefix`][Name::BlockQuotePrefix]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`block_quote`][crate::construct::block_quote]
+        
+        ## Example
+        
+        ```markdown
+        > | > a
+            ^
+          | b
+        ```
+    - key: block_quote_prefix
+      doc: |
+        Block quote prefix.
+        
+        ## Info
+        
+        *   **Context**:
+            [`BlockQuote`][Name::BlockQuote]
+        *   **Content model**:
+            [`BlockQuoteMarker`][Name::BlockQuoteMarker],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`block_quote`][crate::construct::block_quote]
+        
+        ## Example
+        
+        ```markdown
+        > | > a
+            ^^
+          | b
+        ```
+    - key: byte_order_mark
+      doc: |
+        Byte order mark.
+        
+        ## Info
+        
+        *   **Context**:
+            optional first event
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`document`][crate::construct::document]
+    - key: character_escape
+      doc: |
+        Whole character escape.
+        
+        ## Info
+        
+        *   **Context**:
+            [string content][crate::construct::string] or
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`CharacterEscapeMarker`][Name::CharacterEscapeMarker],
+            [`CharacterEscapeValue`][Name::CharacterEscapeValue]
+        *   **Construct**:
+            [`character_escape`][crate::construct::character_escape]
+        
+        ## Example
+        
+        ```markdown
+        > | a \- b
+              ^^
+        ```
+    - key: character_escape_marker
+      doc: |
+        Character escape marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CharacterEscape`][Name::CharacterEscape]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`character_escape`][crate::construct::character_escape]
+        
+        ## Example
+        
+        ```markdown
+        > | a \- b
+              ^
+        ```
+    - key: character_escape_value
+      doc: |
+        Character escape value.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CharacterEscape`][Name::CharacterEscape]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`character_escape`][crate::construct::character_escape]
+        
+        ## Example
+        
+        ```markdown
+        > | a \- b
+              ^
+        ```
+    - key: character_reference
+      doc: |
+        Whole character reference.
+        
+        ## Info
+        
+        *   **Context**:
+            [string content][crate::construct::string] or
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`CharacterReferenceMarker`][Name::CharacterReferenceMarker],
+            [`CharacterReferenceMarkerHexadecimal`][Name::CharacterReferenceMarkerHexadecimal],
+            [`CharacterReferenceMarkerNumeric`][Name::CharacterReferenceMarkerNumeric],
+            [`CharacterReferenceMarkerSemi`][Name::CharacterReferenceMarkerSemi],
+            [`CharacterReferenceValue`][Name::CharacterReferenceValue]
+        *   **Construct**:
+            [`character_reference`][crate::construct::character_reference]
+        
+        ## Example
+        
+        ```markdown
+        > | a &amp; b &#8800; c &#x1D306; d
+              ^^^^^   ^^^^^^^   ^^^^^^^^^
+        ```
+    - key: character_reference_marker
+      doc: |
+        Character reference opening marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CharacterReference`][Name::CharacterReference]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`character_reference`][crate::construct::character_reference]
+        
+        ## Example
+        
+        ```markdown
+        > | a &amp; b &#8800; c &#x1D306; d
+              ^       ^         ^
+        ```
+    - key: character_reference_marker_hexadecimal
+      doc: |
+        Character reference hexadecimal numeric marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CharacterReference`][Name::CharacterReference]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`character_reference`][crate::construct::character_reference]
+        
+        ## Example
+        
+        ```markdown
+        > | a &amp; b &#8800; c &#x1D306; d
+                                  ^
+        ```
+    - key: character_reference_marker_numeric
+      doc: |
+        Character reference numeric marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CharacterReference`][Name::CharacterReference]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`character_reference`][crate::construct::character_reference]
+        
+        ## Example
+        
+        ```markdown
+        > | a &amp; b &#8800; c &#x1D306; d
+                      ^         ^
+        ```
+    - key: character_reference_marker_semi
+      doc: |
+        Character reference closing marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CharacterReference`][Name::CharacterReference]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`character_reference`][crate::construct::character_reference]
+        
+        ## Example
+        
+        ```markdown
+        > | a &amp; b &#8800; c &#x1D306; d
+                  ^         ^           ^
+        ```
+    - key: character_reference_value
+      doc: |
+        Character reference value.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CharacterReference`][Name::CharacterReference]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`character_reference`][crate::construct::character_reference]
+        
+        ## Example
+        
+        ```markdown
+        > | a &amp; b &#8800; c &#x1D306; d
+              ^^^      ^^^^       ^^^^^
+        ```
+    - key: code_fenced
+      doc: |
+        Whole code (fenced).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`CodeFencedFence`][Name::CodeFencedFence],
+            [`CodeFlowChunk`][Name::CodeFlowChunk],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ````markdown
+        > | ```js
+            ^^^^^
+        > | console.log(1)
+            ^^^^^^^^^^^^^^
+        > | ```
+            ^^^
+        ````
+    - key: code_fenced_fence
+      doc: |
+        A code (fenced) fence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CodeFenced`][Name::CodeFenced]
+        *   **Content model**:
+            [`CodeFencedFenceInfo`][Name::CodeFencedFenceInfo],
+            [`CodeFencedFenceMeta`][Name::CodeFencedFenceMeta],
+            [`CodeFencedFenceSequence`][Name::CodeFencedFenceSequence],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ````markdown
+        > | ```js
+            ^^^^^
+          | console.log(1)
+        > | ```
+            ^^^
+        ````
+    - key: code_fenced_fence_info
+      doc: |
+        A code (fenced) fence info word.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CodeFencedFence`][Name::CodeFencedFence]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ````markdown
+        > | ```js
+              ^^
+          | console.log(1)
+          | ```
+        ````
+    - key: code_fenced_fence_meta
+      doc: |
+        A code (fenced) fence meta string.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CodeFencedFence`][Name::CodeFencedFence]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ````markdown
+        > | ```js highlight="1"
+                  ^^^^^^^^^^^^^
+          | console.log(1)
+          | ```
+        ````
+    - key: code_fenced_fence_sequence
+      doc: |
+        A code (fenced) fence sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CodeFencedFenceSequence`][Name::CodeFencedFenceSequence]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ````markdown
+        > | ```js
+            ^^^
+          | console.log(1)
+        > | ```
+            ^^^
+        ````
+    - key: code_flow_chunk
+      doc: |
+        A code (fenced, indented) chunk.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CodeFenced`][Name::CodeFenced],
+            [`CodeIndented`][Name::CodeIndented]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow],
+            [`code_indented`][crate::construct::code_indented]
+        
+        ## Example
+        
+        ````markdown
+          | ```js
+        > | console.log(1)
+            ^^^^^^^^^^^^^^
+          | ```
+        ````
+        
+        ```markdown
+        > | ␠␠␠␠console.log(1)
+                ^^^^^^^^^^^^^^
+        ```
+    - key: code_indented
+      doc: |
+        Whole code (indented).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`CodeFlowChunk`][Name::CodeFlowChunk],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ```markdown
+        ␠␠␠␠console.log(1)
+        ^^^^^^^^^^^^^^^^^^
+        ```
+    - key: code_text
+      doc: |
+        Whole code (text).
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`CodeTextData`][Name::CodeTextData],
+            [`CodeTextSequence`][Name::CodeTextSequence],
+            [`LineEnding`][Name::LineEnding]
+        *   **Construct**:
+            [`raw_text`][crate::construct::raw_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a `b` c
+              ^^^
+        ```
+    - key: code_text_data
+      doc: |
+        Code (text) data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CodeText`][Name::CodeText]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`raw_text`][crate::construct::raw_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a `b` c
+              ^
+        ```
+    - key: code_text_sequence
+      doc: |
+        Code (text) sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`CodeText`][Name::CodeText]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`raw_text`][crate::construct::raw_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a `b` c
+              ^ ^
+        ```
+    - key: content
+      doc: |
+        Content.
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [content][crate::construct::content]
+        *   **Construct**:
+            [`content`][crate::construct::content]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b
+            ^^^^^^
+        > | c.
+            ^^
+        ```
+    - key: data
+      doc: |
+        Data.
+        
+        ## Info
+        
+        *   **Context**:
+            [string content][crate::construct::string],
+            [text content][crate::construct::text]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`data`][crate::construct::partial_data]
+        
+        ## Example
+        
+        ```markdown
+        > | aa *bb* cc
+            ^^^ ^^ ^^^
+        ```
+    - key: definition
+      doc: |
+        Whole definition.
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`DefinitionMarker`][Name::DefinitionMarker],
+            [`DefinitionLabel`][Name::DefinitionLabel],
+            [`DefinitionDestination`][Name::DefinitionDestination],
+            [`DefinitionTitle`][Name::DefinitionTitle],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`definition`][crate::construct::definition]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+            ^^^^^^^^^^
+        ```
+    - key: definition_destination
+      doc: |
+        Whole definition destination.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Definition`][Name::Definition]
+        *   **Content model**:
+            [`DefinitionDestinationLiteral`][Name::DefinitionDestinationLiteral],
+            [`DefinitionDestinationRaw`][Name::DefinitionDestinationRaw]
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+                ^
+        > | [a]: <b> "c"
+                ^^^
+        ```
+    - key: definition_destination_literal
+      doc: |
+        Definition destination literal.
+        
+        ## Info
+        
+        *   **Context**:
+            [`DefinitionDestination`][Name::DefinitionDestination]
+        *   **Content model**:
+            [`DefinitionDestinationLiteralMarker`][Name::DefinitionDestinationLiteralMarker],
+            [`DefinitionDestinationString`][Name::DefinitionDestinationString]
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: <b> "c"
+                ^^^
+        ```
+    - key: definition_destination_literal_marker
+      doc: |
+        Definition destination literal marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`DefinitionDestinationLiteral`][Name::DefinitionDestinationLiteral]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: <b> "c"
+                ^ ^
+        ```
+    - key: definition_destination_raw
+      doc: |
+        Definition destination raw.
+        
+        ## Info
+        
+        *   **Context**:
+            [`DefinitionDestination`][Name::DefinitionDestination]
+        *   **Content model**:
+            [`DefinitionDestinationString`][Name::DefinitionDestinationString]
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+                ^
+        ```
+    - key: definition_destination_string
+      doc: |
+        Definition destination data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`DefinitionDestinationLiteral`][Name::DefinitionDestinationLiteral],
+            [`DefinitionDestinationRaw`][Name::DefinitionDestinationRaw]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+                ^
+        > | [a]: <b> "c"
+                  ^
+        ```
+    - key: definition_label
+      doc: |
+        Whole definition label.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Definition`][Name::Definition]
+        *   **Content model**:
+            [`DefinitionLabelMarker`][Name::DefinitionLabelMarker],
+            [`DefinitionLabelString`][Name::DefinitionLabelString],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`label`][crate::construct::partial_label]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+            ^^^
+        ```
+    - key: definition_label_marker
+      doc: |
+        Definition label marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`DefinitionLabel`][Name::DefinitionLabel]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`label`][crate::construct::partial_label]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+            ^ ^
+        ```
+    - key: definition_label_string
+      doc: |
+        Definition label data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`DefinitionLabel`][Name::DefinitionLabel]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`label`][crate::construct::partial_label]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+            ^
+        ```
+    - key: definition_marker
+      doc: |
+        Definition marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Definition`][Name::Definition],
+            [`GfmFootnoteDefinition`][Name::GfmFootnoteDefinition]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`definition`][crate::construct::definition]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+              ^
+        ```
+    - key: definition_title
+      doc: |
+        Whole definition title.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Definition`][Name::Definition]
+        *   **Content model**:
+            [`DefinitionTitleMarker`][Name::DefinitionTitleMarker],
+            [`DefinitionTitleString`][Name::DefinitionTitleString],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`title`][crate::construct::partial_title]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+                  ^^^
+        ```
+    - key: definition_title_marker
+      doc: |
+        Definition title marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`DefinitionTitle`][Name::DefinitionTitle]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`title`][crate::construct::partial_title]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+                  ^ ^
+        ```
+    - key: definition_title_string
+      doc: |
+        Definition title data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`DefinitionTitle`][Name::DefinitionTitle]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`title`][crate::construct::partial_title]
+        
+        ## Example
+        
+        ```markdown
+        > | [a]: b "c"
+                    ^
+        ```
+    - key: emphasis
+      doc: |
+        Emphasis.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`EmphasisSequence`][Name::EmphasisSequence],
+            [`EmphasisText`][Name::EmphasisText]
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | *a*
+            ^^^
+        ```
+    - key: emphasis_sequence
+      doc: |
+        Emphasis sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Emphasis`][Name::Emphasis]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | *a*
+            ^ ^
+        ```
+    - key: emphasis_text
+      doc: |
+        Emphasis text.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Emphasis`][Name::Emphasis]
+        *   **Content model**:
+            [text content][crate::construct::text]
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | *a*
+            ^
+        ```
+    - key: frontmatter
+      doc: |
+        Whole frontmatter.
+        
+        ## Info
+        
+        *   **Context**:
+            [document content][crate::construct::document]
+        *   **Content model**:
+            [`FrontmatterFence`][Name::FrontmatterFence],
+            [`FrontmatterChunk`][Name::FrontmatterChunk],
+            [`LineEnding`][Name::LineEnding]
+        *   **Construct**:
+            [`frontmatter`][crate::construct::frontmatter]
+        
+        ## Example
+        
+        ```markdown
+        > | ---
+            ^^^
+        > | title: Neptune
+            ^^^^^^^^^^^^^^
+        > | ---
+            ^^^
+        ```
+    - key: frontmatter_chunk
+      doc: |
+        Frontmatter chunk.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Frontmatter`][Name::Frontmatter]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`frontmatter`][crate::construct::frontmatter]
+        
+        ## Example
+        
+        ```markdown
+          | ---
+        > | title: Neptune
+            ^^^^^^^^^^^^^^
+          | ---
+        ```
+    - key: frontmatter_fence
+      doc: |
+        Frontmatter fence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Frontmatter`][Name::Frontmatter]
+        *   **Content model**:
+            [`FrontmatterSequence`][Name::FrontmatterSequence],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`frontmatter`][crate::construct::frontmatter]
+        
+        ## Example
+        
+        ```markdown
+        > | ---
+            ^^^
+          | title: Neptune
+        > | ---
+            ^^^
+        ```
+    - key: frontmatter_sequence
+      doc: |
+        Frontmatter sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`FrontmatterFence`][Name::FrontmatterFence]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`frontmatter`][crate::construct::frontmatter]
+        
+        ## Example
+        
+        ```markdown
+        > | ---
+            ^^^
+          | title: Neptune
+        > | ---
+            ^^^
+        ```
+    - key: gfm_autolink_literal_email
+      doc: |
+        GFM extension: email autolink.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            void.
+        *   **Construct**:
+            [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
+        
+        ## Example
+        
+        ```markdown
+        > | context@example.com
+            ^^^^^^^^^^^^^^^^^^^
+        ```
+    - key: gfm_autolink_literal_mailto
+      doc: |
+        GFM extension: email autolink w/ explicit `mailto`.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            void.
+        *   **Construct**:
+            [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
+        
+        ## Example
+        
+        ```markdown
+        > | mailto:context@example.com
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ```
+    - key: gfm_autolink_literal_protocol
+      doc: |
+        GFM extension: autolink w/ protocol.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            void.
+        *   **Construct**:
+            [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
+        
+        ## Example
+        
+        ```markdown
+        > | https://example.com
+            ^^^^^^^^^^^^^^^^^^^
+        ```
+    - key: gfm_autolink_literal_www
+      doc: |
+        GFM extension: autolink w/ www.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            void.
+        *   **Construct**:
+            [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
+        
+        ## Example
+        
+        ```markdown
+        > | www.example.com
+            ^^^^^^^^^^^^^^^
+        ```
+    - key: gfm_autolink_literal_xmpp
+      doc: |
+        GFM extension: email autolink w/ explicit `xmpp`.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            void.
+        *   **Construct**:
+            [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
+        
+        ## Example
+        
+        ```markdown
+        > | mailto:a@b.c/d
+            ^^^^^^^^^^^^^^
+        ```
+    - key: gfm_footnote_call
+      doc: |
+        GFM extension: whole footnote call.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`Label`][Name::Label]
+        *   **Construct**:
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a [^b] c
+              ^^^^
+        ```
+    - key: gfm_footnote_call_label
+      doc: |
+        GFM extension: label start (footnote).
+        
+        ## Info
+        
+        *   **Context**:
+            [`Label`][Name::Label]
+        *   **Content model**:
+            [`GfmFootnoteCallMarker`][Name::GfmFootnoteCallMarker],
+            [`LabelMarker`][Name::LabelMarker]
+        *   **Construct**:
+            [`gfm_label_start_footnote`][crate::construct::gfm_label_start_footnote]
+        
+        ## Example
+        
+        ```markdown
+        > | a [^b] c
+              ^^
+        ```
+    - key: gfm_footnote_call_marker
+      doc: |
+        GFM extension: label start (footnote) marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmFootnoteCallLabel`][Name::GfmFootnoteCallLabel]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_label_start_footnote`][crate::construct::gfm_label_start_footnote]
+        
+        ## Example
+        
+        ```markdown
+        > | a [^b] c
+              ^
+        ```
+    - key: gfm_footnote_definition
+      doc: |
+        GFM extension: whole footnote definition.
+        
+        ## Info
+        
+        *   **Context**:
+            [document content][crate::construct::document]
+        *   **Content model**:
+            [`GfmFootnoteDefinitionPrefix`][Name::GfmFootnoteDefinitionPrefix],
+            [document content][crate::construct::flow]
+        *   **Construct**:
+            [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
+        
+        ## Example
+        
+        ```markdown
+        > | [^a]: b
+            ^^^^^^^
+        ```
+    - key: gfm_footnote_definition_prefix
+      doc: |
+        GFM extension: footnote definition prefix.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmFootnoteDefinition`][Name::GfmFootnoteDefinition]
+        *   **Content model**:
+            [`DefinitionMarker`][Name::DefinitionMarker],
+            [`GfmFootnoteDefinitionLabel`][Name::GfmFootnoteDefinitionLabel],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
+        
+        ## Example
+        
+        ```markdown
+        > | [^a]: b
+            ^^^^^^
+        ```
+    - key: gfm_footnote_definition_label
+      doc: |
+        GFM extension: footnote definition label.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmFootnoteDefinitionPrefix`][Name::GfmFootnoteDefinitionPrefix]
+        *   **Content model**:
+            [`GfmFootnoteDefinitionLabelMarker`][Name::GfmFootnoteDefinitionLabelMarker],
+            [`GfmFootnoteDefinitionLabelString`][Name::GfmFootnoteDefinitionLabelString],
+            [`GfmFootnoteDefinitionMarker`][Name::GfmFootnoteDefinitionMarker]
+        *   **Construct**:
+            [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
+        
+        ## Example
+        
+        ```markdown
+        > | [^a]: b
+            ^^^^
+        ```
+    - key: gfm_footnote_definition_label_marker
+      doc: |
+        GFM extension: footnote definition label marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmFootnoteDefinitionLabel`][Name::GfmFootnoteDefinitionLabel]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
+        
+        ## Example
+        
+        ```markdown
+        > | [^a]: b
+            ^  ^
+    - key: gfm_footnote_definition_label_string
+      doc: |
+        GFM extension: footnote definition label string.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmFootnoteDefinitionLabel`][Name::GfmFootnoteDefinitionLabel]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
+        
+        ## Example
+        
+        ```markdown
+        > | [^a]: b
+              ^
+    - key: gfm_footnote_definition_marker
+      doc: |
+        GFM extension: footnote definition marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmFootnoteDefinitionLabel`][Name::GfmFootnoteDefinitionLabel]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
+        
+        ## Example
+        
+        ```markdown
+        > | [^a]: b
+            ^
+    - key: gfm_strikethrough
+      doc: |
+        GFM extension: Strikethrough.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`GfmStrikethroughSequence`][Name::GfmStrikethroughSequence],
+            [`GfmStrikethroughText`][Name::GfmStrikethroughText]
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | ~a~
+            ^^^
+        ```
+    - key: gfm_strikethrough_sequence
+      doc: |
+        GFM extension: Strikethrough sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmStrikethrough`][Name::GfmStrikethrough]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | ~a~
+            ^ ^
+        ```
+    - key: gfm_strikethrough_text
+      doc: |
+        GFM extension: Strikethrough text.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmStrikethrough`][Name::GfmStrikethrough]
+        *   **Content model**:
+            [text content][crate::construct::text]
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | ~a~
+            ^
+        ```
+    - key: gfm_table
+      doc: |
+        GFM extension: Table.
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`GfmTableBody`][Name::GfmTableBody],
+            [`GfmTableHead`][Name::GfmTableHead],
+            [`LineEnding`][Name::LineEnding]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+        > | | a |
+            ^^^^^
+        > | | - |
+            ^^^^^
+        > | | b |
+            ^^^^^
+        ```
+    - key: gfm_table_body
+      doc: |
+        GFM extension: Table body.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTable`][Name::GfmTable]
+        *   **Content model**:
+            [`GfmTableRow`][Name::GfmTableRow],
+            [`LineEnding`][Name::LineEnding]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+          | | a |
+          | | - |
+        > | | b |
+            ^^^^^
+        ```
+    - key: gfm_table_cell
+      doc: |
+        GFM extension: Table cell.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableRow`][Name::GfmTableRow]
+        *   **Content model**:
+            [`GfmTableCellDivider`][Name::GfmTableCellDivider],
+            [`GfmTableCellText`][Name::GfmTableCellText],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+        > | | a |
+            ^^^^^
+          | | - |
+        > | | b |
+            ^^^^^
+        ```
+    - key: gfm_table_cell_text
+      doc: |
+        GFM extension: Table cell text.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableCell`][Name::GfmTableCell]
+        *   **Content model**:
+            [text content][crate::construct::text]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+        > | | a |
+              ^
+          | | - |
+        > | | b |
+              ^
+        ```
+    - key: gfm_table_cell_divider
+      doc: |
+        GFM extension: Table cell divider.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableCell`][Name::GfmTableCell]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+        > | | a |
+            ^   ^
+        > | | - |
+            ^   ^
+        > | | b |
+            ^   ^
+        ```
+    - key: gfm_table_delimiter_row
+      doc: |
+        GFM extension: Table delimiter row.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableHead`][Name::GfmTableHead]
+        *   **Content model**:
+            [`GfmTableDelimiterCell`][Name::GfmTableDelimiterCell]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+          | | a |
+        > | | - |
+            ^^^^^
+          | | b |
+        ```
+    - key: gfm_table_delimiter_marker
+      doc: |
+        GFM extension: Table delimiter alignment marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableDelimiterCellValue`][Name::GfmTableDelimiterCellValue]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+          | | a  |
+        > | | :- |
+              ^
+          | | b  |
+        ```
+    - key: gfm_table_delimiter_cell
+      doc: |
+        GFM extension: Table delimiter cell.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableDelimiterRow`][Name::GfmTableDelimiterRow]
+        *   **Content model**:
+            [`GfmTableCellDivider`][Name::GfmTableCellDivider],
+            [`GfmTableDelimiterCellValue`][Name::GfmTableDelimiterCellValue],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+          | | a |
+        > | | - |
+            ^^^^^
+          | | b |
+        ```
+    - key: gfm_table_delimiter_cell_value
+      doc: |
+        GFM extension: Table delimiter cell alignment.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableDelimiterCell`][Name::GfmTableDelimiterCell]
+        *   **Content model**:
+            [`GfmTableDelimiterMarker`][Name::GfmTableDelimiterMarker],
+            [`GfmTableDelimiterFiller`][Name::GfmTableDelimiterFiller]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+          | | a |
+        > | | - |
+              ^
+          | | b |
+        ```
+    - key: gfm_table_delimiter_filler
+      doc: |
+        GFM extension: Table delimiter filler.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableDelimiterCellValue`][Name::GfmTableDelimiterCellValue]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+          | | a |
+        > | | - |
+              ^
+          | | b |
+        ```
+    - key: gfm_table_head
+      doc: |
+        GFM extension: Table head.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTable`][Name::GfmTable]
+        *   **Content model**:
+            [`GfmTableRow`][Name::GfmTableRow],
+            [`GfmTableDelimiterRow`][Name::GfmTableDelimiterRow],
+            [`LineEnding`][Name::LineEnding]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+        > | | a |
+            ^^^^^
+        > | | - |
+            ^^^^^
+          | | b |
+        ```
+    - key: gfm_table_row
+      doc: |
+        GFM extension: Table row.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTableBody`][Name::GfmTableBody],
+            [`GfmTableHead`][Name::GfmTableHead]
+        *   **Content model**:
+            [`GfmTableCell`][Name::GfmTableCell]
+        *   **Construct**:
+            [`gfm_table`][crate::construct::gfm_table]
+        
+        ## Example
+        
+        ```markdown
+        > | | a |
+            ^^^^^
+          | | - |
+        > | | b |
+            ^^^^^
+        ```
+    - key: gfm_task_list_item_check
+      doc: |
+        GFM extension: task list item check.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`GfmTaskListItemMarker`][Name::GfmTaskListItemMarker],
+            [`GfmTaskListItemValueChecked`][Name::GfmTaskListItemValueChecked],
+            [`GfmTaskListItemValueUnchecked`][Name::GfmTaskListItemValueUnchecked]
+        *   **Construct**:
+            [`gfm_task_list_item_check`][crate::construct::gfm_task_list_item_check]
+        
+        ## Example
+        
+        ```markdown
+        > | * [x] y.
+              ^^^
+        ```
+    - key: gfm_task_list_item_marker
+      doc: |
+        GFM extension: task list item check marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTaskListItemCheck`][Name::GfmTaskListItemCheck]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_task_list_item_check`][crate::construct::gfm_task_list_item_check]
+        
+        ## Example
+        
+        ```markdown
+        > | * [x] y.
+              ^ ^
+        ```
+    - key: gfm_task_list_item_value_checked
+      doc: |
+        GFM extension: task list item value: checked.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTaskListItemCheck`][Name::GfmTaskListItemCheck]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_task_list_item_check`][crate::construct::gfm_task_list_item_check]
+        
+        ## Example
+        
+        ```markdown
+        > | * [x] y.
+              ^
+        ```
+    - key: gfm_task_list_item_value_unchecked
+      doc: |
+        GFM extension: task list item value: unchecked.
+        
+        ## Info
+        
+        *   **Context**:
+            [`GfmTaskListItemCheck`][Name::GfmTaskListItemCheck]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`gfm_task_list_item_check`][crate::construct::gfm_task_list_item_check]
+        
+        ## Example
+        
+        ```markdown
+        > | * [ ] z.
+              ^
+        ```
+    - key: hard_break_escape
+      doc: |
+        Whole hard break (escape).
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`hard_break_escape`][crate::construct::hard_break_escape]
+        
+        ## Example
+        
+        ```markdown
+        > | a\␊
+            ^
+        > | b
+        ```
+    - key: hard_break_trailing
+      doc: |
+        Whole hard break (trailing).
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`whitespace`][crate::construct::partial_whitespace]
+        
+        ## Example
+        
+        ```markdown
+        > | a␠␠␊
+            ^^
+        > | b
+        ```
+    - key: heading_atx
+      doc: |
+        Whole heading (atx).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`HeadingAtxSequence`][Name::HeadingAtxSequence],
+            [`HeadingAtxText`][Name::HeadingAtxText],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`heading_atx`][crate::construct::heading_atx]
+        
+        ## Example
+        
+        ```markdown
+        > | # alpha
+            ^^^^^^^
+        ```
+    - key: heading_atx_sequence
+      doc: |
+        Heading (atx) sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`HeadingAtx`][Name::HeadingAtx]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`heading_atx`][crate::construct::heading_atx]
+        
+        ## Example
+        
+        ```markdown
+        > | # alpha
+            ^
+        ```
+    - key: heading_atx_text
+      doc: |
+        Heading (atx) data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`HeadingAtx`][Name::HeadingAtx]
+        *   **Content model**:
+            [text content][crate::construct::text]
+        *   **Construct**:
+            [`heading_atx`][crate::construct::heading_atx]
+        
+        ## Example
+        
+        ```markdown
+        > | # alpha
+              ^^^^^
+        ```
+    - key: heading_setext
+      doc: |
+        Whole heading (setext).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`HeadingSetextText`][Name::HeadingSetextText],
+            [`HeadingSetextUnderline`][Name::HeadingSetextUnderline],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`heading_setext`][crate::construct::heading_setext]
+        
+        ## Example
+        
+        ```markdown
+        > | alpha
+            ^^^^^
+        > | =====
+            ^^^^^
+        ```
+    - key: heading_setext_text
+      doc: |
+        Heading (setext) data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`HeadingSetext`][Name::HeadingSetext]
+        *   **Content model**:
+            [text content][crate::construct::text]
+        *   **Construct**:
+            [`heading_setext`][crate::construct::heading_setext]
+        
+        ## Example
+        
+        ```markdown
+        > | alpha
+            ^^^^^
+          | =====
+        ```
+    - key: heading_setext_underline
+      doc: |
+        Heading (setext) underline.
+        
+        ## Info
+        
+        *   **Context**:
+            [`HeadingSetext`][Name::HeadingSetext]
+        *   **Content model**:
+            [`HeadingSetextUnderlineSequence`][Name::HeadingSetextUnderlineSequence],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`heading_setext`][crate::construct::heading_setext]
+        
+        ## Example
+        
+        ```markdown
+          | alpha
+        > | =====
+            ^^^^^
+        ```
+    - key: heading_setext_underline_sequence
+      doc: |
+        Heading (setext) underline sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`HeadingSetext`][Name::HeadingSetext]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`heading_setext`][crate::construct::heading_setext]
+        
+        ## Example
+        
+        ```markdown
+          | alpha
+        > | =====
+            ^^^^^
+        ```
+    - key: html_flow
+      doc: |
+        Whole html (flow).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`HtmlFlowData`][Name::HtmlFlowData],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`html_flow`][crate::construct::html_flow]
+        
+        ## Example
+        
+        ```markdown
+        > | <div>
+            ^^^^^
+        ```
+    - key: html_flow_data
+      doc: |
+        HTML (flow) data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`HtmlFlow`][Name::HtmlFlow]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`html_flow`][crate::construct::html_flow]
+        
+        ## Example
+        
+        ```markdown
+        > | <div>
+            ^^^^^
+        ```
+    - key: html_text
+      doc: |
+        Whole html (text).
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`HtmlTextData`][Name::HtmlTextData],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`html_text`][crate::construct::html_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b> c
+              ^^^
+        ```
+    - key: html_text_data
+      doc: |
+        HTML (text) data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`HtmlText`][Name::HtmlText]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`html_text`][crate::construct::html_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b> c
+              ^^^
+        ```
+    - key: image
+      doc: |
+        Image.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`Label`][Name::Label],
+            [`Resource`][Name::Resource],
+            [`Reference`][Name::Reference]
+        *   **Construct**:
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b] c
+              ^^^^
+        > | a ![b][c] d
+              ^^^^^^^
+        > | a ![b](c) d
+              ^^^^^^^
+        ```
+    - key: label
+      doc: |
+        Label.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Image`][Name::Image],
+            [`Link`][Name::Link]
+        *   **Content model**:
+            [`LabelImage`][Name::LabelImage],
+            [`LabelLink`][Name::LabelLink],
+            [`LabelEnd`][Name::LabelEnd],
+            [`LabelText`][Name::LabelText]
+        *   **Construct**:
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a [b] c
+              ^^^
+        > | a ![b][c] d
+              ^^^^
+        > | a [b](c) d
+              ^^^
+        ```
+    - key: label_end
+      doc: |
+        Label end.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Label`][Name::Label]
+        *   **Content model**:
+            [`LabelMarker`][Name::LabelMarker]
+        *   **Construct**:
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](c) d
+                ^
+        > | a [b](c) d
+                ^
+        ```
+    - key: label_image
+      doc: |
+        Label start (image).
+        
+        ## Info
+        
+        *   **Context**:
+            [`Label`][Name::Label]
+        *   **Content model**:
+            [`LabelImageMarker`][Name::LabelImageMarker],
+            [`LabelMarker`][Name::LabelMarker]
+        *   **Construct**:
+            [`label_start_image`][crate::construct::label_start_image]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](c) d
+              ^^
+        ```
+    - key: label_image_marker
+      doc: |
+        Label start (image) marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`LabelImage`][Name::LabelImage]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`label_start_image`][crate::construct::label_start_image]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](c) d
+              ^
+        ```
+    - key: label_link
+      doc: |
+        Label start (link).
+        
+        ## Info
+        
+        *   **Context**:
+            [`Label`][Name::Label]
+        *   **Content model**:
+            [`LabelMarker`][Name::LabelMarker]
+        *   **Construct**:
+            [`label_start_link`][crate::construct::label_start_link]
+        
+        ## Example
+        
+        ```markdown
+        > | a [b](c) d
+              ^
+        ```
+    - key: label_marker
+      doc: |
+        Label marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`LabelImage`][Name::LabelImage],
+            [`LabelLink`][Name::LabelLink],
+            [`LabelEnd`][Name::LabelEnd]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`label_start_image`][crate::construct::label_start_image],
+            [`label_start_link`][crate::construct::label_start_link],
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](c) d
+              ^ ^
+        > | a [b](c) d
+              ^ ^
+        ```
+    - key: label_text
+      doc: |
+        Label text.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Label`][Name::Label]
+        *   **Content model**:
+            [text content][crate::construct::text]
+        *   **Construct**:
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a [b] c
+              ^
+        > | a ![b][c] d
+                ^
+        > | a [b](c) d
+              ^
+        ```
+    - key: line_ending
+      doc: |
+        Line ending.
+        
+        ## Info
+        
+        *   **Context**:
+            basically everywhere
+        *   **Content model**:
+            void
+        *   **Construct**:
+            n/a
+        
+        ## Example
+        
+        ```markdown
+        > | a␊
+            ^
+          | b
+        ```
+    - key: link
+      doc: |
+        Link.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`Label`][Name::Label],
+            [`Resource`][Name::Resource],
+            [`Reference`][Name::Reference]
+        *   **Construct**:
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a [b] c
+              ^^^
+        > | a [b][c] d
+              ^^^^^^
+        > | a [b](c) d
+              ^^^^^^
+        ```
+    - key: list_item
+      doc: |
+        List item.
+        
+        ## Info
+        
+        *   **Context**:
+            [`ListOrdered`][Name::ListOrdered],
+            [`ListUnordered`][Name::ListUnordered]
+        *   **Content model**:
+            [`ListItemPrefix`][Name::ListItemPrefix],
+            [flow content][crate::construct::flow]
+        *   **Construct**:
+            [`list item`][crate::construct::list_item]
+        
+        ## Example
+        
+        ```markdown
+        > | * a
+            ^^^
+        > | 1. b
+            ^^^^
+        ```
+    - key: list_item_marker
+      doc: |
+        List item (marker).
+        
+        ## Info
+        
+        *   **Context**:
+            [`ListItemPrefix`][Name::ListItemPrefix]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`list item`][crate::construct::list_item]
+        
+        ## Example
+        
+        ```markdown
+        > | * a
+            ^
+        > | 1. b
+            ^
+        ```
+    - key: list_item_prefix
+      doc: |
+        List item (prefix).
+        
+        ## Info
+        
+        *   **Context**:
+            [`ListItem`][Name::ListItem]
+        *   **Content model**:
+            [`ListItemMarker`][Name::ListItemMarker],
+            [`ListItemValue`][Name::ListItemValue],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`list item`][crate::construct::list_item]
+        
+        ## Example
+        
+        ```markdown
+        > | * a
+            ^^
+        > |   b
+            ^^
+        ```
+    - key: list_item_value
+      doc: |
+        List item (value).
+        
+        ## Info
+        
+        *   **Context**:
+            [`ListItemPrefix`][Name::ListItemPrefix]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`list item`][crate::construct::list_item]
+        
+        ## Example
+        
+        ```markdown
+        > | 1. b
+            ^
+        ```
+    - key: list_ordered
+      doc: |
+        List (ordered).
+        
+        ## Info
+        
+        *   **Context**:
+            [document content][crate::construct::document]
+        *   **Content model**:
+            [`BlankLineEnding`][Name::BlankLineEnding],
+            [`BlockQuotePrefix`][Name::BlockQuotePrefix],
+            [`ListItem`][Name::ListItem],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`list item`][crate::construct::list_item]
+        
+        ## Example
+        
+        ```markdown
+        > | 1. a
+            ^^^^
+        > | 2. b
+            ^^^^
+        ```
+    - key: list_unordered
+      doc: |
+        List (unordered).
+        
+        ## Info
+        
+        *   **Context**:
+            [document content][crate::construct::document]
+        *   **Content model**:
+            [`BlankLineEnding`][Name::BlankLineEnding],
+            [`BlockQuotePrefix`][Name::BlockQuotePrefix],
+            [`ListItem`][Name::ListItem],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`list item`][crate::construct::list_item]
+        
+        ## Example
+        
+        ```markdown
+        > | * a
+            ^^^
+        > | * b
+            ^^^
+        ```
+    - key: math_flow
+      doc: |
+        Whole math (flow).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`MathFlowFence`][Name::MathFlowFence],
+            [`MathFlowChunk`][Name::MathFlowChunk],
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ```markdown
+        > | $$
+            ^^
+        > | \frac{1}{2}
+            ^^^^^^^^^^^
+        > | $$
+            ^^
+        ```
+    - key: math_flow_fence
+      doc: |
+        A math (flow) fence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MathFlow`][Name::MathFlow]
+        *   **Content model**:
+            [`MathFlowFenceMeta`][Name::MathFlowFenceMeta],
+            [`MathFlowFenceSequence`][Name::MathFlowFenceSequence],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ```markdown
+        > | $$
+            ^^
+          | \frac{1}{2}
+        > | $$
+            ^^
+        ```
+    - key: math_flow_fence_meta
+      doc: |
+        A math (flow) fence meta string.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MathFlowFence`][Name::MathFlowFence]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ```markdown
+        > | $$alpha bravo
+              ^^^^^^^^^^^
+          | \frac{1}{2}
+          | $$
+        ```
+    - key: math_flow_fence_sequence
+      doc: |
+        A math (flow) fence sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MathFlowFenceSequence`][Name::MathFlowFenceSequence]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ```markdown
+        > | $$
+            ^^
+          | \frac{1}{2}
+        > | $$
+            ^^
+        ```
+    - key: math_flow_chunk
+      doc: |
+        A math (flow) chunk.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MathFlow`][Name::MathFlow]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`raw_flow`][crate::construct::raw_flow]
+        
+        ## Example
+        
+        ```markdown
+          | $$
+        > | \frac{1}{2}
+            ^^^^^^^^^^^
+          | $$
+        ```
+    - key: math_text
+      doc: |
+        Whole math (text).
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`MathTextData`][Name::MathTextData],
+            [`MathTextSequence`][Name::MathTextSequence],
+            [`LineEnding`][Name::LineEnding]
+        *   **Construct**:
+            [`raw_text`][crate::construct::raw_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a $b$ c
+              ^^^
+        ```
+    - key: math_text_data
+      doc: |
+        Math (text) data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MathText`][Name::MathText]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`raw_text`][crate::construct::raw_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a `b` c
+              ^
+        ```
+    - key: math_text_sequence
+      doc: |
+        Math (text) sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MathText`][Name::MathText]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`raw_text`][crate::construct::raw_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a $b$ c
+              ^ ^
+        ```
+    - key: mdx_esm
+      doc: |
+        MDX extension: ESM.
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            void
+            [`MdxEsmData`][Name::MdxEsmData],
+            [`SpaceOrTab`][Name::SpaceOrTab],
+            [`LineEnding`][Name::LineEnding]
+        *   **Construct**:
+            [`mdx_esm`][crate::construct::mdx_esm]
+        
+        ## Example
+        
+        ```markdown
+        > | import a from 'b'
+            ^^^^^^^^^^^^^^^^^
+        ```
+    - key: mdx_esm_data
+      doc: |
+        MDX extension: ESM data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxEsm`][Name::MdxEsm]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`mdx_esm`][crate::construct::mdx_esm]
+        
+        ## Example
+        
+        ```markdown
+        > | import a from 'b'
+            ^^^^^^^^^^^^^^^^^
+        ```
+    - key: mdx_expression_marker
+      doc: |
+        MDX extension: expression marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxFlowExpression`][Name::MdxFlowExpression],
+            [`MdxTextExpression`][Name::MdxTextExpression],
+            [`MdxJsxTagAttributeExpression`][Name::MdxJsxTagAttributeExpression],
+            [`MdxJsxTagAttributeValueExpression`][Name::MdxJsxTagAttributeValueExpression]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_expression`][crate::construct::partial_mdx_expression]
+        
+        ## Example
+        
+        ```markdown
+        > | {Math.PI}
+            ^       ^
+        ```
+    - key: mdx_expression_data
+      doc: |
+        MDX extension: expression data.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxFlowExpression`][Name::MdxFlowExpression],
+            [`MdxTextExpression`][Name::MdxTextExpression],
+            [`MdxJsxTagAttributeExpression`][Name::MdxJsxTagAttributeExpression],
+            [`MdxJsxTagAttributeValueExpression`][Name::MdxJsxTagAttributeValueExpression]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_expression`][crate::construct::partial_mdx_expression]
+        
+        ## Example
+        
+        ```markdown
+        > | {Math.PI}
+            ^^^^^^^
+        ```
+    - key: mdx_flow_expression
+      doc: |
+        MDX extension: expression (flow).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab],
+            [`MdxExpressionMarker`][Name::MdxExpressionMarker],
+            [`MdxExpressionData`][Name::MdxExpressionData]
+        *   **Construct**:
+            [`mdx_expression_flow`][crate::construct::mdx_expression_flow]
+        
+        ## Example
+        
+        ```markdown
+        > | {Math.PI}
+            ^^^^^^^^^
+        ```
+    - key: mdx_text_expression
+      doc: |
+        MDX extension: expression (text).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab],
+            [`MdxExpressionMarker`][Name::MdxExpressionMarker],
+            [`MdxExpressionData`][Name::MdxExpressionData]
+        *   **Construct**:
+            [`mdx_expression_text`][crate::construct::mdx_expression_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a {Math.PI} b
+              ^^^^^^^^^
+        ```
+    - key: mdx_jsx_flow_tag
+      doc: |
+        MDX extension: JSX (flow).
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`MdxJsxEsWhitespace`][Name::MdxJsxEsWhitespace],
+            [`MdxJsxTagMarker`][Name::MdxJsxTagMarker],
+            [`MdxJsxTagClosingMarker`][Name::MdxJsxTagClosingMarker],
+            [`MdxJsxTagName`][Name::MdxJsxTagName],
+            [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute],
+            [`MdxJsxTagAttributeExpression`][Name::MdxJsxTagAttributeExpression],
+            [`MdxJsxTagSelfClosingMarker`][Name::MdxJsxTagSelfClosingMarker]
+        *   **Construct**:
+            [`mdx_jsx_flow`][crate::construct::mdx_jsx_flow]
+        
+        ## Example
+        
+        ```markdown
+        > | <B />
+            ^^^^^
+        ```
+    - key: mdx_jsx_text_tag
+      doc: |
+        MDX extension: JSX (text).
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`MdxJsxEsWhitespace`][Name::MdxJsxEsWhitespace],
+            [`MdxJsxTagMarker`][Name::MdxJsxTagMarker],
+            [`MdxJsxTagClosingMarker`][Name::MdxJsxTagClosingMarker],
+            [`MdxJsxTagName`][Name::MdxJsxTagName],
+            [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute],
+            [`MdxJsxTagAttributeExpression`][Name::MdxJsxTagAttributeExpression],
+            [`MdxJsxTagSelfClosingMarker`][Name::MdxJsxTagSelfClosingMarker]
+        *   **Construct**:
+            [`mdx_jsx_text`][crate::construct::mdx_jsx_text]
+        
+        ## Example
+        
+        ```markdown
+        > | a <B /> c
+              ^^^^^
+        ```
+    - key: mdx_jsx_es_whitespace
+      doc: |
+        MDX extension: JSX: ECMAScript whitespace.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
+            [`MdxJsxTextTag`][Name::MdxJsxTextTag],
+            [`MdxJsxTagName`][Name::MdxJsxTagName],
+            [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute],
+            [`MdxJsxTagAttributeName`][Name::MdxJsxTagAttributeName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <B /> c
+                ^
+        ```
+    - key: mdx_jsx_tag_marker
+      doc: |
+        MDX extension: JSX: tag marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
+            [`MdxJsxTextTag`][Name::MdxJsxTextTag]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <B /> c
+              ^   ^
+        ```
+    - key: mdx_jsx_tag_closing_marker
+      doc: |
+        MDX extension: JSX: closing tag marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
+            [`MdxJsxTextTag`][Name::MdxJsxTextTag]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a </B> c
+              ^
+        ```
+    - key: mdx_jsx_tag_name
+      doc: |
+        MDX extension: JSX: tag name.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
+            [`MdxJsxTextTag`][Name::MdxJsxTextTag]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`MdxJsxEsWhitespace`][Name::MdxJsxEsWhitespace],
+            [`MdxJsxTagNamePrimary`][Name::MdxJsxTagNamePrimary],
+            [`MdxJsxTagNameMember`][Name::MdxJsxTagNameMember],
+            [`MdxJsxTagNameMemberMarker`][Name::MdxJsxTagNameMemberMarker],
+            [`MdxJsxTagNamePrefixMarker`][Name::MdxJsxTagNamePrefixMarker],
+            [`MdxJsxTagNameLocal`][Name::MdxJsxTagNameLocal]
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b> c
+              ^
+        > | a <b:c> d
+              ^^^
+        > | a <b.c> d
+              ^^^
+        ```
+    - key: mdx_jsx_tag_name_primary
+      doc: |
+        MDX extension: JSX: primary tag name.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagName`][Name::MdxJsxTagName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b> c
+              ^
+        > | a <b:c> d
+              ^
+        > | a <b.c> d
+              ^
+        ```
+    - key: mdx_jsx_tag_name_member_marker
+      doc: |
+        MDX extension: JSX: tag name member marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagName`][Name::MdxJsxTagName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b.c> d
+                ^
+        ```
+    - key: mdx_jsx_tag_name_prefix_marker
+      doc: |
+        MDX extension: JSX: tag name prefix marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagName`][Name::MdxJsxTagName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b:c> d
+                ^
+        ```
+    - key: mdx_jsx_tag_name_member
+      doc: |
+        MDX extension: JSX: tag name member.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagName`][Name::MdxJsxTagName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b.c> d
+                ^
+        ```
+    - key: mdx_jsx_tag_name_local
+      doc: |
+        MDX extension: JSX: tag name local.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagName`][Name::MdxJsxTagName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b:c> d
+                ^
+        ```
+    - key: mdx_jsx_tag_attribute
+      doc: |
+        MDX extension: JSX: attribute.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
+            [`MdxJsxTextTag`][Name::MdxJsxTextTag]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`MdxJsxEsWhitespace`][Name::MdxJsxEsWhitespace],
+            [`MdxJsxTagAttributeName`][Name::MdxJsxTagAttributeName],
+            [`MdxJsxTagAttributeInitializerMarker`][Name::MdxJsxTagAttributeInitializerMarker],
+            [`MdxJsxTagAttributeValueLiteral`][Name::MdxJsxTagAttributeValueLiteral],
+            [`MdxJsxTagAttributeValueExpression`][Name::MdxJsxTagAttributeValueExpression]
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c> d
+                ^
+        > | a <b c="d"> e
+                ^^^^^
+        > | a <b c={d}> e
+                ^^^^^
+        ```
+    - key: mdx_jsx_tag_attribute_expression
+      doc: |
+        MDX extension: JSX tag attribute expression.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
+            [`MdxJsxTextTag`][Name::MdxJsxTextTag]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab],
+            [`MdxExpressionMarker`][Name::MdxExpressionMarker],
+            [`MdxExpressionData`][Name::MdxExpressionData]
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b {Math.PI} /> c
+                ^^^^^^^^^
+        ```
+    - key: mdx_jsx_tag_attribute_name
+      doc: |
+        MDX extension: JSX: attribute name.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`MdxJsxEsWhitespace`][Name::MdxJsxEsWhitespace],
+            [`MdxJsxTagAttributePrimaryName`][Name::MdxJsxTagAttributePrimaryName],
+            [`MdxJsxTagAttributeNamePrefixMarker`][Name::MdxJsxTagAttributeNamePrefixMarker],
+            [`MdxJsxTagAttributeNameLocal`][Name::MdxJsxTagAttributeNameLocal]
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c> d
+                ^
+        > | a <b c:d="e"> f
+                ^^^
+        ```
+    - key: mdx_jsx_tag_attribute_primary_name
+      doc: |
+        MDX extension: JSX: primary attribute name.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagAttributeName`][Name::MdxJsxTagAttributeName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c> d
+                ^
+        > | a <b c:d="e"> f
+                ^
+        ```
+    - key: mdx_jsx_tag_attribute_name_prefix_marker
+      doc: |
+        MDX extension: JSX: attribute name prefix marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagAttributeName`][Name::MdxJsxTagAttributeName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c:d="e"> f
+                  ^
+        ```
+    - key: mdx_jsx_tag_attribute_name_local
+      doc: |
+        MDX extension: JSX: local attribute name.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagAttributeName`][Name::MdxJsxTagAttributeName]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c:d="e"> f
+                  ^
+        ```
+    - key: mdx_jsx_tag_attribute_initializer_marker
+      doc: |
+        MDX extension: JSX: attribute initializer marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c="d"> e
+                  ^
+        ```
+    - key: mdx_jsx_tag_attribute_value_expression
+      doc: |
+        MDX extension: JSX tag attribute value expression.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
+            [`MdxJsxTextTag`][Name::MdxJsxTextTag]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`SpaceOrTab`][Name::SpaceOrTab],
+            [`MdxExpressionMarker`][Name::MdxExpressionMarker],
+            [`MdxExpressionData`][Name::MdxExpressionData]
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c={Math.PI} /> d
+                  ^^^^^^^^^
+        ```
+    - key: mdx_jsx_tag_attribute_value_literal
+      doc: |
+        MDX extension: JSX: attribute value literal.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute]
+        *   **Content model**:
+            [`LineEnding`][Name::LineEnding],
+            [`MdxJsxEsWhitespace`][Name::MdxJsxEsWhitespace],
+            [`MdxJsxTagAttributeValueLiteralMarker`][Name::MdxJsxTagAttributeValueLiteralMarker],
+            [`MdxJsxTagAttributeValueLiteralValue`][Name::MdxJsxTagAttributeValueLiteralValue]
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c="d"> e
+                  ^^^
+        ```
+    - key: mdx_jsx_tag_attribute_value_literal_marker
+      doc: |
+        MDX extension: JSX: attribute value literal marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagAttributeValueLiteral`][Name::MdxJsxTagAttributeValueLiteral]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c="d"> e
+                  ^ ^
+        ```
+    - key: mdx_jsx_tag_attribute_value_literal_value
+      doc: |
+        MDX extension: JSX: attribute value literal value.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxTagAttributeValueLiteral`][Name::MdxJsxTagAttributeValueLiteral]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b c="d"> e
+                    ^
+        ```
+    - key: mdx_jsx_tag_self_closing_marker
+      doc: |
+        MDX extension: JSX: self-closing tag marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
+            [`MdxJsxTextTag`][Name::MdxJsxTextTag]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
+        
+        ## Example
+        
+        ```markdown
+        > | a <b /> c
+                ^
+        ```
+    - key: paragraph
+      doc: |
+        Paragraph.
+        
+        ## Info
+        
+        *   **Context**:
+            [content][crate::construct::content]
+        *   **Content model**:
+            [text content][crate::construct::text]
+        *   **Construct**:
+            [`paragraph`][crate::construct::paragraph]
+        
+        ## Example
+        
+        ```markdown
+        > | a b
+            ^^^
+        > | c.
+            ^^
+        ```
+    - key: reference
+      doc: |
+        Reference.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Image`][Name::Image],
+            [`Link`][Name::Link]
+        *   **Content model**:
+            [`ReferenceMarker`][Name::ReferenceMarker],
+            [`ReferenceString`][Name::ReferenceString]
+        *   **Construct**:
+            [`label`][crate::construct::partial_label]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b][c] d
+                  ^^^
+        ```
+    - key: reference_marker
+      doc: |
+        Reference marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Reference`][Name::Reference]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`label`][crate::construct::partial_label]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b][c] d
+                  ^ ^
+        ```
+    - key: reference_string
+      doc: |
+        Reference string.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Reference`][Name::Reference]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`label`][crate::construct::partial_label]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b][c] d
+                  ^
+        ```
+    - key: resource
+      doc: |
+        Resource.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Image`][Name::Image],
+            [`Link`][Name::Link]
+        *   **Content model**:
+            [`ResourceMarker`][Name::ResourceMarker],
+            [`ResourceDestination`][Name::ResourceDestination],
+            [`ResourceTitle`][Name::ResourceTitle],
+            [`SpaceOrTab`][Name::SpaceOrTab],
+            [`LineEnding`][Name::LineEnding]
+        *   **Construct**:
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](c "d") e
+                  ^^^^^^^
+        > | a [b](c) d
+                ^^^
+        ```
+    - key: resource_destination
+      doc: |
+        Resource destination.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Resource`][Name::Resource]
+        *   **Content model**:
+            [`ResourceDestinationLiteral`][Name::ResourceDestinationLiteral],
+            [`ResourceDestinationRaw`][Name::ResourceDestinationRaw]
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](c "d") e
+                  ^
+        ```
+    - key: resource_destination_literal
+      doc: |
+        Resource destination literal.
+        
+        ## Info
+        
+        *   **Context**:
+            [`ResourceDestination`][Name::ResourceDestination]
+        *   **Content model**:
+            [`ResourceDestinationLiteralMarker`][Name::ResourceDestinationLiteralMarker],
+            [`ResourceDestinationString`][Name::ResourceDestinationString]
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](<c> "d") e
+                  ^^^
+        ```
+    - key: resource_destination_literal_marker
+      doc: |
+        Resource destination literal marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`ResourceDestinationLiteral`][Name::ResourceDestinationLiteral]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](<c> "d") e
+                  ^ ^
+        ```
+    - key: resource_destination_raw
+      doc: |
+        Resource destination raw.
+        
+        ## Info
+        
+        *   **Context**:
+            [`ResourceDestination`][Name::ResourceDestination]
+        *   **Content model**:
+            [`ResourceDestinationString`][Name::ResourceDestinationString]
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](c "d") e
+                  ^
+        ```
+    - key: resource_destination_string
+      doc: |
+        Resource destination raw.
+        
+        ## Info
+        
+        *   **Context**:
+            [`ResourceDestinationLiteral`][Name::ResourceDestinationLiteral],
+            [`ResourceDestinationRaw`][Name::ResourceDestinationRaw]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`destination`][crate::construct::partial_destination]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](<c> "d") e
+                    ^
+        > | a ![b](c "d") e
+                  ^
+        ```
+    - key: resource_marker
+      doc: |
+        Resource marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Resource`][Name::Resource]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`label_end`][crate::construct::label_end]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](c "d") e
+                  ^     ^
+        ```
+    - key: resource_title
+      doc: |
+        Resource title.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Resource`][Name::Resource]
+        *   **Content model**:
+            [`ResourceTitleMarker`][Name::ResourceTitleMarker],
+            [`ResourceTitleString`][Name::ResourceTitleString]
+        *   **Construct**:
+            [`title`][crate::construct::partial_title]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](<c> "d") e
+                      ^^^
+        ```
+    - key: resource_title_marker
+      doc: |
+        Resource title marker.
+        
+        ## Info
+        
+        *   **Context**:
+            [`ResourceTitle`][Name::ResourceTitle]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`title`][crate::construct::partial_title]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](<c> "d") e
+                      ^ ^
+        ```
+    - key: resource_title_string
+      doc: |
+        Resource title string.
+        
+        ## Info
+        
+        *   **Context**:
+            [`ResourceTitle`][Name::ResourceTitle]
+        *   **Content model**:
+            [string content][crate::construct::string]
+        *   **Construct**:
+            [`title`][crate::construct::partial_title]
+        
+        ## Example
+        
+        ```markdown
+        > | a ![b](<c> "d") e
+                        ^
+        ```
+    - key: space_or_tab
+      doc: |
+        Space or tab.
+        
+        ## Info
+        
+        *   **Context**:
+            basically everywhere
+        *   **Content model**:
+            void
+        *   **Construct**:
+            n/a
+        
+        ## Example
+        
+        ```markdown
+        > | ␠* * *␠
+            ^ ^ ^ ^
+        ```
+    - key: strong
+      doc: |
+        Strong.
+        
+        ## Info
+        
+        *   **Context**:
+            [text content][crate::construct::text]
+        *   **Content model**:
+            [`StrongSequence`][Name::StrongSequence],
+            [`StrongText`][Name::StrongText]
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | **a**
+            ^^^^^
+        ```
+    - key: strong_sequence
+      doc: |
+        Strong sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Strong`][Name::Strong]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | **a**
+            ^^ ^^
+        ```
+    - key: strong_text
+      doc: |
+        Strong text.
+        
+        ## Info
+        
+        *   **Context**:
+            [`Strong`][Name::Strong]
+        *   **Content model**:
+            [text content][crate::construct::text]
+        *   **Construct**:
+            [`attention`][crate::construct::attention]
+        
+        ## Example
+        
+        ```markdown
+        > | **a**
+              ^
+        ```
+    - key: thematic_break
+      doc: |
+        Whole thematic break.
+        
+        ## Info
+        
+        *   **Context**:
+            [flow content][crate::construct::flow]
+        *   **Content model**:
+            [`ThematicBreakSequence`][Name::ThematicBreakSequence],
+            [`SpaceOrTab`][Name::SpaceOrTab]
+        *   **Construct**:
+            [`thematic_break`][crate::construct::thematic_break]
+        
+        ## Example
+        
+        ```markdown
+        > | * * *
+            ^^^^^
+        ```
+    - key: thematic_break_sequence
+      doc: |
+        Thematic break sequence.
+        
+        ## Info
+        
+        *   **Context**:
+            [`ThematicBreak`][Name::ThematicBreak]
+        *   **Content model**:
+            void
+        *   **Construct**:
+            [`thematic_break`][crate::construct::thematic_break]
+        
+        ## Example
+        
+        ```markdown
+        > | * * *
+            ^ ^ ^
+        ```
+    - key: line_prefix
+      doc: ""
+  void:
+    - attention_sequence
+    - attribute_list_marker
+    - attribute_list_data
+    - autolink_email
+    - autolink_marker
+    - autolink_protocol
+    - blank_line_ending
+    - block_quote_marker
+    - byte_order_mark
+    - character_escape_marker
+    - character_escape_value
+    - character_reference_marker
+    - character_reference_marker_hexadecimal
+    - character_reference_marker_numeric
+    - character_reference_marker_semi
+    - character_reference_value
+    - code_fenced_fence_sequence
+    - code_flow_chunk
+    - code_text_data
+    - code_text_sequence
+    - data
+    - definition_destination_literal_marker
+    - definition_label_marker
+    - definition_marker
+    - definition_title_marker
+    - emphasis_sequence
+    - frontmatter_chunk
+    - gfm_autolink_literal_email
+    - gfm_autolink_literal_protocol
+    - gfm_autolink_literal_www
+    - gfm_footnote_call_marker
+    - gfm_footnote_definition_label_marker
+    - gfm_footnote_definition_marker
+    - gfm_strikethrough_sequence
+    - gfm_table_cell_divider
+    - gfm_table_delimiter_marker
+    - gfm_table_delimiter_filler
+    - gfm_task_list_item_marker
+    - gfm_task_list_item_value_checked
+    - gfm_task_list_item_value_unchecked
+    - frontmatter_sequence
+    - hard_break_escape
+    - hard_break_trailing
+    - heading_atx_sequence
+    - heading_setext_underline_sequence
+    - html_flow_data
+    - html_text_data
+    - label_image_marker
+    - label_marker
+    - line_ending
+    - list_item_marker
+    - list_item_value
+    - math_flow_fence_sequence
+    - math_flow_chunk
+    - math_text_data
+    - math_text_sequence
+    - mdx_esm_data
+    - mdx_expression_marker
+    - mdx_expression_data
+    - mdx_jsx_tag_marker
+    - mdx_jsx_tag_closing_marker
+    - mdx_jsx_tag_name_primary
+    - mdx_jsx_tag_name_member_marker
+    - mdx_jsx_tag_name_prefix_marker
+    - mdx_jsx_tag_name_member
+    - mdx_jsx_tag_name_local
+    - mdx_jsx_tag_self_closing_marker
+    - mdx_jsx_tag_attribute_name_prefix_marker
+    - mdx_jsx_tag_attribute_initializer_marker
+    - mdx_jsx_tag_attribute_name_local
+    - mdx_jsx_tag_attribute_value_literal_marker
+    - mdx_jsx_es_whitespace
+    - reference_marker
+    - resource_marker
+    - resource_title_marker
+    - space_or_tab
+    - strong_sequence
+    - thematic_break_sequence
+records:
+  - name: array
+    rust_name: Array
+    static: true
+    fields:
+      - size
+      - max
+      - default
+      - elements
+    size: 4
+    type: array:array(dynamic())
+  - name: markdown_attempt
+    rust_name: Attempt
+    static: false
+  - name: markdown_construct_options
+    rust_name: Constructs
+    static: false
+  - name: markdown_container
+    rust_name: ContainerState
+    static: false
+  - name: markdown_edit_map
+    rust_name: EditMap
+    static: false
+  - name: markdown_event
+    rust_name: Event
+    static: false
+  - name: markdown_event_link
+    rust_name: Link
+    static: false
+  - name: markdown_index
+    rust_name: Index
+    static: false
+  - name: markdown_indices
+    rust_name: Indices
+    static: false
+  - name: markdown_label_start
+    rust_name: LabelStart
+    static: false
+  - name: markdown_label
+    rust_name: Label
+    static: false
+  - name: markdown_list_item
+    rust_name: ListItem
+    static: false
+  - name: markdown_location
+    rust_name: Location
+    static: false
+  - name: markdown_mdast_reference
+    rust_name: Reference
+    static: false
+  - name: markdown_message
+    rust_name: Message
+    static: false
+  - name: markdown_parse_options
+    rust_name: ParseOptions
+    static: false
+  - name: markdown_parse_state
+    rust_name: ParseState
+    static: false
+  - name: markdown_place
+    rust_name: Place
+    static: false
+  - name: markdown_point
+    rust_name: Point
+    static: false
+  - name: markdown_position
+    rust_name: Position
+    static: false
+  - name: markdown_progress
+    rust_name: Progress
+    static: false
+  - name: markdown_sequence
+    rust_name: Sequence
+    static: false
+  - name: markdown_slice
+    rust_name: Slice
+    static: false
+  - name: markdown_space_or_tab_options
+    rust_name: SpaceOrTabOptions
+    static: false
+  - name: markdown_subresult
+    rust_name: Subresult
+    static: false
+  - name: markdown_tokenize_state
+    rust_name: TokenizeState
+    static: false
+  - name: markdown_tokenizer
+    rust_name: Tokenizer
+    static: false
+  - name: markdown_vec
+    rust_name: Vec
+    static: false
+resolve:
+  name:
+    - key: label
+      mod: label_end
+      doc: |
+        Resolve labels.
+
+        Labels are parsed as starts and ends, and when they match, merged
+        together to form media (links and images), and otherwise turned into
+        data.
+    - key: attention
+      mod: attention
+      doc: |
+        Resolve attention.
+
+        Attention sequences are parsed and finally matched together to form
+        attention (emphasis and strong) based on which characters they contain,
+        and what occurs before and after each sequence.
+        Otherwise they are turned into data.
+    - key: gfm_table
+      mod: gfm_table
+      doc: |
+        Resolve GFM tables.
+
+        The table head, and later each row, are all parsed separately.
+        Resolving groups everything together, and groups cells.
+    - key: heading_atx
+      mod: heading_atx
+      doc: |
+        Resolve heading (atx).
+
+        Heading (atx) contains further sequences and data.
+        At the end, a final sequence is kept that way, while the rest is merged
+        with the data.
+    - key: heading_setext
+      mod: heading_setext
+      doc: |
+        Resolve heading (setext).
+
+        Heading (setext) is parsed as an underline that is preceded by content,
+        both will form the whole construct.
+    - key: list_item
+      mod: list_item
+      doc: |
+        Resolve list item.
+
+        List items are parsed on their own.
+        They are wrapped into ordered or unordered lists based on whether items
+        with the same marker occur next to each other.
+    - key: content
+      mod: content
+      doc: |
+        Resolve content.
+
+        Content is parsed as single lines, as what remains if other flow
+        constructs don’t match.
+        But, when they occur next to each other, they need to be merged.
+    - key: data
+      mod: partial_data
+      doc: |
+        Resolve data.
+
+        Data is parsed as many small bits, due to many punctuation characters
+        potentially starting something in particularly text content.
+        It helps performance to merge them together if those markers did not
+        match anything and hence they occur next to each other.
+    - key: string
+      mod: string
+      doc: |
+        Resolve whitespace in `string`.
+    - key: text
+      mod: text
+      doc: |
+        Resolve whitespace in `text`.
+state:
+  name:
+    - key: attention_start
+      mod: attention
+      fun: start
+    - key: attention_inside
+      mod: attention
+      fun: inside
+    - key: attribute_list_flow_start
+      mod: attribute_list_flow
+      fun: start
+    - key: attribute_list_flow_before
+      mod: attribute_list_flow
+      fun: before
+    - key: attribute_list_flow_after
+      mod: attribute_list_flow
+      fun: after
+    - key: attribute_list_start
+      mod: partial_attribute_list
+      fun: start
+    - key: attribute_list_before
+      mod: partial_attribute_list
+      fun: before
+    - key: attribute_list_inside
+      mod: partial_attribute_list
+      fun: inside
+    - key: attribute_list_eol_after
+      mod: partial_attribute_list
+      fun: eol_after
+    - key: autolink_start
+      mod: autolink
+      fun: start
+    - key: autolink_open
+      mod: autolink
+      fun: open
+    - key: autolink_scheme_or_email_atext
+      mod: autolink
+      fun: scheme_or_email_atext
+    - key: autolink_scheme_inside_or_email_atext
+      mod: autolink
+      fun: scheme_inside_or_email_atext
+    - key: autolink_url_inside
+      mod: autolink
+      fun: url_inside
+    - key: autolink_email_at_sign_or_dot
+      mod: autolink
+      fun: email_at_sign_or_dot
+    - key: autolink_email_atext
+      mod: autolink
+      fun: email_atext
+    - key: autolink_email_value
+      mod: autolink
+      fun: email_value
+    - key: autolink_email_label
+      mod: autolink
+      fun: email_label
+    - key: blank_line_start
+      mod: blank_line
+      fun: start
+    - key: blank_line_after
+      mod: blank_line
+      fun: after
+    - key: block_quote_start
+      mod: block_quote
+      fun: start
+    - key: block_quote_cont_start
+      mod: block_quote
+      fun: cont_start
+    - key: block_quote_cont_before
+      mod: block_quote
+      fun: cont_before
+    - key: block_quote_cont_after
+      mod: block_quote
+      fun: cont_after
+    - key: bom_start
+      mod: partial_bom
+      fun: start
+    - key: bom_inside
+      mod: partial_bom
+      fun: inside
+    - key: character_escape_start
+      mod: character_escape
+      fun: start
+    - key: character_escape_inside
+      mod: character_escape
+      fun: inside
+    - key: character_reference_start
+      mod: character_reference
+      fun: start
+    - key: character_reference_open
+      mod: character_reference
+      fun: open
+    - key: character_reference_numeric
+      mod: character_reference
+      fun: numeric
+    - key: character_reference_value
+      mod: character_reference
+      fun: value
+    - key: code_indented_start
+      mod: code_indented
+      fun: start
+    - key: code_indented_at_break
+      mod: code_indented
+      fun: at_break
+    - key: code_indented_after
+      mod: code_indented
+      fun: after
+    - key: code_indented_further_start
+      mod: code_indented
+      fun: further_start
+    - key: code_indented_inside
+      mod: code_indented
+      fun: inside
+    - key: code_indented_further_begin
+      mod: code_indented
+      fun: further_begin
+    - key: code_indented_further_after
+      mod: code_indented
+      fun: further_after
+    - key: content_chunk_start
+      mod: content
+      fun: chunk_start
+    - key: content_chunk_inside
+      mod: content
+      fun: chunk_inside
+    - key: content_definition_before
+      mod: content
+      fun: definition_before
+    - key: content_definition_after
+      mod: content
+      fun: definition_after
+    - key: data_start
+      mod: partial_data
+      fun: start
+    - key: data_inside
+      mod: partial_data
+      fun: inside
+    - key: data_at_break
+      mod: partial_data
+      fun: at_break
+    - key: definition_start
+      mod: definition
+      fun: start
+    - key: definition_before
+      mod: definition
+      fun: before
+    - key: definition_label_after
+      mod: definition
+      fun: label_after
+    - key: definition_label_nok
+      mod: definition
+      fun: label_nok
+    - key: definition_marker_after
+      mod: definition
+      fun: marker_after
+    - key: definition_destination_before
+      mod: definition
+      fun: destination_before
+    - key: definition_destination_after
+      mod: definition
+      fun: destination_after
+    - key: definition_destination_missing
+      mod: definition
+      fun: destination_missing
+    - key: definition_title_before
+      mod: definition
+      fun: title_before
+    - key: definition_after
+      mod: definition
+      fun: after
+    - key: definition_after_whitespace
+      mod: definition
+      fun: after_whitespace
+    - key: definition_title_before_marker
+      mod: definition
+      fun: title_before_marker
+    - key: definition_title_after
+      mod: definition
+      fun: title_after
+    - key: definition_title_after_optional_whitespace
+      mod: definition
+      fun: title_after_optional_whitespace
+    - key: destination_start
+      mod: partial_destination
+      fun: start
+    - key: destination_enclosed_before
+      mod: partial_destination
+      fun: enclosed_before
+    - key: destination_enclosed
+      mod: partial_destination
+      fun: enclosed
+    - key: destination_enclosed_escape
+      mod: partial_destination
+      fun: enclosed_escape
+    - key: destination_raw
+      mod: partial_destination
+      fun: raw
+    - key: destination_raw_escape
+      mod: partial_destination
+      fun: raw_escape
+    - key: document_start
+      mod: document
+      fun: start
+    - key: document_before_frontmatter
+      mod: document
+      fun: before_frontmatter
+    - key: document_container_existing_before
+      mod: document
+      fun: container_existing_before
+    - key: document_container_existing_after
+      mod: document
+      fun: container_existing_after
+    - key: document_container_new_before
+      mod: document
+      fun: container_new_before
+    - key: document_container_new_before_not_block_quote
+      mod: document
+      fun: container_new_before_not_block_quote
+    - key: document_container_new_before_not_list
+      mod: document
+      fun: container_new_before_not_list
+    - key: document_container_new_before_not_gfm_footnote_definition
+      mod: document
+      fun: container_new_before_not_footnote_definition
+    - key: document_container_new_after
+      mod: document
+      fun: container_new_after
+    - key: document_containers_after
+      mod: document
+      fun: containers_after
+    - key: document_flow_end
+      mod: document
+      fun: flow_end
+    - key: document_flow_inside
+      mod: document
+      fun: flow_inside
+    - key: flow_start
+      mod: flow
+      fun: start
+    - key: flow_before_attribute_list
+      mod: flow
+      fun: before_attribute_list
+    - key: flow_before_gfm_table
+      mod: flow
+      fun: before_gfm_table
+    - key: flow_before_code_indented
+      mod: flow
+      fun: before_code_indented
+    - key: flow_before_raw
+      mod: flow
+      fun: before_raw
+    - key: flow_before_html
+      mod: flow
+      fun: before_html
+    - key: flow_before_mdx_expression
+      mod: flow
+      fun: before_mdx_expression
+    - key: flow_before_mdx_jsx
+      mod: flow
+      fun: before_mdx_jsx
+    - key: flow_before_heading_atx
+      mod: flow
+      fun: before_heading_atx
+    - key: flow_before_heading_setext
+      mod: flow
+      fun: before_heading_setext
+    - key: flow_before_thematic_break
+      mod: flow
+      fun: before_thematic_break
+    - key: flow_after
+      mod: flow
+      fun: after
+    - key: flow_blank_line_before
+      mod: flow
+      fun: blank_line_before
+    - key: flow_blank_line_after
+      mod: flow
+      fun: blank_line_after
+    - key: flow_before_content
+      mod: flow
+      fun: before_content
+    - key: frontmatter_start
+      mod: frontmatter
+      fun: start
+    - key: frontmatter_open_sequence
+      mod: frontmatter
+      fun: open_sequence
+    - key: frontmatter_open_after
+      mod: frontmatter
+      fun: open_after
+    - key: frontmatter_after
+      mod: frontmatter
+      fun: after
+    - key: frontmatter_content_start
+      mod: frontmatter
+      fun: content_start
+    - key: frontmatter_content_inside
+      mod: frontmatter
+      fun: content_inside
+    - key: frontmatter_content_end
+      mod: frontmatter
+      fun: content_end
+    - key: frontmatter_close_start
+      mod: frontmatter
+      fun: close_start
+    - key: frontmatter_close_sequence
+      mod: frontmatter
+      fun: close_sequence
+    - key: frontmatter_close_after
+      mod: frontmatter
+      fun: close_after
+    - key: gfm_autolink_literal_protocol_start
+      mod: gfm_autolink_literal
+      fun: protocol_start
+    - key: gfm_autolink_literal_protocol_after
+      mod: gfm_autolink_literal
+      fun: protocol_after
+    - key: gfm_autolink_literal_protocol_prefix_inside
+      mod: gfm_autolink_literal
+      fun: protocol_prefix_inside
+    - key: gfm_autolink_literal_protocol_slashes_inside
+      mod: gfm_autolink_literal
+      fun: protocol_slashes_inside
+    - key: gfm_autolink_literal_www_after
+      mod: gfm_autolink_literal
+      fun: www_after
+    - key: gfm_autolink_literal_www_start
+      mod: gfm_autolink_literal
+      fun: www_start
+    - key: gfm_autolink_literal_www_prefix_inside
+      mod: gfm_autolink_literal
+      fun: www_prefix_inside
+    - key: gfm_autolink_literal_www_prefix_after
+      mod: gfm_autolink_literal
+      fun: www_prefix_after
+    - key: gfm_autolink_literal_domain_inside
+      mod: gfm_autolink_literal
+      fun: domain_inside
+    - key: gfm_autolink_literal_domain_at_punctuation
+      mod: gfm_autolink_literal
+      fun: domain_at_punctuation
+    - key: gfm_autolink_literal_domain_after
+      mod: gfm_autolink_literal
+      fun: domain_after
+    - key: gfm_autolink_literal_path_inside
+      mod: gfm_autolink_literal
+      fun: path_inside
+    - key: gfm_autolink_literal_path_at_punctuation
+      mod: gfm_autolink_literal
+      fun: path_at_punctuation
+    - key: gfm_autolink_literal_path_after
+      mod: gfm_autolink_literal
+      fun: path_after
+    - key: gfm_autolink_literal_trail
+      mod: gfm_autolink_literal
+      fun: trail
+    - key: gfm_autolink_literal_trail_char_ref_start
+      mod: gfm_autolink_literal
+      fun: trail_char_ref_start
+    - key: gfm_autolink_literal_trail_char_ref_inside
+      mod: gfm_autolink_literal
+      fun: trail_char_ref_inside
+    - key: gfm_autolink_literal_trail_bracket_after
+      mod: gfm_autolink_literal
+      fun: trail_bracket_after
+    - key: gfm_footnote_definition_start
+      mod: gfm_footnote_definition
+      fun: start
+    - key: gfm_footnote_definition_label_before
+      mod: gfm_footnote_definition
+      fun: label_before
+    - key: gfm_footnote_definition_label_at_marker
+      mod: gfm_footnote_definition
+      fun: label_at_marker
+    - key: gfm_footnote_definition_label_inside
+      mod: gfm_footnote_definition
+      fun: label_inside
+    - key: gfm_footnote_definition_label_escape
+      mod: gfm_footnote_definition
+      fun: label_escape
+    - key: gfm_footnote_definition_label_after
+      mod: gfm_footnote_definition
+      fun: label_after
+    - key: gfm_footnote_definition_whitespace_after
+      mod: gfm_footnote_definition
+      fun: whitespace_after
+    - key: gfm_footnote_definition_cont_start
+      mod: gfm_footnote_definition
+      fun: cont_start
+    - key: gfm_footnote_definition_cont_blank
+      mod: gfm_footnote_definition
+      fun: cont_blank
+    - key: gfm_footnote_definition_cont_filled
+      mod: gfm_footnote_definition
+      fun: cont_filled
+    - key: gfm_label_start_footnote_start
+      mod: gfm_label_start_footnote
+      fun: start
+    - key: gfm_label_start_footnote_open
+      mod: gfm_label_start_footnote
+      fun: open
+    - key: gfm_table_start
+      mod: gfm_table
+      fun: start
+    - key: gfm_table_head_row_before
+      mod: gfm_table
+      fun: head_row_before
+    - key: gfm_table_head_row_start
+      mod: gfm_table
+      fun: head_row_start
+    - key: gfm_table_head_row_break
+      mod: gfm_table
+      fun: head_row_break
+    - key: gfm_table_head_row_data
+      mod: gfm_table
+      fun: head_row_data
+    - key: gfm_table_head_row_escape
+      mod: gfm_table
+      fun: head_row_escape
+    - key: gfm_table_head_delimiter_start
+      mod: gfm_table
+      fun: head_delimiter_start
+    - key: gfm_table_head_delimiter_before
+      mod: gfm_table
+      fun: head_delimiter_before
+    - key: gfm_table_head_delimiter_cell_before
+      mod: gfm_table
+      fun: head_delimiter_cell_before
+    - key: gfm_table_head_delimiter_value_before
+      mod: gfm_table
+      fun: head_delimiter_value_before
+    - key: gfm_table_head_delimiter_left_alignment_after
+      mod: gfm_table
+      fun: head_delimiter_left_alignment_after
+    - key: gfm_table_head_delimiter_filler
+      mod: gfm_table
+      fun: head_delimiter_filler
+    - key: gfm_table_head_delimiter_right_alignment_after
+      mod: gfm_table
+      fun: head_delimiter_right_alignment_after
+    - key: gfm_table_head_delimiter_cell_after
+      mod: gfm_table
+      fun: head_delimiter_cell_after
+    - key: gfm_table_head_delimiter_nok
+      mod: gfm_table
+      fun: head_delimiter_nok
+    - key: gfm_table_body_row_start
+      mod: gfm_table
+      fun: body_row_start
+    - key: gfm_table_body_row_break
+      mod: gfm_table
+      fun: body_row_break
+    - key: gfm_table_body_row_data
+      mod: gfm_table
+      fun: body_row_data
+    - key: gfm_table_body_row_escape
+      mod: gfm_table
+      fun: body_row_escape
+    - key: gfm_task_list_item_check_start
+      mod: gfm_task_list_item_check
+      fun: start
+    - key: gfm_task_list_item_check_inside
+      mod: gfm_task_list_item_check
+      fun: inside
+    - key: gfm_task_list_item_check_close
+      mod: gfm_task_list_item_check
+      fun: close
+    - key: gfm_task_list_item_check_after
+      mod: gfm_task_list_item_check
+      fun: after
+    - key: gfm_task_list_item_check_after_space_or_tab
+      mod: gfm_task_list_item_check
+      fun: after_space_or_tab
+    - key: hard_break_escape_start
+      mod: hard_break_escape
+      fun: start
+    - key: hard_break_escape_after
+      mod: hard_break_escape
+      fun: after
+    - key: heading_atx_start
+      mod: heading_atx
+      fun: start
+    - key: heading_atx_before
+      mod: heading_atx
+      fun: before
+    - key: heading_atx_sequence_open
+      mod: heading_atx
+      fun: sequence_open
+    - key: heading_atx_at_break
+      mod: heading_atx
+      fun: at_break
+    - key: heading_atx_sequence_further
+      mod: heading_atx
+      fun: sequence_further
+    - key: heading_atx_data
+      mod: heading_atx
+      fun: data
+    - key: heading_setext_start
+      mod: heading_setext
+      fun: start
+    - key: heading_setext_before
+      mod: heading_setext
+      fun: before
+    - key: heading_setext_inside
+      mod: heading_setext
+      fun: inside
+    - key: heading_setext_after
+      mod: heading_setext
+      fun: after
+    - key: html_flow_start
+      mod: html_flow
+      fun: start
+    - key: html_flow_before
+      mod: html_flow
+      fun: before
+    - key: html_flow_open
+      mod: html_flow
+      fun: open
+    - key: html_flow_declaration_open
+      mod: html_flow
+      fun: declaration_open
+    - key: html_flow_comment_open_inside
+      mod: html_flow
+      fun: comment_open_inside
+    - key: html_flow_cdata_open_inside
+      mod: html_flow
+      fun: cdata_open_inside
+    - key: html_flow_tag_close_start
+      mod: html_flow
+      fun: tag_close_start
+    - key: html_flow_tag_name
+      mod: html_flow
+      fun: tag_name
+    - key: html_flow_basic_self_closing
+      mod: html_flow
+      fun: basic_self_closing
+    - key: html_flow_complete_closing_tag_after
+      mod: html_flow
+      fun: complete_closing_tag_after
+    - key: html_flow_complete_end
+      mod: html_flow
+      fun: complete_end
+    - key: html_flow_complete_attribute_name_before
+      mod: html_flow
+      fun: complete_attribute_name_before
+    - key: html_flow_complete_attribute_name
+      mod: html_flow
+      fun: complete_attribute_name
+    - key: html_flow_complete_attribute_name_after
+      mod: html_flow
+      fun: complete_attribute_name_after
+    - key: html_flow_complete_attribute_value_before
+      mod: html_flow
+      fun: complete_attribute_value_before
+    - key: html_flow_complete_attribute_value_quoted
+      mod: html_flow
+      fun: complete_attribute_value_quoted
+    - key: html_flow_complete_attribute_value_quoted_after
+      mod: html_flow
+      fun: complete_attribute_value_quoted_after
+    - key: html_flow_complete_attribute_value_unquoted
+      mod: html_flow
+      fun: complete_attribute_value_unquoted
+    - key: html_flow_complete_after
+      mod: html_flow
+      fun: complete_after
+    - key: html_flow_blank_line_before
+      mod: html_flow
+      fun: blank_line_before
+    - key: html_flow_continuation
+      mod: html_flow
+      fun: continuation
+    - key: html_flow_continuation_declaration_inside
+      mod: html_flow
+      fun: continuation_declaration_inside
+    - key: html_flow_continuation_after
+      mod: html_flow
+      fun: continuation_after
+    - key: html_flow_continuation_start
+      mod: html_flow
+      fun: continuation_start
+    - key: html_flow_continuation_before
+      mod: html_flow
+      fun: continuation_before
+    - key: html_flow_continuation_comment_inside
+      mod: html_flow
+      fun: continuation_comment_inside
+    - key: html_flow_continuation_raw_tag_open
+      mod: html_flow
+      fun: continuation_raw_tag_open
+    - key: html_flow_continuation_raw_end_tag
+      mod: html_flow
+      fun: continuation_raw_end_tag
+    - key: html_flow_continuation_close
+      mod: html_flow
+      fun: continuation_close
+    - key: html_flow_continuation_cdata_inside
+      mod: html_flow
+      fun: continuation_cdata_inside
+    - key: html_flow_continuation_start_non_lazy
+      mod: html_flow
+      fun: continuation_start_non_lazy
+    - key: html_text_start
+      mod: html_text
+      fun: start
+    - key: html_text_open
+      mod: html_text
+      fun: open
+    - key: html_text_declaration_open
+      mod: html_text
+      fun: declaration_open
+    - key: html_text_tag_close_start
+      mod: html_text
+      fun: tag_close_start
+    - key: html_text_tag_close
+      mod: html_text
+      fun: tag_close
+    - key: html_text_tag_close_between
+      mod: html_text
+      fun: tag_close_between
+    - key: html_text_tag_open
+      mod: html_text
+      fun: tag_open
+    - key: html_text_tag_open_between
+      mod: html_text
+      fun: tag_open_between
+    - key: html_text_tag_open_attribute_name
+      mod: html_text
+      fun: tag_open_attribute_name
+    - key: html_text_tag_open_attribute_name_after
+      mod: html_text
+      fun: tag_open_attribute_name_after
+    - key: html_text_tag_open_attribute_value_before
+      mod: html_text
+      fun: tag_open_attribute_value_before
+    - key: html_text_tag_open_attribute_value_quoted
+      mod: html_text
+      fun: tag_open_attribute_value_quoted
+    - key: html_text_tag_open_attribute_value_quoted_after
+      mod: html_text
+      fun: tag_open_attribute_value_quoted_after
+    - key: html_text_tag_open_attribute_value_unquoted
+      mod: html_text
+      fun: tag_open_attribute_value_unquoted
+    - key: html_text_cdata
+      mod: html_text
+      fun: cdata
+    - key: html_text_cdata_open_inside
+      mod: html_text
+      fun: cdata_open_inside
+    - key: html_text_cdata_close
+      mod: html_text
+      fun: cdata_close
+    - key: html_text_cdata_end
+      mod: html_text
+      fun: cdata_end
+    - key: html_text_comment_open_inside
+      mod: html_text
+      fun: comment_open_inside
+    - key: html_text_comment
+      mod: html_text
+      fun: comment
+    - key: html_text_comment_close
+      mod: html_text
+      fun: comment_close
+    - key: html_text_comment_end
+      mod: html_text
+      fun: comment_end
+    - key: html_text_declaration
+      mod: html_text
+      fun: declaration
+    - key: html_text_end
+      mod: html_text
+      fun: end
+    - key: html_text_instruction
+      mod: html_text
+      fun: instruction
+    - key: html_text_instruction_close
+      mod: html_text
+      fun: instruction_close
+    - key: html_text_line_ending_before
+      mod: html_text
+      fun: line_ending_before
+    - key: html_text_line_ending_after
+      mod: html_text
+      fun: line_ending_after
+    - key: html_text_line_ending_after_prefix
+      mod: html_text
+      fun: line_ending_after_prefix
+    - key: label_start
+      mod: partial_label
+      fun: start
+    - key: label_at_break
+      mod: partial_label
+      fun: at_break
+    - key: label_eol_after
+      mod: partial_label
+      fun: eol_after
+    - key: label_escape
+      mod: partial_label
+      fun: escape
+    - key: label_inside
+      mod: partial_label
+      fun: inside
+    - key: label_nok
+      mod: partial_label
+      fun: nok
+    - key: label_end_start
+      mod: label_end
+      fun: start
+    - key: label_end_after
+      mod: label_end
+      fun: after
+    - key: label_end_resource_start
+      mod: label_end
+      fun: resource_start
+    - key: label_end_resource_before
+      mod: label_end
+      fun: resource_before
+    - key: label_end_resource_open
+      mod: label_end
+      fun: resource_open
+    - key: label_end_resource_destination_after
+      mod: label_end
+      fun: resource_destination_after
+    - key: label_end_resource_destination_missing
+      mod: label_end
+      fun: resource_destination_missing
+    - key: label_end_resource_between
+      mod: label_end
+      fun: resource_between
+    - key: label_end_resource_title_after
+      mod: label_end
+      fun: resource_title_after
+    - key: label_end_resource_end
+      mod: label_end
+      fun: resource_end
+    - key: label_end_ok
+      mod: label_end
+      fun: ok
+    - key: label_end_nok
+      mod: label_end
+      fun: nok
+    - key: label_end_reference_full
+      mod: label_end
+      fun: reference_full
+    - key: label_end_reference_full_after
+      mod: label_end
+      fun: reference_full_after
+    - key: label_end_reference_full_missing
+      mod: label_end
+      fun: reference_full_missing
+    - key: label_end_reference_not_full
+      mod: label_end
+      fun: reference_not_full
+    - key: label_end_reference_collapsed
+      mod: label_end
+      fun: reference_collapsed
+    - key: label_end_reference_collapsed_open
+      mod: label_end
+      fun: reference_collapsed_open
+    - key: label_start_image_start
+      mod: label_start_image
+      fun: start
+    - key: label_start_image_open
+      mod: label_start_image
+      fun: open
+    - key: label_start_image_after
+      mod: label_start_image
+      fun: after
+    - key: label_start_link_start
+      mod: label_start_link
+      fun: start
+    - key: list_item_start
+      mod: list_item
+      fun: start
+    - key: list_item_before
+      mod: list_item
+      fun: before
+    - key: list_item_before_ordered
+      mod: list_item
+      fun: before_ordered
+    - key: list_item_before_unordered
+      mod: list_item
+      fun: before_unordered
+    - key: list_item_value
+      mod: list_item
+      fun: value
+    - key: list_item_marker
+      mod: list_item
+      fun: marker
+    - key: list_item_marker_after
+      mod: list_item
+      fun: marker_after
+    - key: list_item_after
+      mod: list_item
+      fun: after
+    - key: list_item_marker_after_filled
+      mod: list_item
+      fun: marker_after_filled
+    - key: list_item_whitespace
+      mod: list_item
+      fun: whitespace
+    - key: list_item_whitespace_after
+      mod: list_item
+      fun: whitespace_after
+    - key: list_item_prefix_other
+      mod: list_item
+      fun: prefix_other
+    - key: list_item_cont_start
+      mod: list_item
+      fun: cont_start
+    - key: list_item_cont_blank
+      mod: list_item
+      fun: cont_blank
+    - key: list_item_cont_filled
+      mod: list_item
+      fun: cont_filled
+    - key: mdx_esm_start
+      mod: mdx_esm
+      fun: start
+    - key: mdx_esm_word
+      mod: mdx_esm
+      fun: word
+    - key: mdx_esm_inside
+      mod: mdx_esm
+      fun: inside
+    - key: mdx_esm_line_start
+      mod: mdx_esm
+      fun: line_start
+    - key: mdx_esm_blank_line_before
+      mod: mdx_esm
+      fun: blank_line_before
+    - key: mdx_esm_continuation_start
+      mod: mdx_esm
+      fun: continuation_start
+    - key: mdx_esm_at_end
+      mod: mdx_esm
+      fun: at_end
+    - key: mdx_expression_start
+      mod: partial_mdx_expression
+      fun: start
+    - key: mdx_expression_prefix
+      mod: partial_mdx_expression
+      fun: prefix
+    - key: mdx_expression_before
+      mod: partial_mdx_expression
+      fun: before
+    - key: mdx_expression_inside
+      mod: partial_mdx_expression
+      fun: inside
+    - key: mdx_expression_eol_after
+      mod: partial_mdx_expression
+      fun: eol_after
+    - key: mdx_expression_flow_start
+      mod: mdx_expression_flow
+      fun: start
+    - key: mdx_expression_flow_before
+      mod: mdx_expression_flow
+      fun: before
+    - key: mdx_expression_flow_after
+      mod: mdx_expression_flow
+      fun: after
+    - key: mdx_expression_flow_end
+      mod: mdx_expression_flow
+      fun: end
+    - key: mdx_expression_text_start
+      mod: mdx_expression_text
+      fun: start
+    - key: mdx_expression_text_after
+      mod: mdx_expression_text
+      fun: after
+    - key: mdx_jsx_flow_start
+      mod: mdx_jsx_flow
+      fun: start
+    - key: mdx_jsx_flow_before
+      mod: mdx_jsx_flow
+      fun: before
+    - key: mdx_jsx_flow_after
+      mod: mdx_jsx_flow
+      fun: after
+    - key: mdx_jsx_flow_end
+      mod: mdx_jsx_flow
+      fun: end
+    - key: mdx_jsx_flow_nok
+      mod: mdx_jsx_flow
+      fun: nok
+    - key: mdx_jsx_text_start
+      mod: mdx_jsx_text
+      fun: start
+    - key: mdx_jsx_text_after
+      mod: mdx_jsx_text
+      fun: after
+    - key: mdx_jsx_text_nok
+      mod: mdx_jsx_text
+      fun: nok
+    - key: mdx_jsx_start
+      mod: partial_mdx_jsx
+      fun: start
+    - key: mdx_jsx_start_after
+      mod: partial_mdx_jsx
+      fun: start_after
+    - key: mdx_jsx_name_before
+      mod: partial_mdx_jsx
+      fun: name_before
+    - key: mdx_jsx_closing_tag_name_before
+      mod: partial_mdx_jsx
+      fun: closing_tag_name_before
+    - key: mdx_jsx_tag_end
+      mod: partial_mdx_jsx
+      fun: tag_end
+    - key: mdx_jsx_primary_name
+      mod: partial_mdx_jsx
+      fun: primary_name
+    - key: mdx_jsx_primary_name_after
+      mod: partial_mdx_jsx
+      fun: primary_name_after
+    - key: mdx_jsx_member_name_before
+      mod: partial_mdx_jsx
+      fun: member_name_before
+    - key: mdx_jsx_member_name
+      mod: partial_mdx_jsx
+      fun: member_name
+    - key: mdx_jsx_member_name_after
+      mod: partial_mdx_jsx
+      fun: member_name_after
+    - key: mdx_jsx_local_name_before
+      mod: partial_mdx_jsx
+      fun: local_name_before
+    - key: mdx_jsx_local_name
+      mod: partial_mdx_jsx
+      fun: local_name
+    - key: mdx_jsx_local_name_after
+      mod: partial_mdx_jsx
+      fun: local_name_after
+    - key: mdx_jsx_attribute_before
+      mod: partial_mdx_jsx
+      fun: attribute_before
+    - key: mdx_jsx_self_closing
+      mod: partial_mdx_jsx
+      fun: self_closing
+    - key: mdx_jsx_attribute_expression_after
+      mod: partial_mdx_jsx
+      fun: attribute_expression_after
+    - key: mdx_jsx_attribute_primary_name
+      mod: partial_mdx_jsx
+      fun: attribute_primary_name
+    - key: mdx_jsx_attribute_primary_name_after
+      mod: partial_mdx_jsx
+      fun: attribute_primary_name_after
+    - key: mdx_jsx_attribute_local_name_before
+      mod: partial_mdx_jsx
+      fun: attribute_local_name_before
+    - key: mdx_jsx_attribute_local_name
+      mod: partial_mdx_jsx
+      fun: attribute_local_name
+    - key: mdx_jsx_attribute_local_name_after
+      mod: partial_mdx_jsx
+      fun: attribute_local_name_after
+    - key: mdx_jsx_attribute_value_before
+      mod: partial_mdx_jsx
+      fun: attribute_value_before
+    - key: mdx_jsx_attribute_value_quoted_start
+      mod: partial_mdx_jsx
+      fun: attribute_value_quoted_start
+    - key: mdx_jsx_attribute_value_quoted
+      mod: partial_mdx_jsx
+      fun: attribute_value_quoted
+    - key: mdx_jsx_attribute_value_expression_after
+      mod: partial_mdx_jsx
+      fun: attribute_value_expression_after
+    - key: mdx_jsx_es_whitespace_start
+      mod: partial_mdx_jsx
+      fun: es_whitespace_start
+    - key: mdx_jsx_es_whitespace_inside
+      mod: partial_mdx_jsx
+      fun: es_whitespace_inside
+    - key: mdx_jsx_es_whitespace_eol_after
+      mod: partial_mdx_jsx
+      fun: es_whitespace_eol_after
+    - key: non_lazy_continuation_start
+      mod: partial_non_lazy_continuation
+      fun: start
+    - key: non_lazy_continuation_after
+      mod: partial_non_lazy_continuation
+      fun: after
+    - key: paragraph_start
+      mod: paragraph
+      fun: start
+    - key: paragraph_line_start
+      mod: paragraph
+      fun: line_start
+    - key: paragraph_inside
+      mod: paragraph
+      fun: inside
+    - key: raw_flow_start
+      mod: raw_flow
+      fun: start
+    - key: raw_flow_before_sequence_open
+      mod: raw_flow
+      fun: before_sequence_open
+    - key: raw_flow_sequence_open
+      mod: raw_flow
+      fun: sequence_open
+    - key: raw_flow_info_before
+      mod: raw_flow
+      fun: info_before
+    - key: raw_flow_info
+      mod: raw_flow
+      fun: info
+    - key: raw_flow_meta_before
+      mod: raw_flow
+      fun: meta_before
+    - key: raw_flow_meta
+      mod: raw_flow
+      fun: meta
+    - key: raw_flow_at_non_lazy_break
+      mod: raw_flow
+      fun: at_non_lazy_break
+    - key: raw_flow_close_start
+      mod: raw_flow
+      fun: close_start
+    - key: raw_flow_before_sequence_close
+      mod: raw_flow
+      fun: before_sequence_close
+    - key: raw_flow_sequence_close
+      mod: raw_flow
+      fun: sequence_close
+    - key: raw_flow_after_sequence_close
+      mod: raw_flow
+      fun: sequence_close_after
+    - key: raw_flow_content_before
+      mod: raw_flow
+      fun: content_before
+    - key: raw_flow_content_start
+      mod: raw_flow
+      fun: content_start
+    - key: raw_flow_before_content_chunk
+      mod: raw_flow
+      fun: before_content_chunk
+    - key: raw_flow_content_chunk
+      mod: raw_flow
+      fun: content_chunk
+    - key: raw_flow_after
+      mod: raw_flow
+      fun: after
+    - key: raw_text_start
+      mod: raw_text
+      fun: start
+    - key: raw_text_sequence_open
+      mod: raw_text
+      fun: sequence_open
+    - key: raw_text_between
+      mod: raw_text
+      fun: between
+    - key: raw_text_data
+      mod: raw_text
+      fun: data
+    - key: raw_text_sequence_close
+      mod: raw_text
+      fun: sequence_close
+    - key: space_or_tab_start
+      mod: partial_space_or_tab
+      fun: start
+    - key: space_or_tab_inside
+      mod: partial_space_or_tab
+      fun: inside
+    - key: space_or_tab_after
+      mod: partial_space_or_tab
+      fun: after
+    - key: space_or_tab_eol_start
+      mod: partial_space_or_tab_eol
+      fun: start
+    - key: space_or_tab_eol_after_first
+      mod: partial_space_or_tab_eol
+      fun: after_first
+    - key: space_or_tab_eol_after_eol
+      mod: partial_space_or_tab_eol
+      fun: after_eol
+    - key: space_or_tab_eol_at_eol
+      mod: partial_space_or_tab_eol
+      fun: at_eol
+    - key: space_or_tab_eol_after_more
+      mod: partial_space_or_tab_eol
+      fun: after_more
+    - key: string_start
+      mod: string
+      fun: start
+    - key: string_before
+      mod: string
+      fun: before
+    - key: string_before_data
+      mod: string
+      fun: before_data
+    - key: text_start
+      mod: text
+      fun: start
+    - key: text_before
+      mod: text
+      fun: before
+    - key: text_before_html
+      mod: text
+      fun: before_html
+    - key: text_before_mdx_jsx
+      mod: text
+      fun: before_mdx_jsx
+    - key: text_before_hard_break_escape
+      mod: text
+      fun: before_hard_break_escape
+    - key: text_before_label_start_link
+      mod: text
+      fun: before_label_start_link
+    - key: text_before_data
+      mod: text
+      fun: before_data
+    - key: thematic_break_start
+      mod: thematic_break
+      fun: start
+    - key: thematic_break_before
+      mod: thematic_break
+      fun: before
+    - key: thematic_break_sequence
+      mod: thematic_break
+      fun: sequence
+    - key: thematic_break_at_break
+      mod: thematic_break
+      fun: at_break
+    - key: title_start
+      mod: partial_title
+      fun: start
+    - key: title_begin
+      mod: partial_title
+      fun: begin
+    - key: title_after_eol
+      mod: partial_title
+      fun: after_eol
+    - key: title_at_break
+      mod: partial_title
+      fun: at_break
+    - key: title_escape
+      mod: partial_title
+      fun: escape
+    - key: title_inside
+      mod: partial_title
+      fun: inside
+    - key: title_nok
+      mod: partial_title
+      fun: nok

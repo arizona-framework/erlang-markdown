@@ -1,0 +1,81 @@
+%%%-----------------------------------------------------------------------------
+%%% Copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Copyright (c) WhatsApp LLC
+%%%
+%%% This source code is licensed under the MIT license found in the
+%%% LICENSE.md file in the root directory of this source tree.
+%%%
+%%% @author Andrew Bennett <potatosaladx@meta.com>
+%%% @copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Created :  04 Mar 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%%-----------------------------------------------------------------------------
+%%% % @format
+-module(markdown_resolve).
+-moduledoc """
+Resolve events.
+""".
+-compile(warn_missing_spec_all).
+-oncall("whatsapp_clr").
+
+-include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_resolve.hrl").
+
+%% Call API
+-export([
+    call/2,
+<<{% set name_api_continue = joiner(",") %}>>
+<<{% for name in ctx.resolve.name_list %}>>
+    <<{{ name_api_continue() }}>><<{{ name.key }}>>/1
+<<{% endfor %}>>
+]).
+
+%% Types
+-doc "Names of resolvers.".
+-type name() ::
+<<{% set name_type_continue = joiner("| ") %}>>
+<<{% for name in ctx.resolve.name_list %}>>
+    <<{{ name_type_continue() }}>><<{{ name.key }}>>
+<<{% endfor %}>>.
+
+-export_type([
+    name/0
+]).
+
+%%%=============================================================================
+%%% Call API functions
+%%%=============================================================================
+
+-spec call(Tokenizer, Name) -> {Tokenizer, Result} when
+    Tokenizer :: markdown_tokenizer:t(),
+    Name :: name(),
+    Result :: {ok, OptionSubresult} | {error, Message},
+    OptionSubresult :: markdown_types:option(Subresult),
+    Subresult :: markdown_subresult:t(),
+    Message :: markdown_message:t().
+call(Tokenizer1 = #markdown_tokenizer{}, Name) when ?is_markdown_resolve_name(Name) ->
+    % TokenizerBeforeString = markdown_debug:rust_debug_string(Tokenizer1),
+    % io:format("\n\n[~w:~w] BEFORE resolve:~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Name)]),
+    {Tokenizer2, Result} = ?MODULE:Name(Tokenizer1),
+    % TokenizerAfterString = markdown_debug:rust_debug_string(Tokenizer2),
+    % TokenizerString =
+    %     case TokenizerBeforeString =:= TokenizerAfterString of
+    %         true ->
+    %             <<"NO CHANGE">>;
+    %         false ->
+    %             TokenizerAfterString
+    %     end,
+    % io:format("\n\n[~w:~w] AFTER resolve:~ts\n~ts\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Name), markdown_debug:rust_debug_string(Result), TokenizerString]),
+    {Tokenizer2, Result}.
+
+<<{% for name in ctx.resolve.name_list %}>>
+-spec <<{{ name.key }}>>(Tokenizer) -> {Tokenizer, Result} when
+    Tokenizer :: markdown_tokenizer:t(),
+    Result :: {ok, OptionSubresult} | {error, Message},
+    OptionSubresult :: markdown_types:option(Subresult),
+    Subresult :: markdown_subresult:t(),
+    Message :: markdown_message:t().
+-compile({inline, [<<{{ name.key }}>>/1]}).
+<<{{ name.key }}>>(Tokenizer = #markdown_tokenizer{}) ->
+    markdown_construct_<<{{ name.mod }}>>:'resolve'(Tokenizer).
+
+<<{% endfor %}>>
