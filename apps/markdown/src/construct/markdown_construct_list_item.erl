@@ -545,9 +545,13 @@ resolve(
 ) ->
     ListsWip1 = markdown_vec:new(),
     Lists1 = markdown_vec:new(),
-    % io:format("\n\n[~w:~w] BEFORE list_item:resolve_loop\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Lists1)]),
+    % io:format("\n\n[~w:~w] BEFORE list_item:resolve_loop\n~ts\n\n", [
+    %     markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Lists1)
+    % ]),
     Lists2 = resolve_loop(Events1, Bytes, 0, 0, ListsWip1, Lists1),
-    % io:format("\n\n[~w:~w] AFTER list_item:resolve_loop\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Lists2)]),
+    % io:format("\n\n[~w:~w] AFTER list_item:resolve_loop\n~ts\n\n", [
+    %     markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Lists2)
+    % ]),
 
     %% Inject events
     Map2 = markdown_vec:reduce(
@@ -598,8 +602,13 @@ resolve_loop(Events, Bytes, Index1, Balance1, ListsWip1, Lists1) when
 ->
     case markdown_vec:get(Events, Index1) of
         #markdown_event{name = list_item, kind = 'enter'} ->
+            % io:format(user, "~ts\n", [markdown_debug:rust_debug_string(Events)]),
+            % io:format("\n\n[~w] BEFORE list_item:resolve_loop:skip::opt(index=~0tp)\n~ts\n\n", [markdown:counter_get(), Index1, markdown_debug:rust_debug_string(Events)]),
             End = markdown_util_skip:opt(Events, Index1, [list_item]) - 1,
+            % io:format("\n\n[~w] AFTER list_item:resolve_loop:skip::opt(index=~0tp) -> end=~0tp\n~ts\n\n", [markdown:counter_get(), Index1, End, markdown_debug:rust_debug_string(Events)]),
+            % io:format("\n\n[~w] BEFORE list_item:resolve_loop:skip::to(index=~0tp)\n~ts\n\n", [markdown:counter_get(), Index1, markdown_debug:rust_debug_string(Events)]),
             MarkerIndex = markdown_util_skip:to(Events, Index1, [list_item_marker]),
+            % io:format("\n\n[~w] AFTER list_item:resolve_loop:skip::to(index=~0tp) -> marker=~0tp\n~ts\n\n", [markdown:counter_get(), Index1, MarkerIndex, markdown_debug:rust_debug_string(Events)]),
             MarkerEvent = markdown_vec:get(Events, MarkerIndex),
             Marker = binary:at(Bytes, MarkerEvent#markdown_event.point#markdown_point.offset),
             Current = #markdown_list_item{marker = Marker, balance = Balance1, start = Index1, 'end' = End},

@@ -511,6 +511,7 @@ flow_end(
             }
     }
 ) ->
+    % io:format("\n\n[~w] BEFORE flow_end\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer1)]),
     {TokenizeState2, State1} =
         case OptionChildState of
             {some, ChildState} ->
@@ -526,7 +527,9 @@ flow_end(
         document_child = {some, Child2}, document_child_state = {some, State2}, document_exits = DocumentExits2
     },
     Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState3},
-    flow_end__continue(Tokenizer2).
+    {Tokenizer3, State3} = flow_end__continue(Tokenizer2),
+    % io:format("\n\n[~w] AFTER flow_end\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer3)]),
+    {Tokenizer3, State3}.
 
 %%%-----------------------------------------------------------------------------
 %%% Internal functions
@@ -769,11 +772,16 @@ flow_end__continue(
                 #markdown_tokenizer{current = none, tokenize_state = TokenizeState3} ->
                     TokenizeState4 = TokenizeState3#markdown_tokenize_state{document_continued = 0},
                     Tokenizer4 = Tokenizer3#markdown_tokenizer{tokenize_state = TokenizeState4},
+                    % io:format("\n\n[~w] BEFORE exit_containers\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer4)]),
                     case exit_containers(Tokenizer4, 'eof') of
                         {Tokenizer5, ok} ->
+                            % io:format("\n\n[~w] AFTER exit_containers\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer5)]),
+                            % io:format("\n\n[~w] BEFORE resolve\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer5)]),
                             Tokenizer6 = resolve(Tokenizer5),
+                            % io:format("\n\n[~w] AFTER resolve\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer6)]),
                             {Tokenizer6, markdown_state:ok()};
                         {Tokenizer5, {error, ExitContainersEofMessage}} ->
+                            % io:format("\n\n[~w] AFTER exit_containers\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer5)]),
                             {Tokenizer5, {error, ExitContainersEofMessage}}
                     end;
                 #markdown_tokenizer{tokenize_state = TokenizeState3} ->
@@ -797,6 +805,7 @@ resolve(Tokenizer1 = #markdown_tokenizer{}) ->
     %% First, add the container exits into `child`.
     ChildIndex1 = 0,
     Line1 = 0,
+    % io:format("\n\n[~w] BEFORE resolve__container_exits\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer1)]),
     {
         Tokenizer2 = #markdown_tokenizer{
             events = Events1,
@@ -902,7 +911,9 @@ resolve__container_exits(
                                 Exit2
                             end,
                             Exits2 = markdown_vec:map(Exits1, ExitMapFun),
+                            % io:format("\n\n[~w] BEFORE edit_map_add\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(ChildEditMap1)]),
                             ChildEditMap2 = markdown_edit_map:add(ChildEditMap1, InjectIndex2, 0, Exits2),
+                            % io:format("\n\n[~w] AFTER edit_map_add\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(ChildEditMap2)]),
                             Child2 = Child1#markdown_tokenizer{map = ChildEditMap2},
                             TokenizeState2 = TokenizeState1#markdown_tokenize_state{
                                 document_child = {some, Child2}, document_exits = DocumentExits2
@@ -935,6 +946,7 @@ resolve__container_exits(
     ChildIndex,
     Line
 ) ->
+    % io:format("\n\n[~w] AFTER resolve__container_exits\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer1)]),
     {ChildEditMap2, ChildEvents2} = markdown_edit_map:consume(ChildEditMap1, ChildEvents1),
     Child2 = Child1#markdown_tokenizer{events = ChildEvents2, map = ChildEditMap2},
     TokenizeState2 = TokenizeState1#markdown_tokenize_state{document_child = {some, Child2}},
@@ -1008,7 +1020,7 @@ resolve__inject_before_line_ending(
         #markdown_event{kind = 'exit', point = ChildPoint2} ->
             ChildIndex2 = ChildIndex1 + 1,
             %% Inject after `Exit:*`.
-            InjectIndex2 = InjectIndex1 + 1,
+            InjectIndex2 = ChildIndex2 + 1,
             resolve__inject_before_line_ending(Events, ChildIndex2, InjectIndex2, ChildPoint2);
         _ ->
             {ChildIndex1, InjectIndex1, ChildPoint1}

@@ -245,7 +245,9 @@ Flush.
     Message :: markdown_message:t().
 flush(Tokenizer1 = #markdown_tokenizer{point = Point}, State1, Resolve) when is_boolean(Resolve) ->
     To = markdown_point:to_index(Point),
+    % io:format("\n\n[~w] BEFORE push_impl\n~ts\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(State1), markdown_debug:rust_debug_string(Tokenizer1)]),
     {Tokenizer2, State2} = push_impl(Tokenizer1, To, To, State1, true),
+    % io:format(user, "~ts\n", [markdown_debug:rust_debug_string(Tokenizer2#markdown_tokenizer.events)]),
     % io:format("\n\n[~w] AFTER push_impl\n~ts\n~ts\n", [markdown:counter_get(), markdown_debug:rust_debug_string(State2), markdown_debug:rust_debug_string(Tokenizer2)]),
     case markdown_state:to_result(State2) of
         ok ->
@@ -271,6 +273,7 @@ flush(Tokenizer1 = #markdown_tokenizer{point = Point}, State1, Resolve) when is_
                     ResolversIterator = markdown_vec:iterator(Resolvers),
                     case flush__resolve_loop(Tokenizer4, ResolversIterator, Subresult1) of
                         {Tokenizer5 = #markdown_tokenizer{events = Events1, map = EditMap1}, {ok, Subresult2}} ->
+                            % io:format("\n\n[~w] AFTER flush resolve\n\n~ts\n\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer5)]),
                             % io:format("\n\n[~w] BEFORE consume\n\n~ts\n\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer5)]),
                             {EditMap2, Events2} = markdown_edit_map:consume(EditMap1, Events1),
                             Tokenizer6 = Tokenizer5#markdown_tokenizer{events = Events2, map = EditMap2},
@@ -724,6 +727,9 @@ push_impl_loop(
                     {Tokenizer1, State1}
             end;
         {next, Name} ->
+            % io:format("\n\n[~w] BEFORE next(~ts)\n~ts\n~ts\n", [
+            %     markdown:counter_get(), markdown_debug:rust_debug_string(Name), markdown_debug:rust_debug_string(State1), markdown_debug:rust_debug_string(Tokenizer1)
+            % ]),
             MaybeOptionAction =
                 case
                     Point#markdown_point.offset < To#markdown_index.offset orelse
@@ -738,23 +744,33 @@ push_impl_loop(
                         break
                 end,
             case MaybeOptionAction of
+                break ->
+                    {Tokenizer1, State1};
                 {some, ignore} ->
                     Tokenizer2 = move_one(Tokenizer1),
+                    % io:format("\n\n[~w] AFTER next(~ts)\n~ts\n~ts\n", [
+                    %     markdown:counter_get(), markdown_debug:rust_debug_string(Name), markdown_debug:rust_debug_string(State1), markdown_debug:rust_debug_string(Tokenizer2)
+                    % ]),
                     push_impl_loop(Tokenizer2, To, State1, Flush);
-                {some, {insert, Byte}} ->
-                    Tokenizer2 = expect(Tokenizer1, {some, Byte}),
+                _ ->
+                    OptionByte =
+                        case MaybeOptionAction of
+                            {some, {insert, Byte}} ->
+                                {some, Byte};
+                            {some, {normal, Byte}} ->
+                                {some, Byte};
+                            none ->
+                                none
+                        end,
+                    Tokenizer2 = expect(Tokenizer1, OptionByte),
+                    % io:format("\n\n[~w] BEFORE call(~ts)\n~ts\n~ts\n", [
+                    %     markdown:counter_get(), markdown_debug:rust_debug_string(Name), markdown_debug:rust_debug_string(State1), markdown_debug:rust_debug_string(Tokenizer2)
+                    % ]),
                     {Tokenizer3, State2} = markdown_state:call(Tokenizer2, Name),
-                    push_impl_loop(Tokenizer3, To, State2, Flush);
-                {some, {normal, Byte}} ->
-                    Tokenizer2 = expect(Tokenizer1, {some, Byte}),
-                    {Tokenizer3, State2} = markdown_state:call(Tokenizer2, Name),
-                    push_impl_loop(Tokenizer3, To, State2, Flush);
-                none ->
-                    Tokenizer2 = expect(Tokenizer1, none),
-                    {Tokenizer3, State2} = markdown_state:call(Tokenizer2, Name),
-                    push_impl_loop(Tokenizer3, To, State2, Flush);
-                break ->
-                    {Tokenizer1, State1}
+                    % io:format("\n\n[~w] AFTER call(~ts)\n~ts\n~ts\n", [
+                    %     markdown:counter_get(), markdown_debug:rust_debug_string(Name), markdown_debug:rust_debug_string(State2), markdown_debug:rust_debug_string(Tokenizer3)
+                    % ]),
+                    push_impl_loop(Tokenizer3, To, State2, Flush)
             end;
         {retry, Name} ->
             {Tokenizer2, State2} = markdown_state:call(Tokenizer1, Name),

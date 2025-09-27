@@ -946,6 +946,10 @@ rust_debug_fmt(Event, Formatter1) ->
                 true when Size =:= 1 andalso Fields =:= [inner] ->
                     {cont, Formatter1}
             end;
+        {record_elem, markdown_construct_options, _Index, Field, _Value} when
+            Field =:= attribute_list_flow orelse Field =:= attribute_list_text
+        ->
+            {cont, Formatter1};
         {record_elem, Tag, _Index, Field, Value} ->
             Formatter2 =
                 case markdown_debug_types:is_rust_enum(Tag) of

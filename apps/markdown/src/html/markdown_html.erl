@@ -50,7 +50,7 @@ compile(Events = #markdown_vec{}, Bytes, CompileOptions = #markdown_compile_opti
     %% Stop when we find a line ending.
     OptionLineEndingInferred = detect_line_ending_style(Events, Bytes, 0, none),
 
-    %% Figure out which line ending style we’ll use.
+    %% Figure out which line ending style we'll use.
     LineEndingDefault =
         case OptionLineEndingInferred of
             {some, LineEndingInferred} ->
@@ -70,7 +70,7 @@ compile(Events = #markdown_vec{}, Bytes, CompileOptions = #markdown_compile_opti
     %% To speed things up, we collect the places we can jump over for the
     %% second pass.
     %%
-    %% We don’t need to handle GFM footnote definitions like this, because
+    %% We don't need to handle GFM footnote definitions like this, because
     %% unlike normal definitions, what they produce is not used in calls.
     %% It would also get very complex, because footnote definitions can be
     %% nested.
@@ -630,7 +630,7 @@ Handle [`Enter`][Kind::Enter]:[`ResourceDestinationString`][Name::ResourceDestin
     CompileContext :: markdown_html_compile_context:t().
 on_enter_resource_destination_string(CompileContext1 = #markdown_html_compile_context{}) ->
     CompileContext2 = markdown_html_compile_context:buffer(CompileContext1),
-    %% Ignore encoding the result, as we’ll first percent encode the url and
+    %% Ignore encoding the result, as we'll first percent encode the url and
     %% encode manually after.
     CompileContext3 = CompileContext2#markdown_html_compile_context{encode_html = false},
     CompileContext3.
@@ -1232,7 +1232,7 @@ on_exit_list_item(
         block_quote_prefix,
         line_ending,
         space_or_tab,
-        %% Also ignore things that don’t contribute to the document.
+        %% Also ignore things that don't contribute to the document.
         definition,
         gfm_footnote_definition
     ]),
@@ -1511,7 +1511,7 @@ on_exit_raw_flow(CompileContext1 = #markdown_html_compile_context{}) ->
     %% fenced code and block quote by `markdown-rs`, but CM wants to treat that
     %% ending as part of the code.
     CompileContext2 = on_exit_raw_flow__maybe_run_to_end(CompileContext1),
-    %% But in most cases, it’s simpler: when we’ve seen some data, emit an extra
+    %% But in most cases, it's simpler: when we've seen some data, emit an extra
     %% line ending when needed.
     #markdown_html_compile_context{raw_flow_seen_data = {some, RawFlowSeenData}} = CompileContext2,
     CompileContext3 = CompileContext2#markdown_html_compile_context{raw_flow_seen_data = none},
@@ -1679,16 +1679,20 @@ on_exit_raw_text__gfm_table(<<>>, Output) ->
 on_exit_raw_text__trim(Input, Trim1 = false, Index1, End) when Index1 < End ->
     case binary:at(Input, Index1) =:= $\s of
         true ->
-            Trim2 = true,
-            on_exit_raw_text__trim(Input, Trim2, Index1, End);
-        false ->
             Index2 = Index1 + 1,
-            on_exit_raw_text__trim(Input, Trim1, Index2, End)
+            on_exit_raw_text__trim(Input, Trim1, Index2, End);
+        false ->
+            %% Found non-space, we should trim
+            Trim2 = true,
+            Index2 = Index1 + 1,
+            on_exit_raw_text__trim(Input, Trim2, Index2, End)
     end;
 on_exit_raw_text__trim(Input, _Trim = false, _Index, _End) ->
+    %% All spaces between first and last, don't trim
     Output = Input,
     Output;
 on_exit_raw_text__trim(Input, _Trim = true, _Index, _End) ->
+    %% Found non-space content, trim first and last spaces
     Output = binary:part(Input, 1, byte_size(Input) - 2),
     Output.
 

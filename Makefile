@@ -129,14 +129,16 @@ endif
 
 erlfmt: $(ERLFMT)
 	$(verbose) $(ERLFMT) --verbose --write --require-pragma --print-width=120 \
-		'apps/{markdown,markdown_test}/{src,include,test}/**/*.{hrl,erl,app.src}' \
+		'apps/{markdown,markdown_test}/{src,include,test}/**/*.{hrl,erl,app.src,app.src.script}' \
 		'apps/{markdown,markdown_test}/{rebar.config,rebar.config.script}' \
+		'apps/{markdown,markdown_test}/test/**/*.config' \
 		'{rebar.config,rebar.config.script}'
 
 erlfmt-check: $(ERLFMT)
-	$(verbose) $(ERLFMT) --check --require-pragma --print-width=120 \
+	$(verbose) $(ERLFMT) --verbose --write --require-pragma --print-width=120 \
 		'apps/{markdown,markdown_test}/{src,include,test}/**/*.{hrl,erl,app.src,app.src.script}' \
 		'apps/{markdown,markdown_test}/{rebar.config,rebar.config.script}' \
+		'apps/{markdown,markdown_test}/test/**/*.config' \
 		'{rebar.config,rebar.config.script}'
 
 distclean-erlfmt:

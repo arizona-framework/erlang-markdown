@@ -28,8 +28,8 @@ gfm_label_start_footnote ::= '[' '^'
 Label start (footnote) does not, on its own, relate to anything in HTML.
 When matched with a [label end][label_end], they together relate to `<sup>`
 and `<a>` elements in HTML.
-See [*§ 4.5.19 The `sub` and `sup` elements*][html_sup] and
-[*§ 4.5.1 The `a` element*][html_a] in the HTML spec for more info.
+See [*Â§ 4.5.19 The `sub` and `sup` elements*][html_sup] and
+[*Â§ 4.5.1 The `a` element*][html_a] in the HTML spec for more info.
 Without an end, the characters (`[^`) are output.
 
 ## Tokens
@@ -42,7 +42,7 @@ Without an end, the characters (`[^`) are output.
 
 *   [`micromark-extension-gfm-footnote`](https://github.com/micromark/micromark-extension-gfm-footnote)
 
-> 👉 **Note**: Footnotes are not specified in GFM yet.
+> ð **Note**: Footnotes are not specified in GFM yet.
 > See [`github/cmark-gfm#270`](https://github.com/github/cmark-gfm/issues/270)
 > for the related issue.
 
@@ -59,7 +59,8 @@ Without an end, the characters (`[^`) are output.
 
 %% API
 -export([
-    start/1
+    start/1,
+    open/1
 ]).
 
 %%%=============================================================================
@@ -90,5 +91,34 @@ start(
     State = markdown_state:next(gfm_label_start_footnote_open),
     {Tokenizer5, State};
 start(Tokenizer) ->
+    State = markdown_state:nok(),
+    {Tokenizer, State}.
+
+-doc """
+After `[`, at `^`.
+
+```markdown
+> | a [^b] c
+       ^
+```
+""".
+-spec open(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+open(Tokenizer1 = #markdown_tokenizer{current = {some, $^}}) ->
+    Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, gfm_footnote_call_marker),
+    Tokenizer3 = markdown_tokenizer:consume(Tokenizer2),
+    Tokenizer4 = markdown_tokenizer:exit(Tokenizer3, gfm_footnote_call_marker),
+    Events4Length = markdown_vec:size(Tokenizer4#markdown_tokenizer.events),
+    LabelStart = markdown_label_start:new(
+        gfm_footnote_call, markdown_indices:new(Events4Length - 6, Events4Length - 1), false
+    ),
+    TokenizeState4 =
+        #markdown_tokenize_state{label_starts = LabelStarts4} = Tokenizer4#markdown_tokenizer.tokenize_state,
+    LabelStarts5 = markdown_vec:push(LabelStarts4, LabelStart),
+    TokenizeState5 = TokenizeState4#markdown_tokenize_state{label_starts = LabelStarts5},
+    Tokenizer5 = Tokenizer4#markdown_tokenizer{tokenize_state = TokenizeState5},
+    Tokenizer6 = markdown_tokenizer:register_resolver_before(Tokenizer5, label),
+    State = markdown_state:ok(),
+    {Tokenizer6, State};
+open(Tokenizer) ->
     State = markdown_state:nok(),
     {Tokenizer, State}.

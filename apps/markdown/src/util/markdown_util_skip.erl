@@ -140,6 +140,7 @@ skip_opt_impl(Events, Index, {set, Names}, Forward) ->
             false ->
                 'exit'
         end,
+    % io:format(user, "skip_opt_impl_event_loop(Events, Index=~0tp, Names=~0tp, Forward=~0tp, Open=~0tp, Balance=~0tp)\n", [Index, Names, Forward, Open, Balance]),
     skip_opt_impl_event_loop(Events, Index, Names, Forward, Open, Balance).
 
 %% @private
@@ -153,7 +154,8 @@ skip_opt_impl(Events, Index, {set, Names}, Forward) ->
     Balance :: integer().
 skip_opt_impl_event_loop(Events, Index1, Names, Forward, Open, Balance1) when Index1 < ?markdown_vec_size(Events) ->
     #markdown_event{name = CurrentName, kind = CurrentKind} = markdown_vec:get(Events, Index1),
-    case not sets:is_element(CurrentName, Names) orelse CurrentKind =/= Open of
+    % io:format(user, "[el] CurrentName=~0tp, CurrentKind=~0tp\n", [CurrentName, CurrentKind]),
+    case (not sets:is_element(CurrentName, Names)) orelse CurrentKind =/= Open of
         true ->
             Index1;
         false ->
@@ -165,6 +167,7 @@ skip_opt_impl_event_loop(Events, Index1, Names, Forward, Open, Balance1) when In
                         Index1 - 1
                 end,
             Balance2 = Balance1 + 1,
+            % io:format(user, "skip_opt_impl_balance_loop(Events, CurrentName=~0tp, Index2=~0tp, Forward=~0tp, Open=~0tp, Balance2=~0tp)\n", [CurrentName, Index2, Forward, Open, Balance2]),
             {Index3, Balance3} = skip_opt_impl_balance_loop(Events, CurrentName, Index2, Forward, Open, Balance2),
             skip_opt_impl_event_loop(Events, Index3, Names, Forward, Open, Balance3)
     end;
@@ -182,6 +185,7 @@ skip_opt_impl_event_loop(_Events, Index, _Names, _Forward, _Open, _Balance) ->
     Balance :: integer().
 skip_opt_impl_balance_loop(Events, PinnedName, Index1, Forward, Open, Balance1) ->
     #markdown_event{name = CurrentName, kind = CurrentKind} = markdown_vec:get(Events, Index1),
+    % io:format(user, "[bl] PinnedName=~0tp, Index1=~0tp, Forward=~0tp, Open=~0tp, Balance1=~0tp, CurrentName=~0tp, CurrentKind=~0tp\n", [PinnedName, Index1, Forward, Open, Balance1, CurrentName, CurrentKind]),
     Balance2 =
         case CurrentKind =:= Open of
             true -> Balance1 + 1;
