@@ -22,6 +22,10 @@
     indices :: array:array(markdown_unist_point:offset())
 }).
 
+-define('format!'(Fmt, Args), markdown_types:unicode_binary(lists:flatten(io_lib:format(Fmt, Args)))).
+-define('unreachable!'(Fmt, Args), erlang:error(unreachable, [?'format!'(Fmt, Args)])).
+-define('vec!'(List), markdown_vec:from_list(List)).
+
 -define(is_ascii_alphanumeric(X),
     (((X) >= $0) andalso ((X) =< $9) orelse
         ((X) >= $A) andalso ((X) =< $Z) orelse

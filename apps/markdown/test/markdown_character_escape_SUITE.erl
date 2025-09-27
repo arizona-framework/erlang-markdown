@@ -16,6 +16,8 @@
 
 -behaviour(ct_suite).
 
+-include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
 %% ct_suite callbacks
@@ -230,10 +232,25 @@ test_character_escape_case_12(_Config) ->
     ok.
 
 test_character_escape_case_13(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("a \\* b"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Paragraph(Paragraph {
-    %             children: vec![Node::Text(Text {
-    %                 value: "a * b".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                        children = ?'vec!'([
+                            markdown_mdast_node:text(#markdown_mdast_text{
+                                value = <<"a * b">>,
+                                position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+            })},
+        markdown:to_mdast(<<"a \\* b">>, markdown_parse_options:default()),
+        "should support character escapes as `Text`s in mdast"
+    ),
     ok.
 
 %%%-----------------------------------------------------------------------------

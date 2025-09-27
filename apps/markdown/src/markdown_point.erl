@@ -27,7 +27,8 @@ The interface for the location in the document comes from unist
 -export([
     fmt/1,
     new/4,
-    to_index/1
+    to_index/1,
+    to_unist/1
 ]).
 
 %% Types
@@ -77,3 +78,10 @@ new(Line, Column, Offset, Virtual) when
 -spec to_index(Point) -> Index when Point :: t(), Index :: markdown_index:t().
 to_index(Point = #markdown_point{}) ->
     #markdown_index{offset = Point#markdown_point.offset, virtual = Point#markdown_point.virtual}.
+
+-doc """
+Create a unist point.
+""".
+-spec to_unist(Point) -> UnistPoint when Point :: t(), UnistPoint :: markdown_unist_point:t().
+to_unist(Point = #markdown_point{}) ->
+    markdown_unist_point:new(Point#markdown_point.line, Point#markdown_point.column, Point#markdown_point.offset).

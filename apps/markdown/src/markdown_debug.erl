@@ -26,6 +26,7 @@
 %% API
 -export([
     erlang_debug/1,
+    % matchable/1,
     redbug_everything/1,
     redbug_modules/0,
     redbug_start/2,
@@ -119,6 +120,9 @@ erlang_debug(Term) ->
     {cont, Formatter} = walk(Term, Formatter, fun erlang_debug_fmt/2),
     io:format("~n", []),
     ok.
+
+% -spec matchable(Term) -> MatchableTerm when Term :: dynamic(), MatchableTerm :: dynamic().
+% matchable(Term) ->
 
 -spec redbug_everything(Options) -> Result when Options :: dynamic(), Result :: dynamic().
 redbug_everything(Options) ->
@@ -930,25 +934,41 @@ rust_debug_fmt(Event, Formatter1) ->
             cont;
         {record_tail, markdown_vec, _Size} ->
             cont;
-        {record_head, Tag, _Size, _Fields} ->
-            RustName = markdown_debug_types:record_rust_name(Tag),
-            Formatter2 = markdown_formatter:do(Formatter1, [
-                {format, "~ts {", [RustName]},
-                shift_right
-            ]),
-            {cont, Formatter2};
+        {record_head, Tag, Size, Fields} ->
+            case markdown_debug_types:is_rust_enum(Tag) of
+                false ->
+                    RustName = markdown_debug_types:record_rust_name(Tag),
+                    Formatter2 = markdown_formatter:do(Formatter1, [
+                        {format, "~ts {", [RustName]},
+                        shift_right
+                    ]),
+                    {cont, Formatter2};
+                true when Size =:= 1 andalso Fields =:= [inner] ->
+                    {cont, Formatter1}
+            end;
         {record_elem, Tag, _Index, Field, Value} ->
-            RustField =
-                case {Tag, Field} of
-                    {markdown_point, offset} -> index;
-                    {markdown_point, virtual} -> vs;
-                    _ -> Field
+            Formatter2 =
+                case markdown_debug_types:is_rust_enum(Tag) of
+                    false ->
+                        RustField =
+                            case {Tag, Field} of
+                                {markdown_point, offset} -> index;
+                                {markdown_point, virtual} -> vs;
+                                _ -> Field
+                            end,
+                        markdown_formatter:do(Formatter1, [
+                            {write, "\n"},
+                            write_indent,
+                            {format, "~ts: ", [RustField]}
+                        ]);
+                    true when Field =:= inner ->
+                        RustEnum = markdown_debug_types:record_rust_name(element(1, Value)),
+                        markdown_formatter:do(Formatter1, [
+                            shift_right,
+                            {format, "~ts(\n", [RustEnum]},
+                            write_indent
+                        ])
                 end,
-            Formatter2 = markdown_formatter:do(Formatter1, [
-                {write, "\n"},
-                write_indent,
-                {format, "~ts: ", [RustField]}
-            ]),
             maybe
                 {cont, Formatter3} ?= walk(Value, Formatter2, fun rust_debug_fmt/2),
                 Formatter4 = markdown_formatter:do(Formatter3, [
@@ -956,14 +976,25 @@ rust_debug_fmt(Event, Formatter1) ->
                 ]),
                 {cont, Formatter4}
             end;
-        {record_tail, _Tag, _Size} ->
-            Formatter2 = markdown_formatter:do(Formatter1, [
-                {write, "\n"},
-                shift_left,
-                write_indent,
-                {write, "}"}
-            ]),
-            {cont, Formatter2};
+        {record_tail, Tag, _Size} ->
+            case markdown_debug_types:is_rust_enum(Tag) of
+                false ->
+                    Formatter2 = markdown_formatter:do(Formatter1, [
+                        {write, "\n"},
+                        shift_left,
+                        write_indent,
+                        {write, "}"}
+                    ]),
+                    {cont, Formatter2};
+                true ->
+                    Formatter2 = markdown_formatter:do(Formatter1, [
+                        {write, "\n"},
+                        shift_left,
+                        write_indent,
+                        {write, ")"}
+                    ]),
+                    {cont, Formatter2}
+            end;
         {retry, Value} ->
             Formatter2 = markdown_formatter:do(Formatter1, [
                 {write, "Retry(\n"},

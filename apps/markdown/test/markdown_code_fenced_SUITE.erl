@@ -16,6 +16,8 @@
 
 -behaviour(ct_suite).
 
+-include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
 %% ct_suite callbacks
@@ -544,33 +546,77 @@ test_code_fenced_case_43(_Config) ->
     ok.
 
 test_code_fenced_case_44(_Config) ->
-    % ?assertMatch({ok, <<&Default::default()
-    %     )?/utf8>>}, markdown:to_html(<<to_mdast(
-    %         "```js extra\nconsole.log(1)\nconsole.log(2)\n```"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Code(Code {
-    %             lang: Some("js".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:code(#markdown_mdast_code{
+                        lang = {some, <<"js">>},
+                        meta = {some, <<"extra">>},
+                        value = <<"console.log(1)\nconsole.log(2)">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 4, 4, 45)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 4, 4, 45)}
+            })},
+        markdown:to_mdast(<<"```js extra\nconsole.log(1)\nconsole.log(2)\n```">>, markdown_parse_options:default()),
+        "should support code (fenced) as `Code`s in mdast"
+    ),
     ok.
 
 test_code_fenced_case_45(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("```\nasd"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Code(Code {
-    %             lang: None,
-    %             meta: None,
-    %             value: "asd".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:code(#markdown_mdast_code{
+                        lang = none,
+                        meta = none,
+                        value = <<"asd">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 2, 4, 7)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 2, 4, 7)}
+            })},
+        markdown:to_mdast(<<"```\nasd">>, markdown_parse_options:default()),
+        "should support code (fenced) w/o closing fence in mdast"
+    ),
     ok.
 
 test_code_fenced_case_46(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("```\rasd\r```"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Code(Code {
-    %             lang: None,
-    %             meta: None,
-    %             value: "asd".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:code(#markdown_mdast_code{
+                        lang = none,
+                        meta = none,
+                        value = <<"asd">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 11)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 11)}
+            })},
+        markdown:to_mdast(<<"```\rasd\r```">>, markdown_parse_options:default()),
+        "should support code (fenced) w/o CR line endings"
+    ),
     ok.
 
 test_code_fenced_case_47(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("```\r\nasd\r\n```"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Code(Code {
-    %             lang: None,
-    %             meta: None,
-    %             value: "asd".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:code(#markdown_mdast_code{
+                        lang = none,
+                        meta = none,
+                        value = <<"asd">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 13)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 13)}
+            })},
+        markdown:to_mdast(<<"```\r\nasd\r\n```">>, markdown_parse_options:default()),
+        "should support code (fenced) w/o CR+LF line endings"
+    ),
     ok.

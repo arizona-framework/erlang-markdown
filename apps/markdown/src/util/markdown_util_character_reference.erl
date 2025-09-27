@@ -132,7 +132,12 @@ decode_numeric(Value, Radix) when is_binary(Value) andalso ?is_pos_integer(Radix
     CodePoint = erlang:binary_to_integer(Value, Radix),
     try <<CodePoint/utf8>> of
         <<Char/utf8>> ->
-            <<Char/utf8>>
+            case decode_numeric_is_invalid(Char) of
+                false ->
+                    <<Char/utf8>>;
+                true ->
+                    <<?REPLACEMENT_CHARACTER/utf8>>
+            end
     catch
         error:badarg ->
             <<?REPLACEMENT_CHARACTER/utf8>>
@@ -194,3 +199,21 @@ Panics if `marker` is not `b'&'`, `b'x'`, or `b'#'`.
 value_test($&, Byte) -> ?is_ascii_alphanumeric(Byte);
 value_test($x, Byte) -> ?is_ascii_hexdigit(Byte);
 value_test($#, Byte) -> ?is_ascii_digit(Byte).
+
+%%%-----------------------------------------------------------------------------
+%%% Internal functions
+%%%-----------------------------------------------------------------------------
+
+%% @private
+-spec decode_numeric_is_invalid(Char) -> IsInvalid when Char :: char(), IsInvalid :: boolean().
+decode_numeric_is_invalid(C) when
+    (C >= $\0 andalso C =< $\x08) orelse (C =:= $\x0B) orelse (C >= $\x0E andalso C =< $\x1F)
+->
+    %% C0 except for HT, LF, FF, CR, space.
+    true;
+decode_numeric_is_invalid(C) when (C >= $\x7F andalso C =< $\x9F) ->
+    %% Control character (DEL) of C0, and C1 controls.
+    true;
+decode_numeric_is_invalid(_) ->
+    %% Lone surrogates, noncharacters, and out of range are handled by Erlang.
+    false.

@@ -7,50 +7,48 @@
 %%%
 %%% @author Andrew Bennett <potatosaladx@meta.com>
 %%% @copyright (c) Meta Platforms, Inc. and affiliates.
-%%% Created :  04 Mar 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%% Created :  26 Jun 2025 by Andrew Bennett <potatosaladx@meta.com>
 %%%-----------------------------------------------------------------------------
 %%% % @format
--module(markdown_mdast_node).
+-module(markdown_mdast_list_item).
 -moduledoc """
+List item.
 
+```markdown
+> | * a
+    ^^^
+```
 """.
 -compile(warn_missing_spec_all).
 -oncall("whatsapp_clr").
 
 -include_lib("markdown/include/markdown_mdast.hrl").
 
-%% New API
+%% API
 -export([
-    blockquote/1,
-    root/1
+    new/0
 ]).
 
 %% Types
--type inner() ::
-    % Document:
-    %% Root.
-    markdown_mdast_root:t()
-    % Container:
-    %% Block quote.
-    | markdown_mdast_blockquote:t().
--type t() :: #markdown_mdast_node{}.
+-type t() :: #markdown_mdast_list_item{}.
 
 -export_type([
-    inner/0,
     t/0
 ]).
 
 %%%=============================================================================
-%%% New API functions
+%%% API functions
 %%%=============================================================================
 
--spec blockquote(Inner) -> Node when Inner :: markdown_mdast_blockquote:t(), Node :: t().
-blockquote(Inner = #markdown_mdast_blockquote{}) ->
-    #markdown_mdast_node{inner = Inner}.
-
--spec root(Inner) -> Node when Inner :: markdown_mdast_root:t(), Node :: t().
-root(Inner = #markdown_mdast_root{}) ->
-    #markdown_mdast_node{inner = Inner}.
+-spec new() -> ListItem when
+    ListItem :: t().
+new() ->
+    #markdown_mdast_list_item{
+        children = markdown_vec:new(),
+        position = none,
+        spread = false,
+        checked = none
+    }.
 
 %%%-----------------------------------------------------------------------------
 %%% Internal functions

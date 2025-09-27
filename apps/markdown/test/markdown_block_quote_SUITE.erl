@@ -16,6 +16,8 @@
 
 -behaviour(ct_suite).
 
+-include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
 %% ct_suite callbacks
@@ -440,11 +442,30 @@ test_block_quote_case_33(_Config) ->
     ok.
 
 test_block_quote_case_34(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("> a"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Blockquote(Blockquote {
-    %             children: vec![Node::Paragraph(Paragraph {
-    %                 children: vec![Node::Text(Text {
-    %                     value: "a".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:blockquote(#markdown_mdast_blockquote{
+                        children = ?'vec!'([
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"a">>,
+                                        position = {some, markdown_unist_position:new(1, 3, 2, 1, 4, 3)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(1, 3, 2, 1, 4, 3)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+            })},
+        markdown:to_mdast(<<"> a">>, markdown_parse_options:default()),
+        "should support block quotes as `BlockQuote`s in mdast"
+    ),
     ok.
 
 %%%-----------------------------------------------------------------------------

@@ -16,6 +16,8 @@
 
 -behaviour(ct_suite).
 
+-include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
 %% ct_suite callbacks
@@ -166,7 +168,7 @@ end_per_testcase(_TestCase, _Config) ->
 
 test_character_reference_case_1(_Config) ->
     ?assertMatch(
-        {ok, <<"<p>\u{a0} &amp; © Æ Ď\n¾ ℋ ⅆ\n∲ ≧̸</p>"/utf8>>},
+        {ok, <<"<p>\x{a0} &amp; © Æ Ď\n¾ ℋ ⅆ\n∲ ≧̸</p>"/utf8>>},
         markdown:to_html(
             <<"&nbsp; &amp; &copy; &AElig; &Dcaron;\n&frac34; &HilbertSpace; &DifferentialD;\n&ClockwiseContourIntegral; &ngE;"/utf8>>
         ),
@@ -410,15 +412,26 @@ test_character_reference_case_30(_Config) ->
     ok.
 
 test_character_reference_case_31(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("&nbsp; &amp; &copy; &AElig; &Dcaron;\n&frac34; &HilbertSpace; &DifferentialD;\n&ClockwiseContourIntegral; &ngE;\n&#35; &#1234; &#992; &#0;\n&#X22; &#XD06; &#xcab;"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Paragraph(Paragraph {
-    %             children: vec![Node::Text(Text {
-    %                 value: "\u{a0} & © Æ Ď\n¾ ℋ ⅆ\n∲ ≧̸\n# Ӓ Ϡ �\n\" ആ ಫ".into(),
-    %                 position: Some(Position::new(1, 1, 0, 5, 23, 158))
-    %             }),],
-    %             position: Some(Position::new(1, 1, 0, 5, 23, 158))
-    %         })],
-    %         position: Some(Position::new(1, 1, 0, 5, 23, 158))
-    %     }),
-    %     "should support character references as `Text`s in mdast"),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                        children = ?'vec!'([
+                            markdown_mdast_node:text(#markdown_mdast_text{
+                                value = <<"\x{a0} & © Æ Ď\n¾ ℋ ⅆ\n∲ ≧̸\n# Ӓ Ϡ �\n\" ആ ಫ"/utf8>>,
+                                position = {some, markdown_unist_position:new(1, 1, 0, 5, 23, 158)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 5, 23, 158)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 5, 23, 158)}
+            })},
+        markdown:to_mdast(
+            <<"&nbsp; &amp; &copy; &AElig; &Dcaron;\n&frac34; &HilbertSpace; &DifferentialD;\n&ClockwiseContourIntegral; &ngE;\n&#35; &#1234; &#992; &#0;\n&#X22; &#XD06; &#xcab;"/utf8>>,
+            markdown_parse_options:default()
+        ),
+        "should support character references as `Text`s in mdast"
+    ),
     ok.

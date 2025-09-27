@@ -16,6 +16,8 @@
 
 -behaviour(ct_suite).
 
+-include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
 %% ct_suite callbacks
@@ -371,7 +373,17 @@ test_thematic_break_case_28(_Config) ->
     ok.
 
 test_thematic_break_case_29(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("***"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::ThematicBreak(ThematicBreak {
-    %             position: Some(Position::new(1, 1, 0, 1, 4, 3),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:thematic_break(#markdown_mdast_thematic_break{
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+            })},
+        markdown:to_mdast(<<"***">>, markdown_parse_options:default()),
+        "should support thematic breaks as `ThematicBreak`s in mdast"
+    ),
     ok.

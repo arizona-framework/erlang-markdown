@@ -52,6 +52,7 @@
     remove_last/2,
     reverse/1,
     set/3,
+    set_last/2,
     size/1,
     sort/1,
     sort_by/2,
@@ -333,6 +334,11 @@ push(Vec1 = #markdown_vec{items = Items1, size = Size1}, Item) ->
 set(Vec1 = #markdown_vec{items = Items1, size = Size}, Index, Item) when Index >= 0 andalso Index < Size ->
     Items2 = array:set(Index, {some, Item}, Items1),
     Vec2 = Vec1#markdown_vec{items = Items2},
+    Vec2.
+
+-spec set_last(Vec, Item) -> Vec when Vec :: t(Item), Item :: item().
+set_last(Vec1 = #markdown_vec{size = Size}, Item) when Size >= 0 ->
+    Vec2 = set(Vec1, ?MODULE:size(Vec1) - 1, Item),
     Vec2.
 
 -spec reduce(Vec | Iterator, AccIn, Function) -> AccOut when

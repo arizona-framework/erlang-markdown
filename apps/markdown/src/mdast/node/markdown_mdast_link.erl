@@ -7,16 +7,16 @@
 %%%
 %%% @author Andrew Bennett <potatosaladx@meta.com>
 %%% @copyright (c) Meta Platforms, Inc. and affiliates.
-%%% Created :  04 Mar 2025 by Andrew Bennett <potatosaladx@meta.com>
+%%% Created :  26 Jun 2025 by Andrew Bennett <potatosaladx@meta.com>
 %%%-----------------------------------------------------------------------------
 %%% % @format
--module(markdown_mdast_root).
+-module(markdown_mdast_link).
 -moduledoc """
-Document.
+Link.
 
 ```markdown
-> | a
-    ^
+> | [a](b)
+    ^^^^^^
 ```
 """.
 -compile(warn_missing_spec_all).
@@ -24,22 +24,31 @@ Document.
 
 -include_lib("markdown/include/markdown_mdast.hrl").
 
-%% New API
-% -export([
-%     expression/1,
-%     literal/1
-% ]).
+%% API
+-export([
+    new/0
+]).
 
 %% Types
--type t() :: #markdown_mdast_root{}.
+-type t() :: #markdown_mdast_link{}.
 
 -export_type([
     t/0
 ]).
 
 %%%=============================================================================
-%%% New API functions
+%%% API functions
 %%%=============================================================================
+
+-spec new() -> Link when
+    Link :: t().
+new() ->
+    #markdown_mdast_link{
+        children = markdown_vec:new(),
+        position = none,
+        url = <<>>,
+        title = none
+    }.
 
 %%%-----------------------------------------------------------------------------
 %%% Internal functions

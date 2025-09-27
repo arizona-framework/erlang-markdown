@@ -16,6 +16,8 @@
 
 -behaviour(ct_suite).
 
+-include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
 %% ct_suite callbacks
@@ -391,11 +393,20 @@ test_code_indented_case_28(_Config) ->
     ok.
 
 test_code_indented_case_29(_Config) ->
-    % ?assertMatch({ok, <<&Default::default()
-    %     )?/utf8>>}, markdown:to_html(<<to_mdast(
-    %         "\tconsole.log(1)\n    console.log(2)\n"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Code(Code {
-    %             lang: None,
-    %             meta: None,
-    %             value: "console.log(1)\nconsole.log(2)".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:code(#markdown_mdast_code{
+                        lang = none,
+                        meta = none,
+                        value = <<"console.log(1)\nconsole.log(2)">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 2, 19, 34)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 3, 1, 35)}
+            })},
+        markdown:to_mdast(<<"\tconsole.log(1)\n    console.log(2)\n">>, markdown_parse_options:default()),
+        "should support code (indented) as `Code`s in mdast"
+    ),
     ok.

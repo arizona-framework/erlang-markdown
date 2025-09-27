@@ -67,7 +67,7 @@ assert_eq!(sanitize("https://a👍b.c/%20/%"), "https://a%F0%9F%91%8Db.c/%20/%25
 
 ## References
 
-*   [`micromark-util-sanitize-uri` in `micromark`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-sanitize-uri)
+* [`micromark-util-sanitize-uri` in `micromark`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-sanitize-uri)
 """.
 -spec sanitize(Value) -> SanitizedValue when Value :: unicode:unicode_binary(), SanitizedValue :: binary().
 sanitize(Value) when is_binary(Value) ->
@@ -97,7 +97,7 @@ assert_eq!(sanitize_with_protocols("https://a👍b.c/%20/%", &["http", "https"])
 
 ## References
 
-*   [`micromark-util-sanitize-uri` in `micromark`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-sanitize-uri)
+* [`micromark-util-sanitize-uri` in `micromark`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-sanitize-uri)
 """.
 -spec sanitize_with_protocols(Value, Protocols) -> SanitizedValue when
     Value :: unicode:unicode_binary(), Protocols :: protocols(), SanitizedValue :: binary().
@@ -161,7 +161,7 @@ assert_eq!(sanitize_uri("https://a👍b.c/%20/%"), "https://a%F0%9F%91%8Db.c/%20
 
 ## References
 
-*   [`micromark-util-sanitize-uri` in `micromark`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-sanitize-uri)
+* [`micromark-util-sanitize-uri` in `micromark`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-sanitize-uri)
 
 [definition]: crate::construct::definition
 [label_end]: crate::construct::label_end
@@ -184,7 +184,8 @@ normalize_loop(<<C/utf8, Rest/bytes>>, Acc1) when
         not (C =:= $! orelse C =:= $# orelse C =:= $$ orelse (C >= $& andalso C =< $;) orelse C =:= $= orelse
             (C >= $? andalso C =< $Z) orelse C =:= $_ orelse (C >= $a andalso C =< $z) orelse C =:= $~)
 ->
-    Acc2 = <<Acc1/bytes, "%", (binary:encode_hex(<<C/utf8>>, uppercase))/bytes>>,
+    Encoded = <<<<"%", (binary:encode_hex(<<Byte:8>>, uppercase))/bytes>> || <<Byte:8>> <= <<C/utf8>>>>,
+    Acc2 = <<Acc1/bytes, Encoded/bytes>>,
     normalize_loop(Rest, Acc2);
 normalize_loop(<<C/utf8, Rest/bytes>>, Acc1) ->
     Acc2 = <<Acc1/bytes, C/utf8>>,

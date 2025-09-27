@@ -16,6 +16,8 @@
 
 -behaviour(ct_suite).
 
+-include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
 %% ct_suite callbacks
@@ -354,23 +356,75 @@ test_code_text_case_25(_Config) ->
     ok.
 
 test_code_text_case_26(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("a `alpha` b."/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Paragraph(Paragraph {
-    %             children: vec![
-    %                 Node::Text(Text {
-    %                     value: "a ".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                        children = ?'vec!'([
+                            markdown_mdast_node:text(#markdown_mdast_text{
+                                value = <<"a ">>,
+                                position = {some, markdown_unist_position:new(1, 1, 0, 1, 3, 2)}
+                            }),
+                            markdown_mdast_node:inline_code(#markdown_mdast_inline_code{
+                                value = <<"alpha">>,
+                                position = {some, markdown_unist_position:new(1, 3, 2, 1, 10, 9)}
+                            }),
+                            markdown_mdast_node:text(#markdown_mdast_text{
+                                value = <<" b.">>,
+                                position = {some, markdown_unist_position:new(1, 10, 9, 1, 13, 12)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 13, 12)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 13, 12)}
+            })},
+        markdown:to_mdast(<<"a `alpha` b.">>, markdown_parse_options:default()),
+        "should support code (text) as `InlineCode`s in mdast"
+    ),
     ok.
 
 test_code_text_case_27(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("`  alpha `"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Paragraph(Paragraph {
-    %             children: vec![Node::InlineCode(InlineCode {
-    %                 value: " alpha".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                        children = ?'vec!'([
+                            markdown_mdast_node:inline_code(#markdown_mdast_inline_code{
+                                value = <<" alpha">>,
+                                position = {some, markdown_unist_position:new(1, 1, 0, 1, 11, 10)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 11, 10)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 11, 10)}
+            })},
+        markdown:to_mdast(<<"`  alpha `">>, markdown_parse_options:default()),
+        "should strip one space from each side of `InlineCode` if the value starts and ends with space"
+    ),
     ok.
 
 test_code_text_case_28(_Config) ->
-    % ?assertMatch({ok, <<&Default::default())?/utf8>>}, markdown:to_html(<<to_mdast("`   `"/utf8>>), Node::Root(Root {
-    %         children: vec![Node::Paragraph(Paragraph {
-    %             children: vec![Node::InlineCode(InlineCode {
-    %                 value: "   ".into(),
+    ?assertEqual(
+        {ok,
+            markdown_mdast_node:root(#markdown_mdast_root{
+                children = ?'vec!'([
+                    markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                        children = ?'vec!'([
+                            markdown_mdast_node:inline_code(#markdown_mdast_inline_code{
+                                value = <<"   ">>,
+                                position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+            })},
+        markdown:to_mdast(<<"`   `">>, markdown_parse_options:default()),
+        "should not strip any whitespace if `InlineCode` is all whitespace"
+    ),
     ok.

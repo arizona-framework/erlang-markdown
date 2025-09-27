@@ -49,7 +49,7 @@ assert_eq!(encode("I <3 🦀"), "I &lt;3 🦀");
 
 ## References
 
-*   [`micromark-util-encode` in `micromark`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-encode)
+* [`micromark-util-encode` in `micromark`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-encode)
 """.
 -spec encode(Value, EncodeHtml) -> UnicodeValue when
     Value :: binary(), EncodeHtml :: boolean(), UnicodeValue :: unicode:unicode_binary().
@@ -72,12 +72,12 @@ encode(Value, EncodeHtml) when is_binary(Value) andalso is_boolean(EncodeHtml) -
 encode_loop(<<Byte:8, Bytes/bytes>>, Start1, Index1, Value, EncodeHtml, Acc1) ->
     case Byte of
         _ when
-            Byte =:= 0 orelse
+            Byte =:= $\x00 orelse
                 (EncodeHtml =:= true andalso (Byte =:= $& orelse Byte =:= $" orelse Byte =:= $< orelse Byte =:= $>))
         ->
             Escaped =
                 case Byte of
-                    0 -> <<"�"/utf8>>;
+                    $\x00 -> <<"�"/utf8>>;
                     $& -> <<"&amp;">>;
                     $" -> <<"&quot;">>;
                     $< -> <<"&lt;">>;

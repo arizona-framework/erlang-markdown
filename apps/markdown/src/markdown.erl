@@ -35,12 +35,15 @@
     record_defs/0,
     record_print_fun/0,
     record_print_fun/1,
+    mdast/0,
+    mdast/2,
     test/0,
     test/1,
     test/2,
     test/3,
     to_html/1,
-    to_html_with_options/2
+    to_html_with_options/2,
+    to_mdast/2
 ]).
 
 %% Internal API
@@ -242,6 +245,20 @@ record_print_fun(RecDefs) ->
         end
     end.
 
+-spec mdast() -> dynamic().
+mdast() ->
+    mdast(doc(), #{}).
+
+-spec mdast(dynamic(), dynamic()) -> dynamic().
+mdast(Value, ParseOptions) ->
+    case test(Value, ParseOptions) of
+        {ok, {Events, ParseState}} ->
+            Bytes = markdown_parse_state:bytes(ParseState),
+            markdown_mdast:compile(Events, Bytes);
+        Error = {error, _Message} ->
+            Error
+    end.
+
 -spec test() -> dynamic().
 test() ->
     test(doc(), #{}, #{}).
@@ -345,6 +362,49 @@ to_html_with_options(MarkdownInput, Options = #markdown_options{}) when is_binar
 to_html_with_options(MarkdownInput, CastableOptions) when is_binary(MarkdownInput) ->
     Options = markdown_options:new(CastableOptions),
     to_html_with_options(MarkdownInput, Options).
+
+-doc """
+Turn markdown into a syntax tree.
+
+## Errors
+
+`to_mdast()` never errors with normal markdown because markdown does not
+have syntax errors, so feel free to `unwrap()`.
+However, MDX does have syntax errors.
+When MDX is turned on, there are several errors that can occur with how
+JSX, expressions, or ESM are written.
+
+## Examples
+
+```
+use markdown::{to_mdast, ParseOptions};
+# fn main() -> Result<(), markdown::message::Message> {
+
+let tree = to_mdast("# Hey, *you*!", &ParseOptions::default())?;
+
+println!("{:?}", tree);
+// => Root { children: [Heading { children: [Text { value: "Hey, ", position: Some(1:3-1:8 (2-7)) }, Emphasis { children: [Text { value: "you", position: Some(1:9-1:12 (8-11)) }], position: Some(1:8-1:13 (7-12)) }, Text { value: "!", position: Some(1:13-1:14 (12-13)) }], position: Some(1:1-1:14 (0-13)), depth: 1 }], position: Some(1:1-1:14 (0-13)) }
+# Ok(())
+# }
+```
+""".
+-spec to_mdast(MarkdownInput, ParseOptions) -> Result when
+    MarkdownInput :: binary(),
+    ParseOptions :: markdown_parse_options:t() | markdown_parse_options:castable(),
+    Result :: {ok, Node} | {error, Message},
+    Node :: markdown_mdast_node:t(),
+    Message :: markdown_message:t().
+to_mdast(MarkdownInput, ParseOptions = #markdown_parse_options{}) when is_binary(MarkdownInput) ->
+    case markdown_parser:parse(MarkdownInput, ParseOptions) of
+        {ok, {Events, ParseState}} ->
+            Bytes = markdown_parse_state:bytes(ParseState),
+            markdown_mdast:compile(Events, Bytes);
+        Error = {error, _Message} ->
+            Error
+    end;
+to_mdast(MarkdownInput, CastableParseOptions) when is_binary(MarkdownInput) ->
+    ParseOptions = markdown_parse_options:new(CastableParseOptions),
+    to_mdast(MarkdownInput, ParseOptions).
 
 %%%=============================================================================
 %%% Internal API functions

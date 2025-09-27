@@ -34,6 +34,56 @@
     stops :: markdown_vec:t(markdown_mdast_stop:t())
 }).
 
+%% Block quote.
+%%
+%% ```markdown
+%% > | > a
+%%     ^^^
+%% ```
+-record(markdown_mdast_blockquote, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Break.
+%%
+%% ```markdown
+%% > | a\
+%%      ^
+%%   | b
+%% ```
+-record(markdown_mdast_break, {
+    %% Void.
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Code (flow).
+%%
+%% ```markdown
+%% > | ~~~
+%%     ^^^
+%% > | a
+%%     ^
+%% > | ~~~
+%%     ^^^
+%% ```
+-record(markdown_mdast_code, {
+    %% Text.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Extra.
+    %%% The language of computer code being marked up.
+    lang :: markdown_option:t(binary()),
+    %%% Custom info relating to the node.
+    meta :: markdown_option:t(binary())
+}).
+
 %% Context used to compile markdown.
 -record(markdown_mdast_compile_context, {
     %% Static info.
@@ -58,6 +108,230 @@
     }),
     %%% Current event index.
     index = 0 :: markdown_types:usize()
+}).
+
+%% Definition.
+%%
+%% ```markdown
+%% > | [a]: b
+%%     ^^^^^^
+%% ```
+-record(markdown_mdast_definition, {
+    %% Void.
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Resource.
+    %%% URL to the referenced resource.
+    url :: binary(),
+    %%% Advisory info for the resource, such as something that would be
+    %%% appropriate for a tooltip.
+    title :: markdown_option:t(binary()),
+    %% Association.
+    %%% Value that can match another node.
+    %%% `identifier` is a source value: character escapes and character references
+    %%% are *not* parsed.
+    %%% Its value must be normalized.
+    identifier :: binary(),
+    %%% `label` is a string value: it works just like `title` on a link or a
+    %%% `lang` on code: character escapes and character references are parsed.
+    %%%
+    %%% To normalize a value, collapse markdown whitespace (`[\t\n\r ]+`) to a
+    %%% space, trim the optional initial and/or final space, and perform
+    %%% case-folding.
+    label :: markdown_option:t(binary())
+}).
+
+%% GFM: delete.
+%%
+%% ```markdown
+%% > | ~~a~~
+%%     ^^^^^
+%% ```
+-record(markdown_mdast_delete, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Emphasis.
+%%
+%% ```markdown
+%% > | *a*
+%%     ^^^
+%% ```
+-record(markdown_mdast_emphasis, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% GFM: footnote definition.
+%%
+%% ```markdown
+%% > | [^a]: b
+%%     ^^^^^^^
+%% ```
+-record(markdown_mdast_footnote_definition, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Association.
+    %%% Value that can match another node.
+    %%% `identifier` is a source value: character escapes and character references
+    %%% are *not* parsed.
+    %%% Its value must be normalized.
+    identifier :: binary(),
+    %%% `label` is a string value: it works just like `title` on a link or a
+    %%% `lang` on code: character escapes and character references are parsed.
+    %%%
+    %%% To normalize a value, collapse markdown whitespace (`[\t\n\r ]+`) to a
+    %%% space, trim the optional initial and/or final space, and perform
+    %%% case-folding.
+    label :: markdown_option:t(binary())
+}).
+
+%% GFM: footnote reference.
+%%
+%% ```markdown
+%% > | [^a]
+%%     ^^^^
+%% ```
+-record(markdown_mdast_footnote_reference, {
+    %% Void.
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Association.
+    %%% Value that can match another node.
+    %%% `identifier` is a source value: character escapes and character references
+    %%% are *not* parsed.
+    %%% Its value must be normalized.
+    identifier :: binary(),
+    %%% `label` is a string value: it works just like `title` on a link or a
+    %%% `lang` on code: character escapes and character references are parsed.
+    %%%
+    %%% To normalize a value, collapse markdown whitespace (`[\t\n\r ]+`) to a
+    %%% space, trim the optional initial and/or final space, and perform
+    %%% case-folding.
+    label :: markdown_option:t(binary())
+}).
+
+%% Heading.
+%%
+%% ```markdown
+%% > | # a
+%%     ^^^
+%% ```
+-record(markdown_mdast_heading, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Extra.
+    %%% Rank (between `1` and `6`, both including).
+    depth :: markdown_types:u8()
+}).
+
+%% Html (flow or phrasing).
+%%
+%% ```markdown
+%% > | <a>
+%%     ^^^
+%% ```
+-record(markdown_mdast_html, {
+    %% Text.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Image.
+%%
+%% ```markdown
+%% > | ![a](b)
+%%     ^^^^^^^
+%% ```
+-record(markdown_mdast_image, {
+    %% Void.
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Alternative.
+    %%% Equivalent content for environments that cannot represent the node as
+    %%% intended.
+    alt :: binary(),
+    %% Resource.
+    %%% URL to the referenced resource.
+    url :: binary(),
+    %%% Advisory info for the resource, such as something that would be
+    %%% appropriate for a tooltip.
+    title :: markdown_option:t(binary())
+}).
+
+%% Image reference.
+%%
+%% ```markdown
+%% > | ![a]
+%%     ^^^^
+%% ```
+-record(markdown_mdast_image_reference, {
+    %% Void.
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Alternative.
+    %%% Equivalent content for environments that cannot represent the node as
+    %%% intended.
+    alt :: binary(),
+    %% Reference.
+    %%% Explicitness of a reference.
+    reference_kind :: markdown_mdast_reference:kind(),
+    %% Association.
+    %%% Value that can match another node.
+    %%% `identifier` is a source value: character escapes and character references
+    %%% are *not* parsed.
+    %%% Its value must be normalized.
+    identifier :: binary(),
+    %%% `label` is a string value: it works just like `title` on a link or a
+    %%% `lang` on code: character escapes and character references are parsed.
+    %%%
+    %%% To normalize a value, collapse markdown whitespace (`[\t\n\r ]+`) to a
+    %%% space, trim the optional initial and/or final space, and perform
+    %%% case-folding.
+    label :: markdown_option:t(binary())
+}).
+
+%% Code (phrasing).
+%%
+%% ```markdown
+%% > | `a`
+%%     ^^^
+%% ```
+-record(markdown_mdast_inline_code, {
+    %% Text.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Math (phrasing).
+%%
+%% ```markdown
+%% > | $a$
+%%     ^^^
+%% ```
+-record(markdown_mdast_inline_math, {
+    %% Text.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
 }).
 
 %% Info on a tag.
@@ -91,6 +365,137 @@
     'end' :: markdown_unist_point:t()
 }).
 
+%% Link.
+%%
+%% ```markdown
+%% > | [a](b)
+%%     ^^^^^^
+%% ```
+-record(markdown_mdast_link, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Resource.
+    %%% URL to the referenced resource.
+    url :: binary(),
+    %%% Advisory info for the resource, such as something that would be
+    %%% appropriate for a tooltip.
+    title :: markdown_option:t(binary())
+}).
+
+%% Link reference.
+%%
+%% ```markdown
+%% > | [a]
+%%     ^^^
+%% ```
+-record(markdown_mdast_link_reference, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Reference.
+    %%% Explicitness of a reference.
+    reference_kind :: markdown_mdast_reference:kind(),
+    %% Association.
+    %%% Value that can match another node.
+    %%% `identifier` is a source value: character escapes and character references
+    %%% are *not* parsed.
+    %%% Its value must be normalized.
+    identifier :: binary(),
+    %%% `label` is a string value: it works just like `title` on a link or a
+    %%% `lang` on code: character escapes and character references are parsed.
+    %%%
+    %%% To normalize a value, collapse markdown whitespace (`[\t\n\r ]+`) to a
+    %%% space, trim the optional initial and/or final space, and perform
+    %%% case-folding.
+    label :: markdown_option:t(binary())
+}).
+
+%% List.
+%%
+%% ```markdown
+%% > | * a
+%%     ^^^
+%% ```
+-record(markdown_mdast_list, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Extra.
+    %%% Ordered (`true`) or unordered (`false`).
+    ordered :: boolean(),
+    %%% Starting number of the list.
+    %%% `none` when unordered.
+    start :: markdown_option:t(markdown_types:u32()),
+    %%% One or more of its children are separated with a blank line from its
+    %%% siblings (when `true`), or not (when `false`).
+    spread :: boolean()
+}).
+
+%% List item.
+%%
+%% ```markdown
+%% > | * a
+%%     ^^^
+%% ```
+-record(markdown_mdast_list_item, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Extra.
+    %%% The item contains two or more children separated by a blank line
+    %%% (when `true`), or not (when `false`).
+    spread :: boolean(),
+    %%% GFM: whether the item is done (when `true`), not done (when `false`),
+    %%% or indeterminate or not applicable (`none`).
+    checked :: markdown_option:t(boolean())
+}).
+
+%% Math (flow).
+%%
+%% ```markdown
+%% > | $$
+%%     ^^
+%% > | a
+%%     ^
+%% > | $$
+%%     ^^
+%% ```
+-record(markdown_mdast_math, {
+    %% Text.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Extra.
+    %%% Custom info relating to the node.
+    meta :: markdown_option:t(binary())
+}).
+
+%% MDX: expression (flow).
+%%
+%% ```markdown
+%% > | {a}
+%%     ^^^
+%% ```
+-record(markdown_mdast_mdx_flow_expression, {
+    %% Text.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Custom data on where each slice of `value` came from.
+    stops :: markdown_vec:t(markdown_mdast_stop:t())
+}).
+
 %% MDX: JSX attribute.
 %%
 %% ```markdown
@@ -120,9 +525,97 @@
     stops :: markdown_vec:t(markdown_mdast_stop:t())
 }).
 
+%% MDX: JSX element (container).
+%%
+%% ```markdown
+%% > | <a />
+%%     ^^^^^
+%% ```
+-record(markdown_mdast_mdx_jsx_flow_element, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% JSX element.
+    %%% Name.
+    %%%
+    %%% Fragments have no name.
+    name :: markdown_option:t(binary()),
+    %%% Attributes.
+    attributes :: markdown_vec:t(markdown_mdast_attribute_content:t())
+}).
+
+%% MDX: JSX element (text).
+%%
+%% ```markdown
+%% > | <a />.
+%%     ^^^^^
+%% ```
+-record(markdown_mdast_mdx_jsx_text_element, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% JSX element.
+    %%% Name.
+    %%%
+    %%% Fragments have no name.
+    name :: markdown_option:t(binary()),
+    %%% Attributes.
+    attributes :: markdown_vec:t(markdown_mdast_attribute_content:t())
+}).
+
+%% MDX: expression (text).
+%%
+%% ```markdown
+%% > | a {b}
+%%       ^^^
+%% ```
+-record(markdown_mdast_mdx_text_expression, {
+    %% Literal.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Custom data on where each slice of `value` came from.
+    stops :: markdown_vec:t(markdown_mdast_stop:t())
+}).
+
+%% MDX: ESM.
+%%
+%% ```markdown
+%% > | import a from 'b'
+%%     ^^^^^^^^^^^^^^^^^
+%% ```
+-record(markdown_mdast_mdxjs_esm, {
+    %% Literal.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Custom data on where each slice of `value` came from.
+    stops :: markdown_vec:t(markdown_mdast_stop:t())
+}).
+
 %% Nodes.
 -record(markdown_mdast_node, {
     inner :: markdown_mdast_node:inner()
+}).
+
+%% Paragraph.
+%%
+%% ```markdown
+%% > | a
+%%     ^
+%% ```
+-record(markdown_mdast_paragraph, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
 }).
 
 -record(markdown_mdast_root, {
@@ -145,6 +638,129 @@
 -record(markdown_mdast_stop, {
     relative :: non_neg_integer(),
     absolute :: non_neg_integer()
+}).
+
+%% Strong.
+%%
+%% ```markdown
+%% > | **a**
+%%     ^^^^^
+%% ```
+-record(markdown_mdast_strong, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% GFM: table.
+%%
+%% ```markdown
+%% > | | a |
+%%     ^^^^^
+%% > | | - |
+%%     ^^^^^
+%% ```
+-record(markdown_mdast_table, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t()),
+    %% Extra.
+    %%% Represents how cells in columns are aligned.
+    align :: markdown_vec:t(markdown_mdast_align:kind())
+}).
+
+%% GFM: table cell.
+%%
+%% ```markdown
+%% > | | a |
+%%     ^^^^^
+%% ```
+-record(markdown_mdast_table_cell, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% GFM: table row.
+%%
+%% ```markdown
+%% > | | a |
+%%     ^^^^^
+%% ```
+-record(markdown_mdast_table_row, {
+    %% Parent.
+    %%% Content model.
+    children :: markdown_vec:t(markdown_mdast_node:t()),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Text.
+%%
+%% ```markdown
+%% > | a
+%%     ^
+%% ```
+-record(markdown_mdast_text, {
+    %% Parent.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Thematic break.
+%%
+%% ```markdown
+%% > | ***
+%%     ^^^
+%% ```
+-record(markdown_mdast_thematic_break, {
+    %% Void.
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Frontmatter: toml.
+%%
+%% ```markdown
+%% > | +++
+%%     ^^^
+%% > | a: b
+%%     ^^^^
+%% > | +++
+%%     ^^^
+%% ```
+-record(markdown_mdast_toml, {
+    %% Void.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
+}).
+
+%% Frontmatter: yaml.
+%%
+%% ```markdown
+%% > | ---
+%%     ^^^
+%% > | a: b
+%%     ^^^^
+%% > | ---
+%%     ^^^
+%% ```
+-record(markdown_mdast_yaml, {
+    %% Void.
+    %%% Content model.
+    value :: binary(),
+    %%% Positional info.
+    position :: markdown_option:t(markdown_unist_position:t())
 }).
 
 -endif.
