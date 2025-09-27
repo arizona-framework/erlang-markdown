@@ -33,8 +33,8 @@ export ARCH
 endif
 
 # Configuration.
-ELP_VERSION ?= 2025-01-21
-ELP_OTP_VERSION ?= 27.1
+ELP_VERSION ?= 2025-09-01
+ELP_OTP_VERSION ?= 28
 
 ELP ?= $(CURDIR)/elp
 export ELP
@@ -79,7 +79,7 @@ distclean-eqwalizer:
 .PHONY: erlfmt erlfmt-check distclean-erlfmt format
 
 # Configuration.
-ERLFMT_VERSION ?= 1.6.0
+ERLFMT_VERSION ?= 1.7.0
 
 ERLFMT ?= $(CURDIR)/erlfmt
 export ERLFMT

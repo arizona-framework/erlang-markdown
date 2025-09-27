@@ -19,9 +19,9 @@
 
 %% Macros
 -define(is_markdown_record_name(X),
-(<<{% set record_name_macro_continue = joiner(" orelse ") %}>>
-<<{% for record in ctx.records.record_list %}>>
-    <<{{ record_name_macro_continue() }}>>(X) =:= <<{{ record.name }}>>
-<<{% endfor %}>>)).
+(~J{ set record_name_macro_continue = joiner(" orelse ") }.
+~J{ for record in ctx.records.record_list }.
+    ~J< record_name_macro_continue() >.(X) =:= ~J< record.name >.
+~J{ endfor }.)).
 
 -endif.

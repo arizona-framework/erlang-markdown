@@ -23,19 +23,19 @@ Resolve events.
 %% Call API
 -export([
     call/2,
-<<{% set name_api_continue = joiner(",") %}>>
-<<{% for name in ctx.resolve.name_list %}>>
-    <<{{ name_api_continue() }}>><<{{ name.key }}>>/1
-<<{% endfor %}>>
+~J{ set name_api_continue = joiner(",") }.
+~J{ for name in ctx.resolve.name_list }.
+    ~J< name_api_continue() >.~J< name.key >./1
+~J{ endfor }.
 ]).
 
 %% Types
 -doc "Names of resolvers.".
 -type name() ::
-<<{% set name_type_continue = joiner("| ") %}>>
-<<{% for name in ctx.resolve.name_list %}>>
-    <<{{ name_type_continue() }}>><<{{ name.key }}>>
-<<{% endfor %}>>.
+~J{ set name_type_continue = joiner("| ") }.
+~J{ for name in ctx.resolve.name_list }.
+    ~J< name_type_continue() >.~J< name.key >.
+~J{ endfor }..
 
 -export_type([
     name/0
@@ -67,15 +67,15 @@ call(Tokenizer1 = #markdown_tokenizer{}, Name) when ?is_markdown_resolve_name(Na
     % io:format("\n\n[~w:~w] AFTER resolve:~ts\n~ts\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Name), markdown_debug:rust_debug_string(Result), TokenizerString]),
     {Tokenizer2, Result}.
 
-<<{% for name in ctx.resolve.name_list %}>>
--spec <<{{ name.key }}>>(Tokenizer) -> {Tokenizer, Result} when
+~J{ for name in ctx.resolve.name_list }.
+-spec ~J< name.key >.(Tokenizer) -> {Tokenizer, Result} when
     Tokenizer :: markdown_tokenizer:t(),
     Result :: {ok, OptionSubresult} | {error, Message},
     OptionSubresult :: markdown_types:option(Subresult),
     Subresult :: markdown_subresult:t(),
     Message :: markdown_message:t().
--compile({inline, [<<{{ name.key }}>>/1]}).
-<<{{ name.key }}>>(Tokenizer = #markdown_tokenizer{}) ->
-    markdown_construct_<<{{ name.mod }}>>:'resolve'(Tokenizer).
+-compile({inline, [~J< name.key >./1]}).
+~J< name.key >.(Tokenizer = #markdown_tokenizer{}) ->
+    markdown_construct_~J< name.mod >.:'resolve'(Tokenizer).
 
-<<{% endfor %}>>
+~J{ endfor }.

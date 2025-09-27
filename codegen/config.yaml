@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=./schema.json
+
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # Copyright (c) WhatsApp LLC
 #
@@ -10,14 +12,14 @@ event:
     - key: attention_sequence
       doc: |
         Attention sequence.
-        
+
         > 👉 **Note**: this is used while parsing but compiled away.
     - key: attribute_flow_list
       doc: |
         Attribute list (flow).
-        
+
         ## Example
-        
+
         ```markdown
         > | {.red}
             ^^^^^^
@@ -25,9 +27,9 @@ event:
     - key: attribute_list_data
       doc: |
         Attribute list data.
-        
+
         ## Example
-        
+
         ```markdown
         > | {.red}
              ^^^^
@@ -35,9 +37,9 @@ event:
     - key: attribute_list_marker
       doc: |
         Attribute list marker.
-        
+
         ## Example
-        
+
         ```markdown
         > | {.red}
             ^    ^
@@ -45,9 +47,9 @@ event:
     - key: autolink
       doc: |
         Whole autolink.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -56,9 +58,9 @@ event:
             [`AutolinkProtocol`][Name::AutolinkProtocol]
         *   **Construct**:
             [`autolink`][crate::construct::autolink]
-        
+
         ## Example
-        
+
         ```markdown
         > | <https://example.com> and <admin@example.com>
             ^^^^^^^^^^^^^^^^^^^^^     ^^^^^^^^^^^^^^^^^^^
@@ -66,18 +68,18 @@ event:
     - key: autolink_email
       doc: |
         Email autolink w/o markers.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Autolink`][Name::Autolink]
         *   **Content model**:
             void
         *   **Construct**:
             [`autolink`][crate::construct::autolink]
-        
+
         ## Example
-        
+
         ```markdown
         > | <admin@example.com>
             ^^^^^^^^^^^^^^^^^
@@ -85,18 +87,18 @@ event:
     - key: autolink_marker
       doc: |
         Marker of an autolink.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Autolink`][Name::Autolink]
         *   **Content model**:
             void
         *   **Construct**:
             [`autolink`][crate::construct::autolink]
-        
+
         ## Example
-        
+
         ```markdown
         > | <https://example.com>
             ^                   ^
@@ -104,18 +106,18 @@ event:
     - key: autolink_protocol
       doc: |
         Protocol autolink w/o markers.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Autolink`][Name::Autolink]
         *   **Content model**:
             void
         *   **Construct**:
             [`autolink`][crate::construct::autolink]
-        
+
         ## Example
-        
+
         ```markdown
         > | <https://example.com>
             ^^^^^^^^^^^^^^^^^^^
@@ -123,18 +125,18 @@ event:
     - key: blank_line_ending
       doc: |
         Line ending preceded only by whitespace or nothing at all.
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
             void
         *   **Construct**:
             [`blank_line`][crate::construct::blank_line]
-        
+
         ## Example
-        
+
         ```markdown
         > | ␠␠␊
               ^
@@ -142,9 +144,9 @@ event:
     - key: block_quote
       doc: |
         Whole block quote.
-        
+
         ## Info
-        
+
         *   **Context**:
             [document content][crate::construct::document]
         *   **Content model**:
@@ -152,9 +154,9 @@ event:
             [flow content][crate::construct::flow]
         *   **Construct**:
             [`block_quote`][crate::construct::block_quote]
-        
+
         ## Example
-        
+
         ```markdown
         > | > a
             ^^^
@@ -164,18 +166,18 @@ event:
     - key: block_quote_marker
       doc: |
         Block quote marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`BlockQuotePrefix`][Name::BlockQuotePrefix]
         *   **Content model**:
             void
         *   **Construct**:
             [`block_quote`][crate::construct::block_quote]
-        
+
         ## Example
-        
+
         ```markdown
         > | > a
             ^
@@ -184,9 +186,9 @@ event:
     - key: block_quote_prefix
       doc: |
         Block quote prefix.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`BlockQuote`][Name::BlockQuote]
         *   **Content model**:
@@ -194,9 +196,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`block_quote`][crate::construct::block_quote]
-        
+
         ## Example
-        
+
         ```markdown
         > | > a
             ^^
@@ -205,9 +207,9 @@ event:
     - key: byte_order_mark
       doc: |
         Byte order mark.
-        
+
         ## Info
-        
+
         *   **Context**:
             optional first event
         *   **Content model**:
@@ -217,9 +219,9 @@ event:
     - key: character_escape
       doc: |
         Whole character escape.
-        
+
         ## Info
-        
+
         *   **Context**:
             [string content][crate::construct::string] or
             [text content][crate::construct::text]
@@ -228,9 +230,9 @@ event:
             [`CharacterEscapeValue`][Name::CharacterEscapeValue]
         *   **Construct**:
             [`character_escape`][crate::construct::character_escape]
-        
+
         ## Example
-        
+
         ```markdown
         > | a \- b
               ^^
@@ -238,18 +240,18 @@ event:
     - key: character_escape_marker
       doc: |
         Character escape marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CharacterEscape`][Name::CharacterEscape]
         *   **Content model**:
             void
         *   **Construct**:
             [`character_escape`][crate::construct::character_escape]
-        
+
         ## Example
-        
+
         ```markdown
         > | a \- b
               ^
@@ -257,18 +259,18 @@ event:
     - key: character_escape_value
       doc: |
         Character escape value.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CharacterEscape`][Name::CharacterEscape]
         *   **Content model**:
             void
         *   **Construct**:
             [`character_escape`][crate::construct::character_escape]
-        
+
         ## Example
-        
+
         ```markdown
         > | a \- b
               ^
@@ -276,9 +278,9 @@ event:
     - key: character_reference
       doc: |
         Whole character reference.
-        
+
         ## Info
-        
+
         *   **Context**:
             [string content][crate::construct::string] or
             [text content][crate::construct::text]
@@ -290,9 +292,9 @@ event:
             [`CharacterReferenceValue`][Name::CharacterReferenceValue]
         *   **Construct**:
             [`character_reference`][crate::construct::character_reference]
-        
+
         ## Example
-        
+
         ```markdown
         > | a &amp; b &#8800; c &#x1D306; d
               ^^^^^   ^^^^^^^   ^^^^^^^^^
@@ -300,18 +302,18 @@ event:
     - key: character_reference_marker
       doc: |
         Character reference opening marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CharacterReference`][Name::CharacterReference]
         *   **Content model**:
             void
         *   **Construct**:
             [`character_reference`][crate::construct::character_reference]
-        
+
         ## Example
-        
+
         ```markdown
         > | a &amp; b &#8800; c &#x1D306; d
               ^       ^         ^
@@ -319,18 +321,18 @@ event:
     - key: character_reference_marker_hexadecimal
       doc: |
         Character reference hexadecimal numeric marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CharacterReference`][Name::CharacterReference]
         *   **Content model**:
             void
         *   **Construct**:
             [`character_reference`][crate::construct::character_reference]
-        
+
         ## Example
-        
+
         ```markdown
         > | a &amp; b &#8800; c &#x1D306; d
                                   ^
@@ -338,18 +340,18 @@ event:
     - key: character_reference_marker_numeric
       doc: |
         Character reference numeric marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CharacterReference`][Name::CharacterReference]
         *   **Content model**:
             void
         *   **Construct**:
             [`character_reference`][crate::construct::character_reference]
-        
+
         ## Example
-        
+
         ```markdown
         > | a &amp; b &#8800; c &#x1D306; d
                       ^         ^
@@ -357,18 +359,18 @@ event:
     - key: character_reference_marker_semi
       doc: |
         Character reference closing marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CharacterReference`][Name::CharacterReference]
         *   **Content model**:
             void
         *   **Construct**:
             [`character_reference`][crate::construct::character_reference]
-        
+
         ## Example
-        
+
         ```markdown
         > | a &amp; b &#8800; c &#x1D306; d
                   ^         ^           ^
@@ -376,18 +378,18 @@ event:
     - key: character_reference_value
       doc: |
         Character reference value.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CharacterReference`][Name::CharacterReference]
         *   **Content model**:
             void
         *   **Construct**:
             [`character_reference`][crate::construct::character_reference]
-        
+
         ## Example
-        
+
         ```markdown
         > | a &amp; b &#8800; c &#x1D306; d
               ^^^      ^^^^       ^^^^^
@@ -395,9 +397,9 @@ event:
     - key: code_fenced
       doc: |
         Whole code (fenced).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -407,9 +409,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ````markdown
         > | ```js
             ^^^^^
@@ -421,9 +423,9 @@ event:
     - key: code_fenced_fence
       doc: |
         A code (fenced) fence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CodeFenced`][Name::CodeFenced]
         *   **Content model**:
@@ -433,9 +435,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ````markdown
         > | ```js
             ^^^^^
@@ -446,18 +448,18 @@ event:
     - key: code_fenced_fence_info
       doc: |
         A code (fenced) fence info word.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CodeFencedFence`][Name::CodeFencedFence]
         *   **Content model**:
             [string content][crate::construct::string]
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ````markdown
         > | ```js
               ^^
@@ -467,18 +469,18 @@ event:
     - key: code_fenced_fence_meta
       doc: |
         A code (fenced) fence meta string.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CodeFencedFence`][Name::CodeFencedFence]
         *   **Content model**:
             [string content][crate::construct::string]
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ````markdown
         > | ```js highlight="1"
                   ^^^^^^^^^^^^^
@@ -488,18 +490,18 @@ event:
     - key: code_fenced_fence_sequence
       doc: |
         A code (fenced) fence sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CodeFencedFenceSequence`][Name::CodeFencedFenceSequence]
         *   **Content model**:
             void
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ````markdown
         > | ```js
             ^^^
@@ -510,9 +512,9 @@ event:
     - key: code_flow_chunk
       doc: |
         A code (fenced, indented) chunk.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CodeFenced`][Name::CodeFenced],
             [`CodeIndented`][Name::CodeIndented]
@@ -521,16 +523,16 @@ event:
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow],
             [`code_indented`][crate::construct::code_indented]
-        
+
         ## Example
-        
+
         ````markdown
           | ```js
         > | console.log(1)
             ^^^^^^^^^^^^^^
           | ```
         ````
-        
+
         ```markdown
         > | ␠␠␠␠console.log(1)
                 ^^^^^^^^^^^^^^
@@ -538,9 +540,9 @@ event:
     - key: code_indented
       doc: |
         Whole code (indented).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -549,9 +551,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ```markdown
         ␠␠␠␠console.log(1)
         ^^^^^^^^^^^^^^^^^^
@@ -559,9 +561,9 @@ event:
     - key: code_text
       doc: |
         Whole code (text).
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -570,9 +572,9 @@ event:
             [`LineEnding`][Name::LineEnding]
         *   **Construct**:
             [`raw_text`][crate::construct::raw_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a `b` c
               ^^^
@@ -580,18 +582,18 @@ event:
     - key: code_text_data
       doc: |
         Code (text) data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CodeText`][Name::CodeText]
         *   **Content model**:
             void
         *   **Construct**:
             [`raw_text`][crate::construct::raw_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a `b` c
               ^
@@ -599,18 +601,18 @@ event:
     - key: code_text_sequence
       doc: |
         Code (text) sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`CodeText`][Name::CodeText]
         *   **Content model**:
             void
         *   **Construct**:
             [`raw_text`][crate::construct::raw_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a `b` c
               ^ ^
@@ -618,18 +620,18 @@ event:
     - key: content
       doc: |
         Content.
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
             [content][crate::construct::content]
         *   **Construct**:
             [`content`][crate::construct::content]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b
             ^^^^^^
@@ -639,9 +641,9 @@ event:
     - key: data
       doc: |
         Data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [string content][crate::construct::string],
             [text content][crate::construct::text]
@@ -649,9 +651,9 @@ event:
             void
         *   **Construct**:
             [`data`][crate::construct::partial_data]
-        
+
         ## Example
-        
+
         ```markdown
         > | aa *bb* cc
             ^^^ ^^ ^^^
@@ -659,9 +661,9 @@ event:
     - key: definition
       doc: |
         Whole definition.
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -673,9 +675,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`definition`][crate::construct::definition]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
             ^^^^^^^^^^
@@ -683,9 +685,9 @@ event:
     - key: definition_destination
       doc: |
         Whole definition destination.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Definition`][Name::Definition]
         *   **Content model**:
@@ -693,9 +695,9 @@ event:
             [`DefinitionDestinationRaw`][Name::DefinitionDestinationRaw]
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
                 ^
@@ -705,9 +707,9 @@ event:
     - key: definition_destination_literal
       doc: |
         Definition destination literal.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`DefinitionDestination`][Name::DefinitionDestination]
         *   **Content model**:
@@ -715,9 +717,9 @@ event:
             [`DefinitionDestinationString`][Name::DefinitionDestinationString]
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: <b> "c"
                 ^^^
@@ -725,18 +727,18 @@ event:
     - key: definition_destination_literal_marker
       doc: |
         Definition destination literal marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`DefinitionDestinationLiteral`][Name::DefinitionDestinationLiteral]
         *   **Content model**:
             void
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: <b> "c"
                 ^ ^
@@ -744,18 +746,18 @@ event:
     - key: definition_destination_raw
       doc: |
         Definition destination raw.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`DefinitionDestination`][Name::DefinitionDestination]
         *   **Content model**:
             [`DefinitionDestinationString`][Name::DefinitionDestinationString]
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
                 ^
@@ -763,9 +765,9 @@ event:
     - key: definition_destination_string
       doc: |
         Definition destination data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`DefinitionDestinationLiteral`][Name::DefinitionDestinationLiteral],
             [`DefinitionDestinationRaw`][Name::DefinitionDestinationRaw]
@@ -773,9 +775,9 @@ event:
             [string content][crate::construct::string]
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
                 ^
@@ -785,9 +787,9 @@ event:
     - key: definition_label
       doc: |
         Whole definition label.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Definition`][Name::Definition]
         *   **Content model**:
@@ -797,9 +799,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`label`][crate::construct::partial_label]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
             ^^^
@@ -807,18 +809,18 @@ event:
     - key: definition_label_marker
       doc: |
         Definition label marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`DefinitionLabel`][Name::DefinitionLabel]
         *   **Content model**:
             void
         *   **Construct**:
             [`label`][crate::construct::partial_label]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
             ^ ^
@@ -826,18 +828,18 @@ event:
     - key: definition_label_string
       doc: |
         Definition label data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`DefinitionLabel`][Name::DefinitionLabel]
         *   **Content model**:
             [string content][crate::construct::string]
         *   **Construct**:
             [`label`][crate::construct::partial_label]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
             ^
@@ -845,9 +847,9 @@ event:
     - key: definition_marker
       doc: |
         Definition marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Definition`][Name::Definition],
             [`GfmFootnoteDefinition`][Name::GfmFootnoteDefinition]
@@ -855,9 +857,9 @@ event:
             void
         *   **Construct**:
             [`definition`][crate::construct::definition]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
               ^
@@ -865,9 +867,9 @@ event:
     - key: definition_title
       doc: |
         Whole definition title.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Definition`][Name::Definition]
         *   **Content model**:
@@ -877,9 +879,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`title`][crate::construct::partial_title]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
                   ^^^
@@ -887,18 +889,18 @@ event:
     - key: definition_title_marker
       doc: |
         Definition title marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`DefinitionTitle`][Name::DefinitionTitle]
         *   **Content model**:
             void
         *   **Construct**:
             [`title`][crate::construct::partial_title]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
                   ^ ^
@@ -906,18 +908,18 @@ event:
     - key: definition_title_string
       doc: |
         Definition title data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`DefinitionTitle`][Name::DefinitionTitle]
         *   **Content model**:
             [string content][crate::construct::string]
         *   **Construct**:
             [`title`][crate::construct::partial_title]
-        
+
         ## Example
-        
+
         ```markdown
         > | [a]: b "c"
                     ^
@@ -925,9 +927,9 @@ event:
     - key: emphasis
       doc: |
         Emphasis.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -935,9 +937,9 @@ event:
             [`EmphasisText`][Name::EmphasisText]
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | *a*
             ^^^
@@ -945,18 +947,18 @@ event:
     - key: emphasis_sequence
       doc: |
         Emphasis sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Emphasis`][Name::Emphasis]
         *   **Content model**:
             void
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | *a*
             ^ ^
@@ -964,18 +966,18 @@ event:
     - key: emphasis_text
       doc: |
         Emphasis text.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Emphasis`][Name::Emphasis]
         *   **Content model**:
             [text content][crate::construct::text]
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | *a*
             ^
@@ -983,9 +985,9 @@ event:
     - key: frontmatter
       doc: |
         Whole frontmatter.
-        
+
         ## Info
-        
+
         *   **Context**:
             [document content][crate::construct::document]
         *   **Content model**:
@@ -994,9 +996,9 @@ event:
             [`LineEnding`][Name::LineEnding]
         *   **Construct**:
             [`frontmatter`][crate::construct::frontmatter]
-        
+
         ## Example
-        
+
         ```markdown
         > | ---
             ^^^
@@ -1008,18 +1010,18 @@ event:
     - key: frontmatter_chunk
       doc: |
         Frontmatter chunk.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Frontmatter`][Name::Frontmatter]
         *   **Content model**:
             void
         *   **Construct**:
             [`frontmatter`][crate::construct::frontmatter]
-        
+
         ## Example
-        
+
         ```markdown
           | ---
         > | title: Neptune
@@ -1029,9 +1031,9 @@ event:
     - key: frontmatter_fence
       doc: |
         Frontmatter fence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Frontmatter`][Name::Frontmatter]
         *   **Content model**:
@@ -1039,9 +1041,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`frontmatter`][crate::construct::frontmatter]
-        
+
         ## Example
-        
+
         ```markdown
         > | ---
             ^^^
@@ -1052,18 +1054,18 @@ event:
     - key: frontmatter_sequence
       doc: |
         Frontmatter sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`FrontmatterFence`][Name::FrontmatterFence]
         *   **Content model**:
             void
         *   **Construct**:
             [`frontmatter`][crate::construct::frontmatter]
-        
+
         ## Example
-        
+
         ```markdown
         > | ---
             ^^^
@@ -1074,18 +1076,18 @@ event:
     - key: gfm_autolink_literal_email
       doc: |
         GFM extension: email autolink.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
             void.
         *   **Construct**:
             [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
-        
+
         ## Example
-        
+
         ```markdown
         > | context@example.com
             ^^^^^^^^^^^^^^^^^^^
@@ -1093,18 +1095,18 @@ event:
     - key: gfm_autolink_literal_mailto
       doc: |
         GFM extension: email autolink w/ explicit `mailto`.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
             void.
         *   **Construct**:
             [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
-        
+
         ## Example
-        
+
         ```markdown
         > | mailto:context@example.com
             ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1112,18 +1114,18 @@ event:
     - key: gfm_autolink_literal_protocol
       doc: |
         GFM extension: autolink w/ protocol.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
             void.
         *   **Construct**:
             [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
-        
+
         ## Example
-        
+
         ```markdown
         > | https://example.com
             ^^^^^^^^^^^^^^^^^^^
@@ -1131,18 +1133,18 @@ event:
     - key: gfm_autolink_literal_www
       doc: |
         GFM extension: autolink w/ www.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
             void.
         *   **Construct**:
             [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
-        
+
         ## Example
-        
+
         ```markdown
         > | www.example.com
             ^^^^^^^^^^^^^^^
@@ -1150,18 +1152,18 @@ event:
     - key: gfm_autolink_literal_xmpp
       doc: |
         GFM extension: email autolink w/ explicit `xmpp`.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
             void.
         *   **Construct**:
             [`gfm_autolink_literal`][crate::construct::gfm_autolink_literal]
-        
+
         ## Example
-        
+
         ```markdown
         > | mailto:a@b.c/d
             ^^^^^^^^^^^^^^
@@ -1169,18 +1171,18 @@ event:
     - key: gfm_footnote_call
       doc: |
         GFM extension: whole footnote call.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
             [`Label`][Name::Label]
         *   **Construct**:
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a [^b] c
               ^^^^
@@ -1188,9 +1190,9 @@ event:
     - key: gfm_footnote_call_label
       doc: |
         GFM extension: label start (footnote).
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Label`][Name::Label]
         *   **Content model**:
@@ -1198,9 +1200,9 @@ event:
             [`LabelMarker`][Name::LabelMarker]
         *   **Construct**:
             [`gfm_label_start_footnote`][crate::construct::gfm_label_start_footnote]
-        
+
         ## Example
-        
+
         ```markdown
         > | a [^b] c
               ^^
@@ -1208,18 +1210,18 @@ event:
     - key: gfm_footnote_call_marker
       doc: |
         GFM extension: label start (footnote) marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmFootnoteCallLabel`][Name::GfmFootnoteCallLabel]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_label_start_footnote`][crate::construct::gfm_label_start_footnote]
-        
+
         ## Example
-        
+
         ```markdown
         > | a [^b] c
               ^
@@ -1227,9 +1229,9 @@ event:
     - key: gfm_footnote_definition
       doc: |
         GFM extension: whole footnote definition.
-        
+
         ## Info
-        
+
         *   **Context**:
             [document content][crate::construct::document]
         *   **Content model**:
@@ -1237,9 +1239,9 @@ event:
             [document content][crate::construct::flow]
         *   **Construct**:
             [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
-        
+
         ## Example
-        
+
         ```markdown
         > | [^a]: b
             ^^^^^^^
@@ -1247,9 +1249,9 @@ event:
     - key: gfm_footnote_definition_prefix
       doc: |
         GFM extension: footnote definition prefix.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmFootnoteDefinition`][Name::GfmFootnoteDefinition]
         *   **Content model**:
@@ -1258,9 +1260,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
-        
+
         ## Example
-        
+
         ```markdown
         > | [^a]: b
             ^^^^^^
@@ -1268,9 +1270,9 @@ event:
     - key: gfm_footnote_definition_label
       doc: |
         GFM extension: footnote definition label.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmFootnoteDefinitionPrefix`][Name::GfmFootnoteDefinitionPrefix]
         *   **Content model**:
@@ -1279,9 +1281,9 @@ event:
             [`GfmFootnoteDefinitionMarker`][Name::GfmFootnoteDefinitionMarker]
         *   **Construct**:
             [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
-        
+
         ## Example
-        
+
         ```markdown
         > | [^a]: b
             ^^^^
@@ -1289,63 +1291,63 @@ event:
     - key: gfm_footnote_definition_label_marker
       doc: |
         GFM extension: footnote definition label marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmFootnoteDefinitionLabel`][Name::GfmFootnoteDefinitionLabel]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
-        
+
         ## Example
-        
+
         ```markdown
         > | [^a]: b
             ^  ^
     - key: gfm_footnote_definition_label_string
       doc: |
         GFM extension: footnote definition label string.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmFootnoteDefinitionLabel`][Name::GfmFootnoteDefinitionLabel]
         *   **Content model**:
             [string content][crate::construct::string]
         *   **Construct**:
             [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
-        
+
         ## Example
-        
+
         ```markdown
         > | [^a]: b
               ^
     - key: gfm_footnote_definition_marker
       doc: |
         GFM extension: footnote definition marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmFootnoteDefinitionLabel`][Name::GfmFootnoteDefinitionLabel]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_footnote_definition`][crate::construct::gfm_footnote_definition]
-        
+
         ## Example
-        
+
         ```markdown
         > | [^a]: b
             ^
     - key: gfm_strikethrough
       doc: |
         GFM extension: Strikethrough.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -1353,9 +1355,9 @@ event:
             [`GfmStrikethroughText`][Name::GfmStrikethroughText]
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | ~a~
             ^^^
@@ -1363,18 +1365,18 @@ event:
     - key: gfm_strikethrough_sequence
       doc: |
         GFM extension: Strikethrough sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmStrikethrough`][Name::GfmStrikethrough]
         *   **Content model**:
             void
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | ~a~
             ^ ^
@@ -1382,18 +1384,18 @@ event:
     - key: gfm_strikethrough_text
       doc: |
         GFM extension: Strikethrough text.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmStrikethrough`][Name::GfmStrikethrough]
         *   **Content model**:
             [text content][crate::construct::text]
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | ~a~
             ^
@@ -1401,9 +1403,9 @@ event:
     - key: gfm_table
       doc: |
         GFM extension: Table.
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -1412,9 +1414,9 @@ event:
             [`LineEnding`][Name::LineEnding]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
         > | | a |
             ^^^^^
@@ -1426,9 +1428,9 @@ event:
     - key: gfm_table_body
       doc: |
         GFM extension: Table body.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTable`][Name::GfmTable]
         *   **Content model**:
@@ -1436,9 +1438,9 @@ event:
             [`LineEnding`][Name::LineEnding]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
           | | a |
           | | - |
@@ -1448,9 +1450,9 @@ event:
     - key: gfm_table_cell
       doc: |
         GFM extension: Table cell.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableRow`][Name::GfmTableRow]
         *   **Content model**:
@@ -1459,9 +1461,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
         > | | a |
             ^^^^^
@@ -1472,18 +1474,18 @@ event:
     - key: gfm_table_cell_text
       doc: |
         GFM extension: Table cell text.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableCell`][Name::GfmTableCell]
         *   **Content model**:
             [text content][crate::construct::text]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
         > | | a |
               ^
@@ -1494,18 +1496,18 @@ event:
     - key: gfm_table_cell_divider
       doc: |
         GFM extension: Table cell divider.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableCell`][Name::GfmTableCell]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
         > | | a |
             ^   ^
@@ -1517,18 +1519,18 @@ event:
     - key: gfm_table_delimiter_row
       doc: |
         GFM extension: Table delimiter row.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableHead`][Name::GfmTableHead]
         *   **Content model**:
             [`GfmTableDelimiterCell`][Name::GfmTableDelimiterCell]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
           | | a |
         > | | - |
@@ -1538,18 +1540,18 @@ event:
     - key: gfm_table_delimiter_marker
       doc: |
         GFM extension: Table delimiter alignment marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableDelimiterCellValue`][Name::GfmTableDelimiterCellValue]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
           | | a  |
         > | | :- |
@@ -1559,9 +1561,9 @@ event:
     - key: gfm_table_delimiter_cell
       doc: |
         GFM extension: Table delimiter cell.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableDelimiterRow`][Name::GfmTableDelimiterRow]
         *   **Content model**:
@@ -1570,9 +1572,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
           | | a |
         > | | - |
@@ -1582,9 +1584,9 @@ event:
     - key: gfm_table_delimiter_cell_value
       doc: |
         GFM extension: Table delimiter cell alignment.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableDelimiterCell`][Name::GfmTableDelimiterCell]
         *   **Content model**:
@@ -1592,9 +1594,9 @@ event:
             [`GfmTableDelimiterFiller`][Name::GfmTableDelimiterFiller]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
           | | a |
         > | | - |
@@ -1604,18 +1606,18 @@ event:
     - key: gfm_table_delimiter_filler
       doc: |
         GFM extension: Table delimiter filler.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableDelimiterCellValue`][Name::GfmTableDelimiterCellValue]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
           | | a |
         > | | - |
@@ -1625,9 +1627,9 @@ event:
     - key: gfm_table_head
       doc: |
         GFM extension: Table head.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTable`][Name::GfmTable]
         *   **Content model**:
@@ -1636,9 +1638,9 @@ event:
             [`LineEnding`][Name::LineEnding]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
         > | | a |
             ^^^^^
@@ -1649,9 +1651,9 @@ event:
     - key: gfm_table_row
       doc: |
         GFM extension: Table row.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTableBody`][Name::GfmTableBody],
             [`GfmTableHead`][Name::GfmTableHead]
@@ -1659,9 +1661,9 @@ event:
             [`GfmTableCell`][Name::GfmTableCell]
         *   **Construct**:
             [`gfm_table`][crate::construct::gfm_table]
-        
+
         ## Example
-        
+
         ```markdown
         > | | a |
             ^^^^^
@@ -1672,9 +1674,9 @@ event:
     - key: gfm_task_list_item_check
       doc: |
         GFM extension: task list item check.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -1683,9 +1685,9 @@ event:
             [`GfmTaskListItemValueUnchecked`][Name::GfmTaskListItemValueUnchecked]
         *   **Construct**:
             [`gfm_task_list_item_check`][crate::construct::gfm_task_list_item_check]
-        
+
         ## Example
-        
+
         ```markdown
         > | * [x] y.
               ^^^
@@ -1693,18 +1695,18 @@ event:
     - key: gfm_task_list_item_marker
       doc: |
         GFM extension: task list item check marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTaskListItemCheck`][Name::GfmTaskListItemCheck]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_task_list_item_check`][crate::construct::gfm_task_list_item_check]
-        
+
         ## Example
-        
+
         ```markdown
         > | * [x] y.
               ^ ^
@@ -1712,18 +1714,18 @@ event:
     - key: gfm_task_list_item_value_checked
       doc: |
         GFM extension: task list item value: checked.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTaskListItemCheck`][Name::GfmTaskListItemCheck]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_task_list_item_check`][crate::construct::gfm_task_list_item_check]
-        
+
         ## Example
-        
+
         ```markdown
         > | * [x] y.
               ^
@@ -1731,18 +1733,18 @@ event:
     - key: gfm_task_list_item_value_unchecked
       doc: |
         GFM extension: task list item value: unchecked.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`GfmTaskListItemCheck`][Name::GfmTaskListItemCheck]
         *   **Content model**:
             void
         *   **Construct**:
             [`gfm_task_list_item_check`][crate::construct::gfm_task_list_item_check]
-        
+
         ## Example
-        
+
         ```markdown
         > | * [ ] z.
               ^
@@ -1750,18 +1752,18 @@ event:
     - key: hard_break_escape
       doc: |
         Whole hard break (escape).
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
             void
         *   **Construct**:
             [`hard_break_escape`][crate::construct::hard_break_escape]
-        
+
         ## Example
-        
+
         ```markdown
         > | a\␊
             ^
@@ -1770,18 +1772,18 @@ event:
     - key: hard_break_trailing
       doc: |
         Whole hard break (trailing).
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
             void
         *   **Construct**:
             [`whitespace`][crate::construct::partial_whitespace]
-        
+
         ## Example
-        
+
         ```markdown
         > | a␠␠␊
             ^^
@@ -1790,9 +1792,9 @@ event:
     - key: heading_atx
       doc: |
         Whole heading (atx).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -1801,9 +1803,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`heading_atx`][crate::construct::heading_atx]
-        
+
         ## Example
-        
+
         ```markdown
         > | # alpha
             ^^^^^^^
@@ -1811,18 +1813,18 @@ event:
     - key: heading_atx_sequence
       doc: |
         Heading (atx) sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`HeadingAtx`][Name::HeadingAtx]
         *   **Content model**:
             void
         *   **Construct**:
             [`heading_atx`][crate::construct::heading_atx]
-        
+
         ## Example
-        
+
         ```markdown
         > | # alpha
             ^
@@ -1830,18 +1832,18 @@ event:
     - key: heading_atx_text
       doc: |
         Heading (atx) data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`HeadingAtx`][Name::HeadingAtx]
         *   **Content model**:
             [text content][crate::construct::text]
         *   **Construct**:
             [`heading_atx`][crate::construct::heading_atx]
-        
+
         ## Example
-        
+
         ```markdown
         > | # alpha
               ^^^^^
@@ -1849,9 +1851,9 @@ event:
     - key: heading_setext
       doc: |
         Whole heading (setext).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -1861,9 +1863,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`heading_setext`][crate::construct::heading_setext]
-        
+
         ## Example
-        
+
         ```markdown
         > | alpha
             ^^^^^
@@ -1873,18 +1875,18 @@ event:
     - key: heading_setext_text
       doc: |
         Heading (setext) data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`HeadingSetext`][Name::HeadingSetext]
         *   **Content model**:
             [text content][crate::construct::text]
         *   **Construct**:
             [`heading_setext`][crate::construct::heading_setext]
-        
+
         ## Example
-        
+
         ```markdown
         > | alpha
             ^^^^^
@@ -1893,9 +1895,9 @@ event:
     - key: heading_setext_underline
       doc: |
         Heading (setext) underline.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`HeadingSetext`][Name::HeadingSetext]
         *   **Content model**:
@@ -1903,9 +1905,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`heading_setext`][crate::construct::heading_setext]
-        
+
         ## Example
-        
+
         ```markdown
           | alpha
         > | =====
@@ -1914,18 +1916,18 @@ event:
     - key: heading_setext_underline_sequence
       doc: |
         Heading (setext) underline sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`HeadingSetext`][Name::HeadingSetext]
         *   **Content model**:
             void
         *   **Construct**:
             [`heading_setext`][crate::construct::heading_setext]
-        
+
         ## Example
-        
+
         ```markdown
           | alpha
         > | =====
@@ -1934,9 +1936,9 @@ event:
     - key: html_flow
       doc: |
         Whole html (flow).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -1945,9 +1947,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`html_flow`][crate::construct::html_flow]
-        
+
         ## Example
-        
+
         ```markdown
         > | <div>
             ^^^^^
@@ -1955,18 +1957,18 @@ event:
     - key: html_flow_data
       doc: |
         HTML (flow) data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`HtmlFlow`][Name::HtmlFlow]
         *   **Content model**:
             void
         *   **Construct**:
             [`html_flow`][crate::construct::html_flow]
-        
+
         ## Example
-        
+
         ```markdown
         > | <div>
             ^^^^^
@@ -1974,9 +1976,9 @@ event:
     - key: html_text
       doc: |
         Whole html (text).
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -1985,9 +1987,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`html_text`][crate::construct::html_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b> c
               ^^^
@@ -1995,18 +1997,18 @@ event:
     - key: html_text_data
       doc: |
         HTML (text) data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`HtmlText`][Name::HtmlText]
         *   **Content model**:
             void
         *   **Construct**:
             [`html_text`][crate::construct::html_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b> c
               ^^^
@@ -2014,9 +2016,9 @@ event:
     - key: image
       doc: |
         Image.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -2025,9 +2027,9 @@ event:
             [`Reference`][Name::Reference]
         *   **Construct**:
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b] c
               ^^^^
@@ -2039,9 +2041,9 @@ event:
     - key: label
       doc: |
         Label.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Image`][Name::Image],
             [`Link`][Name::Link]
@@ -2052,9 +2054,9 @@ event:
             [`LabelText`][Name::LabelText]
         *   **Construct**:
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a [b] c
               ^^^
@@ -2066,18 +2068,18 @@ event:
     - key: label_end
       doc: |
         Label end.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Label`][Name::Label]
         *   **Content model**:
             [`LabelMarker`][Name::LabelMarker]
         *   **Construct**:
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](c) d
                 ^
@@ -2087,9 +2089,9 @@ event:
     - key: label_image
       doc: |
         Label start (image).
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Label`][Name::Label]
         *   **Content model**:
@@ -2097,9 +2099,9 @@ event:
             [`LabelMarker`][Name::LabelMarker]
         *   **Construct**:
             [`label_start_image`][crate::construct::label_start_image]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](c) d
               ^^
@@ -2107,18 +2109,18 @@ event:
     - key: label_image_marker
       doc: |
         Label start (image) marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`LabelImage`][Name::LabelImage]
         *   **Content model**:
             void
         *   **Construct**:
             [`label_start_image`][crate::construct::label_start_image]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](c) d
               ^
@@ -2126,18 +2128,18 @@ event:
     - key: label_link
       doc: |
         Label start (link).
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Label`][Name::Label]
         *   **Content model**:
             [`LabelMarker`][Name::LabelMarker]
         *   **Construct**:
             [`label_start_link`][crate::construct::label_start_link]
-        
+
         ## Example
-        
+
         ```markdown
         > | a [b](c) d
               ^
@@ -2145,9 +2147,9 @@ event:
     - key: label_marker
       doc: |
         Label marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`LabelImage`][Name::LabelImage],
             [`LabelLink`][Name::LabelLink],
@@ -2158,9 +2160,9 @@ event:
             [`label_start_image`][crate::construct::label_start_image],
             [`label_start_link`][crate::construct::label_start_link],
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](c) d
               ^ ^
@@ -2170,18 +2172,18 @@ event:
     - key: label_text
       doc: |
         Label text.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Label`][Name::Label]
         *   **Content model**:
             [text content][crate::construct::text]
         *   **Construct**:
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a [b] c
               ^
@@ -2193,18 +2195,18 @@ event:
     - key: line_ending
       doc: |
         Line ending.
-        
+
         ## Info
-        
+
         *   **Context**:
             basically everywhere
         *   **Content model**:
             void
         *   **Construct**:
             n/a
-        
+
         ## Example
-        
+
         ```markdown
         > | a␊
             ^
@@ -2213,9 +2215,9 @@ event:
     - key: link
       doc: |
         Link.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -2224,9 +2226,9 @@ event:
             [`Reference`][Name::Reference]
         *   **Construct**:
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a [b] c
               ^^^
@@ -2238,9 +2240,9 @@ event:
     - key: list_item
       doc: |
         List item.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ListOrdered`][Name::ListOrdered],
             [`ListUnordered`][Name::ListUnordered]
@@ -2249,9 +2251,9 @@ event:
             [flow content][crate::construct::flow]
         *   **Construct**:
             [`list item`][crate::construct::list_item]
-        
+
         ## Example
-        
+
         ```markdown
         > | * a
             ^^^
@@ -2261,18 +2263,18 @@ event:
     - key: list_item_marker
       doc: |
         List item (marker).
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ListItemPrefix`][Name::ListItemPrefix]
         *   **Content model**:
             void
         *   **Construct**:
             [`list item`][crate::construct::list_item]
-        
+
         ## Example
-        
+
         ```markdown
         > | * a
             ^
@@ -2282,9 +2284,9 @@ event:
     - key: list_item_prefix
       doc: |
         List item (prefix).
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ListItem`][Name::ListItem]
         *   **Content model**:
@@ -2293,9 +2295,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`list item`][crate::construct::list_item]
-        
+
         ## Example
-        
+
         ```markdown
         > | * a
             ^^
@@ -2305,18 +2307,18 @@ event:
     - key: list_item_value
       doc: |
         List item (value).
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ListItemPrefix`][Name::ListItemPrefix]
         *   **Content model**:
             void
         *   **Construct**:
             [`list item`][crate::construct::list_item]
-        
+
         ## Example
-        
+
         ```markdown
         > | 1. b
             ^
@@ -2324,9 +2326,9 @@ event:
     - key: list_ordered
       doc: |
         List (ordered).
-        
+
         ## Info
-        
+
         *   **Context**:
             [document content][crate::construct::document]
         *   **Content model**:
@@ -2337,9 +2339,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`list item`][crate::construct::list_item]
-        
+
         ## Example
-        
+
         ```markdown
         > | 1. a
             ^^^^
@@ -2349,9 +2351,9 @@ event:
     - key: list_unordered
       doc: |
         List (unordered).
-        
+
         ## Info
-        
+
         *   **Context**:
             [document content][crate::construct::document]
         *   **Content model**:
@@ -2362,9 +2364,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`list item`][crate::construct::list_item]
-        
+
         ## Example
-        
+
         ```markdown
         > | * a
             ^^^
@@ -2374,9 +2376,9 @@ event:
     - key: math_flow
       doc: |
         Whole math (flow).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -2386,9 +2388,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ```markdown
         > | $$
             ^^
@@ -2400,9 +2402,9 @@ event:
     - key: math_flow_fence
       doc: |
         A math (flow) fence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MathFlow`][Name::MathFlow]
         *   **Content model**:
@@ -2411,9 +2413,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ```markdown
         > | $$
             ^^
@@ -2424,18 +2426,18 @@ event:
     - key: math_flow_fence_meta
       doc: |
         A math (flow) fence meta string.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MathFlowFence`][Name::MathFlowFence]
         *   **Content model**:
             [string content][crate::construct::string]
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ```markdown
         > | $$alpha bravo
               ^^^^^^^^^^^
@@ -2445,18 +2447,18 @@ event:
     - key: math_flow_fence_sequence
       doc: |
         A math (flow) fence sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MathFlowFenceSequence`][Name::MathFlowFenceSequence]
         *   **Content model**:
             void
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ```markdown
         > | $$
             ^^
@@ -2467,18 +2469,18 @@ event:
     - key: math_flow_chunk
       doc: |
         A math (flow) chunk.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MathFlow`][Name::MathFlow]
         *   **Content model**:
             void
         *   **Construct**:
             [`raw_flow`][crate::construct::raw_flow]
-        
+
         ## Example
-        
+
         ```markdown
           | $$
         > | \frac{1}{2}
@@ -2488,9 +2490,9 @@ event:
     - key: math_text
       doc: |
         Whole math (text).
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -2499,9 +2501,9 @@ event:
             [`LineEnding`][Name::LineEnding]
         *   **Construct**:
             [`raw_text`][crate::construct::raw_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a $b$ c
               ^^^
@@ -2509,18 +2511,18 @@ event:
     - key: math_text_data
       doc: |
         Math (text) data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MathText`][Name::MathText]
         *   **Content model**:
             void
         *   **Construct**:
             [`raw_text`][crate::construct::raw_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a `b` c
               ^
@@ -2528,18 +2530,18 @@ event:
     - key: math_text_sequence
       doc: |
         Math (text) sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MathText`][Name::MathText]
         *   **Content model**:
             void
         *   **Construct**:
             [`raw_text`][crate::construct::raw_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a $b$ c
               ^ ^
@@ -2547,9 +2549,9 @@ event:
     - key: mdx_esm
       doc: |
         MDX extension: ESM.
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -2559,9 +2561,9 @@ event:
             [`LineEnding`][Name::LineEnding]
         *   **Construct**:
             [`mdx_esm`][crate::construct::mdx_esm]
-        
+
         ## Example
-        
+
         ```markdown
         > | import a from 'b'
             ^^^^^^^^^^^^^^^^^
@@ -2569,18 +2571,18 @@ event:
     - key: mdx_esm_data
       doc: |
         MDX extension: ESM data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxEsm`][Name::MdxEsm]
         *   **Content model**:
             void
         *   **Construct**:
             [`mdx_esm`][crate::construct::mdx_esm]
-        
+
         ## Example
-        
+
         ```markdown
         > | import a from 'b'
             ^^^^^^^^^^^^^^^^^
@@ -2588,9 +2590,9 @@ event:
     - key: mdx_expression_marker
       doc: |
         MDX extension: expression marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxFlowExpression`][Name::MdxFlowExpression],
             [`MdxTextExpression`][Name::MdxTextExpression],
@@ -2600,9 +2602,9 @@ event:
             void
         *   **Construct**:
             [`partial_mdx_expression`][crate::construct::partial_mdx_expression]
-        
+
         ## Example
-        
+
         ```markdown
         > | {Math.PI}
             ^       ^
@@ -2610,9 +2612,9 @@ event:
     - key: mdx_expression_data
       doc: |
         MDX extension: expression data.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxFlowExpression`][Name::MdxFlowExpression],
             [`MdxTextExpression`][Name::MdxTextExpression],
@@ -2622,9 +2624,9 @@ event:
             void
         *   **Construct**:
             [`partial_mdx_expression`][crate::construct::partial_mdx_expression]
-        
+
         ## Example
-        
+
         ```markdown
         > | {Math.PI}
             ^^^^^^^
@@ -2632,9 +2634,9 @@ event:
     - key: mdx_flow_expression
       doc: |
         MDX extension: expression (flow).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -2644,9 +2646,9 @@ event:
             [`MdxExpressionData`][Name::MdxExpressionData]
         *   **Construct**:
             [`mdx_expression_flow`][crate::construct::mdx_expression_flow]
-        
+
         ## Example
-        
+
         ```markdown
         > | {Math.PI}
             ^^^^^^^^^
@@ -2654,9 +2656,9 @@ event:
     - key: mdx_text_expression
       doc: |
         MDX extension: expression (text).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -2666,9 +2668,9 @@ event:
             [`MdxExpressionData`][Name::MdxExpressionData]
         *   **Construct**:
             [`mdx_expression_text`][crate::construct::mdx_expression_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a {Math.PI} b
               ^^^^^^^^^
@@ -2676,9 +2678,9 @@ event:
     - key: mdx_jsx_flow_tag
       doc: |
         MDX extension: JSX (flow).
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -2692,9 +2694,9 @@ event:
             [`MdxJsxTagSelfClosingMarker`][Name::MdxJsxTagSelfClosingMarker]
         *   **Construct**:
             [`mdx_jsx_flow`][crate::construct::mdx_jsx_flow]
-        
+
         ## Example
-        
+
         ```markdown
         > | <B />
             ^^^^^
@@ -2702,9 +2704,9 @@ event:
     - key: mdx_jsx_text_tag
       doc: |
         MDX extension: JSX (text).
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -2718,9 +2720,9 @@ event:
             [`MdxJsxTagSelfClosingMarker`][Name::MdxJsxTagSelfClosingMarker]
         *   **Construct**:
             [`mdx_jsx_text`][crate::construct::mdx_jsx_text]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <B /> c
               ^^^^^
@@ -2728,9 +2730,9 @@ event:
     - key: mdx_jsx_es_whitespace
       doc: |
         MDX extension: JSX: ECMAScript whitespace.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
             [`MdxJsxTextTag`][Name::MdxJsxTextTag],
@@ -2741,9 +2743,9 @@ event:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <B /> c
                 ^
@@ -2751,9 +2753,9 @@ event:
     - key: mdx_jsx_tag_marker
       doc: |
         MDX extension: JSX: tag marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
             [`MdxJsxTextTag`][Name::MdxJsxTextTag]
@@ -2761,9 +2763,9 @@ event:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <B /> c
               ^   ^
@@ -2771,9 +2773,9 @@ event:
     - key: mdx_jsx_tag_closing_marker
       doc: |
         MDX extension: JSX: closing tag marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
             [`MdxJsxTextTag`][Name::MdxJsxTextTag]
@@ -2781,9 +2783,9 @@ event:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a </B> c
               ^
@@ -2791,9 +2793,9 @@ event:
     - key: mdx_jsx_tag_name
       doc: |
         MDX extension: JSX: tag name.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
             [`MdxJsxTextTag`][Name::MdxJsxTextTag]
@@ -2807,9 +2809,9 @@ event:
             [`MdxJsxTagNameLocal`][Name::MdxJsxTagNameLocal]
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b> c
               ^
@@ -2821,18 +2823,18 @@ event:
     - key: mdx_jsx_tag_name_primary
       doc: |
         MDX extension: JSX: primary tag name.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagName`][Name::MdxJsxTagName]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b> c
               ^
@@ -2844,18 +2846,18 @@ event:
     - key: mdx_jsx_tag_name_member_marker
       doc: |
         MDX extension: JSX: tag name member marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagName`][Name::MdxJsxTagName]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b.c> d
                 ^
@@ -2863,18 +2865,18 @@ event:
     - key: mdx_jsx_tag_name_prefix_marker
       doc: |
         MDX extension: JSX: tag name prefix marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagName`][Name::MdxJsxTagName]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b:c> d
                 ^
@@ -2882,18 +2884,18 @@ event:
     - key: mdx_jsx_tag_name_member
       doc: |
         MDX extension: JSX: tag name member.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagName`][Name::MdxJsxTagName]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b.c> d
                 ^
@@ -2901,18 +2903,18 @@ event:
     - key: mdx_jsx_tag_name_local
       doc: |
         MDX extension: JSX: tag name local.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagName`][Name::MdxJsxTagName]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b:c> d
                 ^
@@ -2920,9 +2922,9 @@ event:
     - key: mdx_jsx_tag_attribute
       doc: |
         MDX extension: JSX: attribute.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
             [`MdxJsxTextTag`][Name::MdxJsxTextTag]
@@ -2935,9 +2937,9 @@ event:
             [`MdxJsxTagAttributeValueExpression`][Name::MdxJsxTagAttributeValueExpression]
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c> d
                 ^
@@ -2949,9 +2951,9 @@ event:
     - key: mdx_jsx_tag_attribute_expression
       doc: |
         MDX extension: JSX tag attribute expression.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
             [`MdxJsxTextTag`][Name::MdxJsxTextTag]
@@ -2962,9 +2964,9 @@ event:
             [`MdxExpressionData`][Name::MdxExpressionData]
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b {Math.PI} /> c
                 ^^^^^^^^^
@@ -2972,9 +2974,9 @@ event:
     - key: mdx_jsx_tag_attribute_name
       doc: |
         MDX extension: JSX: attribute name.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute]
         *   **Content model**:
@@ -2985,9 +2987,9 @@ event:
             [`MdxJsxTagAttributeNameLocal`][Name::MdxJsxTagAttributeNameLocal]
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c> d
                 ^
@@ -2997,18 +2999,18 @@ event:
     - key: mdx_jsx_tag_attribute_primary_name
       doc: |
         MDX extension: JSX: primary attribute name.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagAttributeName`][Name::MdxJsxTagAttributeName]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c> d
                 ^
@@ -3018,18 +3020,18 @@ event:
     - key: mdx_jsx_tag_attribute_name_prefix_marker
       doc: |
         MDX extension: JSX: attribute name prefix marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagAttributeName`][Name::MdxJsxTagAttributeName]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c:d="e"> f
                   ^
@@ -3037,18 +3039,18 @@ event:
     - key: mdx_jsx_tag_attribute_name_local
       doc: |
         MDX extension: JSX: local attribute name.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagAttributeName`][Name::MdxJsxTagAttributeName]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c:d="e"> f
                   ^
@@ -3056,18 +3058,18 @@ event:
     - key: mdx_jsx_tag_attribute_initializer_marker
       doc: |
         MDX extension: JSX: attribute initializer marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c="d"> e
                   ^
@@ -3075,9 +3077,9 @@ event:
     - key: mdx_jsx_tag_attribute_value_expression
       doc: |
         MDX extension: JSX tag attribute value expression.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
             [`MdxJsxTextTag`][Name::MdxJsxTextTag]
@@ -3088,9 +3090,9 @@ event:
             [`MdxExpressionData`][Name::MdxExpressionData]
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c={Math.PI} /> d
                   ^^^^^^^^^
@@ -3098,9 +3100,9 @@ event:
     - key: mdx_jsx_tag_attribute_value_literal
       doc: |
         MDX extension: JSX: attribute value literal.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute]
         *   **Content model**:
@@ -3110,9 +3112,9 @@ event:
             [`MdxJsxTagAttributeValueLiteralValue`][Name::MdxJsxTagAttributeValueLiteralValue]
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c="d"> e
                   ^^^
@@ -3120,18 +3122,18 @@ event:
     - key: mdx_jsx_tag_attribute_value_literal_marker
       doc: |
         MDX extension: JSX: attribute value literal marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagAttributeValueLiteral`][Name::MdxJsxTagAttributeValueLiteral]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c="d"> e
                   ^ ^
@@ -3139,18 +3141,18 @@ event:
     - key: mdx_jsx_tag_attribute_value_literal_value
       doc: |
         MDX extension: JSX: attribute value literal value.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxTagAttributeValueLiteral`][Name::MdxJsxTagAttributeValueLiteral]
         *   **Content model**:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b c="d"> e
                     ^
@@ -3158,9 +3160,9 @@ event:
     - key: mdx_jsx_tag_self_closing_marker
       doc: |
         MDX extension: JSX: self-closing tag marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`MdxJsxFlowTag`][Name::MdxJsxFlowTag],
             [`MdxJsxTextTag`][Name::MdxJsxTextTag]
@@ -3168,9 +3170,9 @@ event:
             void
         *   **Construct**:
             [`partial_mdx_jsx`][crate::construct::partial_mdx_jsx]
-        
+
         ## Example
-        
+
         ```markdown
         > | a <b /> c
                 ^
@@ -3178,18 +3180,18 @@ event:
     - key: paragraph
       doc: |
         Paragraph.
-        
+
         ## Info
-        
+
         *   **Context**:
             [content][crate::construct::content]
         *   **Content model**:
             [text content][crate::construct::text]
         *   **Construct**:
             [`paragraph`][crate::construct::paragraph]
-        
+
         ## Example
-        
+
         ```markdown
         > | a b
             ^^^
@@ -3199,9 +3201,9 @@ event:
     - key: reference
       doc: |
         Reference.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Image`][Name::Image],
             [`Link`][Name::Link]
@@ -3210,9 +3212,9 @@ event:
             [`ReferenceString`][Name::ReferenceString]
         *   **Construct**:
             [`label`][crate::construct::partial_label]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b][c] d
                   ^^^
@@ -3220,18 +3222,18 @@ event:
     - key: reference_marker
       doc: |
         Reference marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Reference`][Name::Reference]
         *   **Content model**:
             void
         *   **Construct**:
             [`label`][crate::construct::partial_label]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b][c] d
                   ^ ^
@@ -3239,18 +3241,18 @@ event:
     - key: reference_string
       doc: |
         Reference string.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Reference`][Name::Reference]
         *   **Content model**:
             [string content][crate::construct::string]
         *   **Construct**:
             [`label`][crate::construct::partial_label]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b][c] d
                   ^
@@ -3258,9 +3260,9 @@ event:
     - key: resource
       doc: |
         Resource.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Image`][Name::Image],
             [`Link`][Name::Link]
@@ -3272,9 +3274,9 @@ event:
             [`LineEnding`][Name::LineEnding]
         *   **Construct**:
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](c "d") e
                   ^^^^^^^
@@ -3284,9 +3286,9 @@ event:
     - key: resource_destination
       doc: |
         Resource destination.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Resource`][Name::Resource]
         *   **Content model**:
@@ -3294,9 +3296,9 @@ event:
             [`ResourceDestinationRaw`][Name::ResourceDestinationRaw]
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](c "d") e
                   ^
@@ -3304,9 +3306,9 @@ event:
     - key: resource_destination_literal
       doc: |
         Resource destination literal.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ResourceDestination`][Name::ResourceDestination]
         *   **Content model**:
@@ -3314,9 +3316,9 @@ event:
             [`ResourceDestinationString`][Name::ResourceDestinationString]
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](<c> "d") e
                   ^^^
@@ -3324,18 +3326,18 @@ event:
     - key: resource_destination_literal_marker
       doc: |
         Resource destination literal marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ResourceDestinationLiteral`][Name::ResourceDestinationLiteral]
         *   **Content model**:
             void
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](<c> "d") e
                   ^ ^
@@ -3343,18 +3345,18 @@ event:
     - key: resource_destination_raw
       doc: |
         Resource destination raw.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ResourceDestination`][Name::ResourceDestination]
         *   **Content model**:
             [`ResourceDestinationString`][Name::ResourceDestinationString]
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](c "d") e
                   ^
@@ -3362,9 +3364,9 @@ event:
     - key: resource_destination_string
       doc: |
         Resource destination raw.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ResourceDestinationLiteral`][Name::ResourceDestinationLiteral],
             [`ResourceDestinationRaw`][Name::ResourceDestinationRaw]
@@ -3372,9 +3374,9 @@ event:
             [string content][crate::construct::string]
         *   **Construct**:
             [`destination`][crate::construct::partial_destination]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](<c> "d") e
                     ^
@@ -3384,18 +3386,18 @@ event:
     - key: resource_marker
       doc: |
         Resource marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Resource`][Name::Resource]
         *   **Content model**:
             void
         *   **Construct**:
             [`label_end`][crate::construct::label_end]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](c "d") e
                   ^     ^
@@ -3403,9 +3405,9 @@ event:
     - key: resource_title
       doc: |
         Resource title.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Resource`][Name::Resource]
         *   **Content model**:
@@ -3413,9 +3415,9 @@ event:
             [`ResourceTitleString`][Name::ResourceTitleString]
         *   **Construct**:
             [`title`][crate::construct::partial_title]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](<c> "d") e
                       ^^^
@@ -3423,18 +3425,18 @@ event:
     - key: resource_title_marker
       doc: |
         Resource title marker.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ResourceTitle`][Name::ResourceTitle]
         *   **Content model**:
             void
         *   **Construct**:
             [`title`][crate::construct::partial_title]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](<c> "d") e
                       ^ ^
@@ -3442,18 +3444,18 @@ event:
     - key: resource_title_string
       doc: |
         Resource title string.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ResourceTitle`][Name::ResourceTitle]
         *   **Content model**:
             [string content][crate::construct::string]
         *   **Construct**:
             [`title`][crate::construct::partial_title]
-        
+
         ## Example
-        
+
         ```markdown
         > | a ![b](<c> "d") e
                         ^
@@ -3461,18 +3463,18 @@ event:
     - key: space_or_tab
       doc: |
         Space or tab.
-        
+
         ## Info
-        
+
         *   **Context**:
             basically everywhere
         *   **Content model**:
             void
         *   **Construct**:
             n/a
-        
+
         ## Example
-        
+
         ```markdown
         > | ␠* * *␠
             ^ ^ ^ ^
@@ -3480,9 +3482,9 @@ event:
     - key: strong
       doc: |
         Strong.
-        
+
         ## Info
-        
+
         *   **Context**:
             [text content][crate::construct::text]
         *   **Content model**:
@@ -3490,9 +3492,9 @@ event:
             [`StrongText`][Name::StrongText]
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | **a**
             ^^^^^
@@ -3500,18 +3502,18 @@ event:
     - key: strong_sequence
       doc: |
         Strong sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Strong`][Name::Strong]
         *   **Content model**:
             void
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | **a**
             ^^ ^^
@@ -3519,18 +3521,18 @@ event:
     - key: strong_text
       doc: |
         Strong text.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`Strong`][Name::Strong]
         *   **Content model**:
             [text content][crate::construct::text]
         *   **Construct**:
             [`attention`][crate::construct::attention]
-        
+
         ## Example
-        
+
         ```markdown
         > | **a**
               ^
@@ -3538,9 +3540,9 @@ event:
     - key: thematic_break
       doc: |
         Whole thematic break.
-        
+
         ## Info
-        
+
         *   **Context**:
             [flow content][crate::construct::flow]
         *   **Content model**:
@@ -3548,9 +3550,9 @@ event:
             [`SpaceOrTab`][Name::SpaceOrTab]
         *   **Construct**:
             [`thematic_break`][crate::construct::thematic_break]
-        
+
         ## Example
-        
+
         ```markdown
         > | * * *
             ^^^^^
@@ -3558,18 +3560,18 @@ event:
     - key: thematic_break_sequence
       doc: |
         Thematic break sequence.
-        
+
         ## Info
-        
+
         *   **Context**:
             [`ThematicBreak`][Name::ThematicBreak]
         *   **Content model**:
             void
         *   **Construct**:
             [`thematic_break`][crate::construct::thematic_break]
-        
+
         ## Example
-        
+
         ```markdown
         > | * * *
             ^ ^ ^
@@ -3668,85 +3670,79 @@ records:
     type: array:array(dynamic())
   - name: markdown_attempt
     rust_name: Attempt
-    static: false
   - name: markdown_construct_options
     rust_name: Constructs
-    static: false
   - name: markdown_container
     rust_name: ContainerState
-    static: false
   - name: markdown_edit_map
     rust_name: EditMap
-    static: false
   - name: markdown_event
     rust_name: Event
-    static: false
   - name: markdown_event_link
     rust_name: Link
-    static: false
+  - name: markdown_html_media
+    rust_name: Media
   - name: markdown_index
     rust_name: Index
-    static: false
   - name: markdown_indices
     rust_name: Indices
-    static: false
   - name: markdown_label_start
     rust_name: LabelStart
-    static: false
   - name: markdown_label
     rust_name: Label
-    static: false
   - name: markdown_list_item
     rust_name: ListItem
-    static: false
   - name: markdown_location
     rust_name: Location
-    static: false
+  - name: markdown_mdast_blockquote
+    rust_name: Blockquote
+  - name: markdown_mdast_emphasis
+    rust_name: Emphasis
+  - name: markdown_mdast_node
+    rust_enum: true
+    rust_name: Node
+  - name: markdown_mdast_paragraph
+    rust_name: Paragraph
   - name: markdown_mdast_reference
     rust_name: Reference
-    static: false
+  - name: markdown_mdast_root
+    rust_name: Root
+  - name: markdown_mdast_text
+    rust_name: Text
+  - name: markdown_mdast_thematic_break
+    rust_name: ThematicBreak
   - name: markdown_message
     rust_name: Message
-    static: false
   - name: markdown_parse_options
     rust_name: ParseOptions
-    static: false
   - name: markdown_parse_state
     rust_name: ParseState
-    static: false
   - name: markdown_place
     rust_name: Place
-    static: false
   - name: markdown_point
     rust_name: Point
-    static: false
   - name: markdown_position
     rust_name: Position
-    static: false
   - name: markdown_progress
     rust_name: Progress
-    static: false
   - name: markdown_sequence
     rust_name: Sequence
-    static: false
   - name: markdown_slice
     rust_name: Slice
-    static: false
   - name: markdown_space_or_tab_options
     rust_name: SpaceOrTabOptions
-    static: false
   - name: markdown_subresult
     rust_name: Subresult
-    static: false
   - name: markdown_tokenize_state
     rust_name: TokenizeState
-    static: false
   - name: markdown_tokenizer
     rust_name: Tokenizer
-    static: false
+  - name: markdown_unist_point
+    rust_name: Point
+  - name: markdown_unist_position
+    rust_name: Position
   - name: markdown_vec
     rust_name: Vec
-    static: false
 resolve:
   name:
     - key: label

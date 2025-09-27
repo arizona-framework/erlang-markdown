@@ -7,10 +7,13 @@
 [linux]
 [working-directory: '/project/codegen']
 codegen: poetry-install format
-    poetry run erlang_markdown_codegen /project/codegen/config.yaml /project /project/codegen/templates0 /project/codegen/templates1
+    poetry run erlang_markdown_codegen json-schema /project/codegen/schema.json
+    poetry run erlang_markdown_codegen generate /project/codegen/config.yaml /project /project/codegen/templates0 /project/codegen/templates1
 
 [macos]
 codegen: docker-codegen
+    gmake format
+    just sign
 
 [linux]
 format: format-python-src
@@ -33,3 +36,15 @@ lock: docker-lock
 
 [macos]
 shell: docker-shell
+
+[linux]
+[working-directory: '/project/codegen']
+sign: poetry-install
+    poetry run erlang_markdown_codegen sign /project/codegen/config.yaml /project /project/codegen/templates0 /project/codegen/templates1
+
+[macos]
+sign: docker-sign
+
+[macos]
+watch:
+    watchexec -w codegen -- just codegen

@@ -14,6 +14,8 @@ setup-python:
     poetry self add poetry-plugin-export
     # Ensure that virtualenvs are installed in .venv
     poetry config virtualenvs.in-project true
+    # Setup poetry shell plugin
+    poetry self add poetry-plugin-shell
 
 [linux]
 [working-directory: '/project/codegen']

@@ -21,11 +21,13 @@ Debugging utilities for types.
 -include_lib("markdown/include/markdown_html.hrl").
 -include_lib("markdown/include/markdown_mdast.hrl").
 -include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_unist.hrl").
 -include_lib("markdown/include/markdown_vec.hrl").
 
 %% API
 -export([
     is_record/2,
+    is_rust_enum/1,
     record_fields/1,
     record_rust_name/1,
     record_size/1
@@ -33,13 +35,21 @@ Debugging utilities for types.
 
 %% Types
 -type record_name() ::
-<<{% set record_name_type_continue = joiner("| ") %}>>
-<<{% for record in ctx.records.record_list %}>>
-    <<{{ record_name_type_continue() }}>><<{{ record.name }}>>
-<<{% endfor %}>>.
+~J{ set record_name_type_continue = joiner("| ") }.
+~J{ for record in ctx.records.record_list }.
+    ~J< record_name_type_continue() >.~J< record.name >.
+~J{ endfor }..
+-type rust_enum() ::
+~J{ set rust_enum_name_type_continue = joiner("| ") }.
+~J{ for record in ctx.records.record_list }.
+~J{ if record.rust_enum }.
+    ~J< rust_enum_name_type_continue() >.~J< record.name >.
+~J{ endif }.
+~J{ endfor }..
 
 -export_type([
-    record_name/0
+    record_name/0,
+    rust_enum/0
 ]).
 
 %%%=============================================================================
@@ -47,11 +57,11 @@ Debugging utilities for types.
 %%%=============================================================================
 
 -spec is_record(RecordName | OtherRecordName, RecordSize) -> boolean() when RecordName :: record_name(), OtherRecordName :: atom(), RecordSize :: non_neg_integer().
-<<{% for record in ctx.records.record_list %}>>
-<<{% if record.static %}>>
-is_record(<<{{ record.name }}>>, <<{{ record.size }}>>) -> true;
-<<{% endif %}>>
-<<{% endfor %}>>
+~J{ for record in ctx.records.record_list }.
+~J{ if record.static }.
+is_record(~J< record.name >., ~J< record.size >.) -> true;
+~J{ endif }.
+~J{ endfor }.
 is_record(RecordName, RecordSize) when ?is_markdown_record_name(RecordName) andalso is_integer(RecordSize) andalso RecordSize >= 0 ->
     case record_size(RecordName) of
         RecordSize ->
@@ -62,20 +72,29 @@ is_record(RecordName, RecordSize) when ?is_markdown_record_name(RecordName) anda
 is_record(_OtherRecordName, _RecordSize) ->
     false.
 
+-spec is_rust_enum(RustEnum | OtherRecordName) -> boolean() when RustEnum :: rust_enum(), OtherRecordName :: atom().
+~J{ for record in ctx.records.record_list }.
+~J{ if record.rust_enum }.
+is_rust_enum(~J< record.name >.) -> true;
+~J{ endif }.
+~J{ endfor }.
+is_rust_enum(_OtherRecordName) ->
+    false.
+
 -spec record_fields(RecordName) -> Fields when RecordName :: record_name(), Fields :: [Field], Field :: atom().
-<<{% set record_fields_fun_continue = joiner(";") %}>>
-<<{% for record in ctx.records.record_list %}>>
-<<{{ record_fields_fun_continue() }}>>record_fields(<<{{ record.name }}>>) -> <<{% if record.static %}>><<{{ record.fields_string }}>><<{% else %}>>record_info(fields, <<{{ record.name }}>>)<<{% endif %}>>
-<<{% endfor %}>>.
+~J{ set record_fields_fun_continue = joiner(";") }.
+~J{ for record in ctx.records.record_list }.
+~J< record_fields_fun_continue() >.record_fields(~J< record.name >.) -> ~J{ if record.static }.~J< record.fields_string >.~J{ else }.record_info(fields, ~J< record.name >.)~J{ endif }.
+~J{ endfor }..
 
 -spec record_rust_name(RecordName) -> RustName when RecordName :: record_name(), RustName :: binary().
-<<{% set record_rust_name_continue = joiner(";") %}>>
-<<{% for record in ctx.records.record_list %}>>
-<<{{ record_rust_name_continue() }}>>record_rust_name(<<{{ record.name }}>>) -> <<"<<{{ record.rust_name }}>>">>
-<<{% endfor %}>>.
+~J{ set record_rust_name_continue = joiner(";") }.
+~J{ for record in ctx.records.record_list }.
+~J< record_rust_name_continue() >.record_rust_name(~J< record.name >.) -> <<"~J< record.rust_name >.">>
+~J{ endfor }..
 
 -spec record_size(RecordName) -> RecordSize when RecordName :: record_name(), RecordSize :: non_neg_integer().
-<<{% set record_size_fun_continue = joiner(";") %}>>
-<<{% for record in ctx.records.record_list %}>>
-<<{{ record_size_fun_continue() }}>>record_size(<<{{ record.name }}>>) -> <<{% if record.static %}>><<{{ record.size }}>><<{% else %}>>record_info(size, <<{{ record.name }}>>) - 1<<{% endif %}>>
-<<{% endfor %}>>.
+~J{ set record_size_fun_continue = joiner(";") }.
+~J{ for record in ctx.records.record_list }.
+~J< record_size_fun_continue() >.record_size(~J< record.name >.) -> ~J{ if record.static }.~J< record.size >.~J{ else }.record_info(size, ~J< record.name >.) - 1~J{ endif }.
+~J{ endfor }..

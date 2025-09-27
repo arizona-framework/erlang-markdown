@@ -19,9 +19,9 @@
 
 %% Macros
 -define(is_markdown_state_name(X),
-(<<{% set name_macro_continue = joiner(" orelse ") %}>>
-<<{% for name in ctx.state.name_list %}>>
-    <<{{ name_macro_continue() }}>>(X) =:= <<{{ name.key }}>>
-<<{% endfor %}>>)).
+(~J{ set name_macro_continue = joiner(" orelse ") }.
+~J{ for name in ctx.state.name_list }.
+    ~J< name_macro_continue() >.(X) =:= ~J< name.key >.
+~J{ endfor }.)).
 
 -endif.

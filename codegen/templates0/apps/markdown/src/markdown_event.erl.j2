@@ -28,10 +28,10 @@ Semantic labels of things happening.
 ]).
 %% Name API
 -export([
-<<{% set name_api_continue = joiner(",") %}>>
-<<{% for name in ctx.event.name_list %}>>
-    <<{{ name_api_continue() }}>><<{{ name.key }}>>/3
-<<{% endfor %}>>
+~J{ set name_api_continue = joiner(",") }.
+~J{ for name in ctx.event.name_list }.
+    ~J< name_api_continue() >.~J< name.key >./3
+~J{ endfor }.
 ]).
 
 %% Types
@@ -56,10 +56,10 @@ Semantic labels of things happening.
 
 -doc "Semantic label of a span.".
 -type name() ::
-<<{% set name_type_continue = joiner("| ") %}>>
-<<{% for name in ctx.event.name_list %}>>
-    <<{{ name_type_continue() }}>><<{{ name.key }}>>
-<<{% endfor %}>>.
+~J{ set name_type_continue = joiner("| ") }.
+~J{ for name in ctx.event.name_list }.
+    ~J< name_type_continue() >.~J< name.key >.
+~J{ endfor }..
 
 -type t() :: #markdown_event{}.
 
@@ -104,17 +104,17 @@ new(Kind, Name, Point = #markdown_point{}, OptionLink) when
 %%% Name API functions
 %%%=============================================================================
 
-<<{% for name in ctx.event.name_list %}>>
+~J{ for name in ctx.event.name_list }.
 -doc """
-<<{{ name.doc -}}>>
+~J< name.doc ->.
 """.
--spec <<{{ name.key }}>>(Kind, Point, OptionLink) -> Event when
+-spec ~J< name.key >.(Kind, Point, OptionLink) -> Event when
     Kind :: kind(),
     Point :: markdown_point:t(),
     OptionLink :: markdown_types:option(Link),
     Link :: markdown_event_link:t(),
     Event :: t().
-<<{{ name.key }}>>(Kind, Point = #markdown_point{}, OptionLink) when ?is_kind(Kind) andalso ?is_option_record(OptionLink, markdown_event_link) ->
+~J< name.key >.(Kind, Point = #markdown_point{}, OptionLink) when ?is_kind(Kind) andalso ?is_option_record(OptionLink, markdown_event_link) ->
     #markdown_event{kind = Kind, name = ?FUNCTION_NAME, point = Point, link = OptionLink}.
 
-<<{% endfor %}>>
+~J{ endfor }.

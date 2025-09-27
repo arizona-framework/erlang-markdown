@@ -32,10 +32,10 @@ States of the state machine.
 %% Call API
 -export([
     call/2,
-<<{% set name_api_continue = joiner(",") %}>>
-<<{% for name in ctx.state.name_list %}>>
-    <<{{ name_api_continue() }}>><<{{ name.key }}>>/1
-<<{% endfor %}>>
+~J{ set name_api_continue = joiner(",") }.
+~J{ for name in ctx.state.name_list }.
+    ~J< name_api_continue() >.~J< name.key >./1
+~J{ endfor }.
 ]).
 
 %% Types
@@ -48,10 +48,10 @@ Only used by MDX.
 
 -doc "Names of states to move to.".
 -type name() ::
-<<{% set name_type_continue = joiner("| ") %}>>
-<<{% for name in ctx.state.name_list %}>>
-    <<{{ name_type_continue() }}>><<{{ name.key }}>>
-<<{% endfor %}>>.
+~J{ set name_type_continue = joiner("| ") }.
+~J{ for name in ctx.state.name_list }.
+    ~J< name_type_continue() >.~J< name.key >.
+~J{ endfor }..
 
 -doc "Move to `name()` next.".
 -type next() :: {next, name()}.
@@ -144,10 +144,10 @@ call(Tokenizer1 = #markdown_tokenizer{}, Name) when ?is_markdown_state_name(Name
     % io:format("\n\n[~w:~w] AFTER state:~ts\n~ts\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Name), markdown_debug:rust_debug_string(State), TokenizerString]),
     {Tokenizer2, State}.
 
-<<{% for name in ctx.state.name_list %}>>
--spec <<{{ name.key }}>>(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: t().
--compile({inline, [<<{{ name.key }}>>/1]}).
-<<{{ name.key }}>>(Tokenizer = #markdown_tokenizer{}) ->
-    markdown_construct_<<{{ name.mod }}>>:'<<{{ name.fun }}>>'(Tokenizer).
+~J{ for name in ctx.state.name_list }.
+-spec ~J< name.key >.(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: t().
+-compile({inline, [~J< name.key >./1]}).
+~J< name.key >.(Tokenizer = #markdown_tokenizer{}) ->
+    markdown_construct_~J< name.mod >.:'~J< name.fun >.'(Tokenizer).
 
-<<{% endfor %}>>
+~J{ endfor }.

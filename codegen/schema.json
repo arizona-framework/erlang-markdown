@@ -1,0 +1,232 @@
+{
+  "$defs": {
+    "DynamicRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "rust_name": {
+          "title": "Rust Name",
+          "type": "string"
+        },
+        "rust_enum": {
+          "default": false,
+          "title": "Rust Enum",
+          "type": "boolean"
+        },
+        "static": {
+          "const": false,
+          "default": false,
+          "title": "Static",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "rust_name"
+      ],
+      "title": "DynamicRecord",
+      "type": "object"
+    },
+    "Event": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "items": {
+            "$ref": "#/$defs/EventName"
+          },
+          "title": "Name",
+          "type": "array"
+        },
+        "void": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Void",
+          "type": "array"
+        }
+      },
+      "title": "Event",
+      "type": "object"
+    },
+    "EventName": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "doc": {
+          "title": "Doc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "doc"
+      ],
+      "title": "EventName",
+      "type": "object"
+    },
+    "Resolve": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "items": {
+            "$ref": "#/$defs/ResolveName"
+          },
+          "title": "Name",
+          "type": "array"
+        }
+      },
+      "title": "Resolve",
+      "type": "object"
+    },
+    "ResolveName": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "mod": {
+          "title": "Mod",
+          "type": "string"
+        },
+        "doc": {
+          "title": "Doc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "mod",
+        "doc"
+      ],
+      "title": "ResolveName",
+      "type": "object"
+    },
+    "State": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "items": {
+            "$ref": "#/$defs/StateName"
+          },
+          "title": "Name",
+          "type": "array"
+        }
+      },
+      "title": "State",
+      "type": "object"
+    },
+    "StateName": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "mod": {
+          "title": "Mod",
+          "type": "string"
+        },
+        "fun": {
+          "title": "Fun",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "mod",
+        "fun"
+      ],
+      "title": "StateName",
+      "type": "object"
+    },
+    "StaticRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "rust_name": {
+          "title": "Rust Name",
+          "type": "string"
+        },
+        "rust_enum": {
+          "default": false,
+          "title": "Rust Enum",
+          "type": "boolean"
+        },
+        "static": {
+          "const": true,
+          "default": true,
+          "title": "Static",
+          "type": "boolean"
+        },
+        "fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fields",
+          "type": "array"
+        },
+        "size": {
+          "exclusiveMinimum": 0,
+          "title": "Size",
+          "type": "integer"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "rust_name",
+        "fields",
+        "size",
+        "type"
+      ],
+      "title": "StaticRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "$ref": "#/$defs/Event"
+    },
+    "records": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/StaticRecord"
+          },
+          {
+            "$ref": "#/$defs/DynamicRecord"
+          }
+        ]
+      },
+      "title": "Records",
+      "type": "array"
+    },
+    "resolve": {
+      "$ref": "#/$defs/Resolve"
+    },
+    "state": {
+      "$ref": "#/$defs/State"
+    }
+  },
+  "required": [
+    "event",
+    "resolve",
+    "state"
+  ],
+  "title": "Root",
+  "type": "object"
+}

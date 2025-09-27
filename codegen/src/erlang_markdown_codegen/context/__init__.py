@@ -5,11 +5,13 @@
 # LICENSE.md file in the root directory of this source tree.
 
 """Context models for codegen."""
-from abc import abstractclassmethod
+import abc
 import bisect
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Iterator, Optional
+
+from ..schema import Root as RootSchema
 
 
 class NamesMixin:
@@ -18,11 +20,11 @@ class NamesMixin:
     # def __str__(self) -> str:
     #     return self.name
 
-    @abstractclassmethod
+    @abc.abstractmethod
     def name_prefix(self) -> str:
         pass
 
-    @abstractclassmethod
+    @abc.abstractmethod
     def names(self) -> list[str]:
         pass
 
@@ -51,8 +53,8 @@ class NamesMixin:
 
 @dataclass
 class Context:
-    _output_path: str
-    _raw_config: Any = field(repr=False)
+    _output_path: str = field(repr=False)
+    schema: RootSchema = field(repr=False)
     event: "Event" = field(init=False)
     resolve: "Resolve" = field(init=False)
     state: "State" = field(init=False)
@@ -63,10 +65,11 @@ class Context:
         from .resolve import Resolve
         from .state import State
 
-        self.event = Event(self, self._raw_config["event"])
-        self.records = Records(self, self._raw_config["records"])
-        self.resolve = Resolve(self, self._raw_config["resolve"])
-        self.state = State(self, self._raw_config["state"])
+        self.event = Event(ctx=self, schema=self.schema.event)
+        self.records = Records(ctx=self, schema=self.schema.records)
+        self.resolve = Resolve(ctx=self, schema=self.schema.resolve)
+        self.state = State(ctx=self, schema=self.schema.state)
+
         return
 
     def debug(self, name: str) -> bool:

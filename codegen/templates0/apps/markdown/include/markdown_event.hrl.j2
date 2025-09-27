@@ -19,15 +19,15 @@
 
 %% Macros
 -define(is_markdown_event_name(X),
-(<<{% set name_macro_continue = joiner(" orelse ") %}>>
-<<{% for name in ctx.event.name_list %}>>
-    <<{{ name_macro_continue() }}>>(X) =:= <<{{ name.key }}>>
-<<{% endfor %}>>)).
+(~J{ set name_macro_continue = joiner(" orelse ") }.
+~J{ for name in ctx.event.name_list }.
+    ~J< name_macro_continue() >.(X) =:= ~J< name.key >.
+~J{ endfor }.)).
 
 -define(is_markdown_event_void(X),
-(<<{% set void_macro_continue = joiner(" orelse ") %}>>
-<<{% for void in ctx.event.void_list %}>>
-    <<{{ void_macro_continue() }}>>(X) =:= <<{{ void.key }}>>
-<<{% endfor %}>>)).
+(~J{ set void_macro_continue = joiner(" orelse ") }.
+~J{ for void in ctx.event.void_list }.
+    ~J< void_macro_continue() >.(X) =:= ~J< void.key >.
+~J{ endfor }.)).
 
 -endif.
