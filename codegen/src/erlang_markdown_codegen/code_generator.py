@@ -197,19 +197,23 @@ class StageTarget:
 
 @dataclass
 class CodeGenerator:
+    signing: bool
     config_file: str
     output_path: str
     templates0_path: str
     templates1_path: str
-    ctx: Context = field(init=False)
+    ctx: Optional[Context] = field(init=False)
     stage0: Stage = field(init=False)
     stage1: Stage = field(init=False)
 
     def __post_init__(self) -> None:
-        with open(self.config_file, "r", encoding="utf-8") as f:
-            data: Any = yaml.safe_load(f)
-            schema: RootSchema = RootSchema(**data)
-            self.ctx = Context(_output_path=self.output_path, schema=schema)
+        if self.signing:
+            self.ctx = None
+        else:
+            with open(self.config_file, "r", encoding="utf-8") as f:
+                data: Any = yaml.safe_load(f)
+                schema: RootSchema = RootSchema(**data)
+                self.ctx = Context(_output_path=self.output_path, schema=schema)
         self.stage0 = Stage(codegen=self, templates_path=self.templates0_path)
         self.stage1 = Stage(codegen=self, templates_path=self.templates1_path)
 

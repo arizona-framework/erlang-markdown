@@ -55,16 +55,19 @@ class NamesMixin:
 class Context:
     _output_path: str = field(repr=False)
     schema: RootSchema = field(repr=False)
+    commonmark: "CommonMark" = field(init=False)
     event: "Event" = field(init=False)
     resolve: "Resolve" = field(init=False)
     state: "State" = field(init=False)
 
     def __post_init__(self) -> None:
+        from .commonmark import CommonMark
         from .event import Event
         from .records import Records
         from .resolve import Resolve
         from .state import State
 
+        self.commonmark = CommonMark(ctx=self, schema=self.schema.commonmark)
         self.event = Event(ctx=self, schema=self.schema.event)
         self.records = Records(ctx=self, schema=self.schema.records)
         self.resolve = Resolve(ctx=self, schema=self.schema.resolve)
@@ -92,6 +95,50 @@ class Context:
             return f", {str_args}"
         else:
             return ""
+
+    def escape_string_for_erlang(self, original_str: str) -> str:
+        result = []
+        for char in original_str:
+            code = ord(char)
+
+            # Handle special escape sequences
+            if char == "\\":
+                result.append("\\\\")
+            elif char == '"':
+                result.append('\\"')
+            elif char == "\n":
+                result.append("\\n")
+            elif char == "\r":
+                result.append("\\r")
+            elif char == "\t":
+                result.append("\\t")
+            elif char == "\b":
+                result.append("\\b")
+            elif char == "\f":
+                result.append("\\f")
+            elif char == "\v":
+                result.append("\\v")
+            # Handle printable ASCII characters
+            elif 32 <= code < 127:
+                result.append(char)
+            # Handle other characters as octal escapes
+            else:
+                result.append(char)
+                # # For UTF-8 bytes outside ASCII range, encode and escape each byte
+                # for byte in char.encode("utf-8"):
+                #     result.append(f"\\x{byte:03o}")
+        return "".join(result)
+
+        # escaped_str: str = original_str.encode("unicode_escape").decode("utf-8")
+        # escaped_str = escaped_str.replace('"', r"\"")  # escape double quotes
+        # escaped_str = escaped_str.replace("'", r"\'")  # escape single quotes
+        # return f"{escaped_str}"
+        # chars: list[str] = []
+        # for char in original_str:
+
+        # comment: str = original_str.strip()
+        # lines: list[str] = comment.split("\n")
+        # return "\\n".join(f"{line}" for line in lines)
 
     def escape_string_for_c(self, original_str: str) -> str:
         escaped_str: str = original_str.encode("unicode_escape").decode("utf-8")

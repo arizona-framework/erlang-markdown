@@ -1,0 +1,98 @@
+%%% % @format
+%%%-----------------------------------------------------------------------------
+%%% Copyright (c) Meta Platforms, Inc. and affiliates.
+%%% Copyright (c) WhatsApp LLC
+%%%
+%%% This source code is licensed under the MIT license found in the
+%%% LICENSE.md file in the root directory of this source tree.
+%%%-----------------------------------------------------------------------------
+-module(markdown_commonmark_SUITE).
+-moduledoc """
+
+""".
+-moduledoc #{author => ["Andrew Bennett <potatosaladx@meta.com>"]}.
+-moduledoc #{created => "2025-09-27", modified => "2025-09-27"}.
+-moduledoc #{copyright => "Meta Platforms, Inc. and affiliates."}.
+-compile(warn_missing_spec_all).
+-oncall("whatsapp_clr").
+
+-include_lib("stdlib/include/assert.hrl").
+
+-behaviour(ct_suite).
+
+%% ct_suite callbacks
+-export([
+    all/0,
+    groups/0,
+    init_per_suite/1,
+    end_per_suite/1,
+    init_per_group/2,
+    end_per_group/2
+]).
+
+%% Test Cases
+-export([
+~J{ set test_case_joiner = joiner(",") }.
+~J{ for test_case in ctx.commonmark.test_case_list }.
+    ~J< test_case_joiner() >. ~J< test_case.name >./1
+~J{ endfor }.
+]).
+
+%% Macros
+-define(DANGER(),
+    markdown_options:new(#{compile => #{allow_dangerous_html => true, allow_dangerous_protocol => true}})
+).
+
+%%%=============================================================================
+%%% ct_suite callbacks
+%%%=============================================================================
+
+-spec all() -> markdown_test:all().
+all() ->
+    [
+        {group, commonmark}
+    ].
+
+-spec groups() -> markdown_test:groups().
+groups() ->
+    [
+        {commonmark, [parallel], [
+~J{ set test_case_joiner = joiner(",") }.
+~J{ for test_case in ctx.commonmark.test_case_list }.
+        ~J< test_case_joiner() >. ~J< test_case.name >.
+~J{ endfor }.
+        ]}
+    ].
+
+-spec init_per_suite(Config :: ct_suite:ct_config()) -> markdown_test:init_per_suite().
+init_per_suite(Config) ->
+    Config.
+
+-spec end_per_suite(Config :: ct_suite:ct_config()) -> markdown_test:end_per_suite().
+end_per_suite(_Config) ->
+    ok.
+
+-spec init_per_group(GroupName :: ct_suite:ct_groupname(), Config :: ct_suite:ct_config()) -> markdown_test:init_per_group().
+init_per_group(_Group, Config) ->
+    Config.
+
+-spec end_per_group(GroupName :: ct_suite:ct_groupname(), Config :: ct_suite:ct_config()) -> markdown_test:end_per_group().
+end_per_group(_Group, _Config) ->
+    ok.
+
+%%%=============================================================================
+%%% Test Cases
+%%%=============================================================================
+
+~J{ for test_case in ctx.commonmark.test_case_list }.
+-spec ~J< test_case.name >.(Config) -> markdown_test:testcase() when
+    Config :: ct_suite:ct_config().
+~J< test_case.name >.(_Config) ->
+    ?assertMatch(
+        {ok, <<"~J< ctx.escape_string_for_erlang(test_case.output_text) >."/utf8>>},
+        markdown:to_html_with_options(<<"~J< ctx.escape_string_for_erlang(test_case.input_text) >."/utf8>>, ?DANGER()),
+        "~J< test_case.heading >. (~J< test_case.index >.)"
+    ),
+    ok.
+
+~J{ endfor }.

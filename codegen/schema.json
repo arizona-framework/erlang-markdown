@@ -1,5 +1,24 @@
 {
   "$defs": {
+    "CommonMark": {
+      "additionalProperties": false,
+      "properties": {
+        "spec": {
+          "title": "Spec",
+          "type": "string"
+        },
+        "unicode": {
+          "title": "Unicode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "spec",
+        "unicode"
+      ],
+      "title": "CommonMark",
+      "type": "object"
+    },
     "DynamicRecord": {
       "additionalProperties": false,
       "properties": {
@@ -198,6 +217,9 @@
   },
   "additionalProperties": false,
   "properties": {
+    "commonmark": {
+      "$ref": "#/$defs/CommonMark"
+    },
     "event": {
       "$ref": "#/$defs/Event"
     },
@@ -223,6 +245,7 @@
     }
   },
   "required": [
+    "commonmark",
     "event",
     "resolve",
     "state"

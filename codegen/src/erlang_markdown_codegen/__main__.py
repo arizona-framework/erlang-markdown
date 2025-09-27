@@ -5,9 +5,11 @@
 # LICENSE.md file in the root directory of this source tree.
 
 """Command-line interface for codegen."""
-import click
 import json
 from pathlib import Path
+
+import click
+
 from . import CodeGenerator, Root
 
 
@@ -25,7 +27,13 @@ def main():
 def generate(config_file: str, output_path: str, templates0_path: str, templates1_path: str):
     """Generate Erlang code from YAML configuration using Jinja2."""
 
-    code_generator: CodeGenerator = CodeGenerator(config_file, output_path, templates0_path, templates1_path)
+    code_generator: CodeGenerator = CodeGenerator(
+        signing=False,
+        config_file=config_file,
+        output_path=output_path,
+        templates0_path=templates0_path,
+        templates1_path=templates1_path,
+    )
 
     code_generator.render()
 
@@ -47,7 +55,13 @@ def json_schema(output_path: str):
 def sign(config_file: str, output_path: str, templates0_path: str, templates1_path: str):
     """Sign Erlang code from YAML configuration using Jinja2."""
 
-    code_generator: CodeGenerator = CodeGenerator(config_file, output_path, templates0_path, templates1_path)
+    code_generator: CodeGenerator = CodeGenerator(
+        signing=True,
+        config_file=config_file,
+        output_path=output_path,
+        templates0_path=templates0_path,
+        templates1_path=templates1_path,
+    )
 
     code_generator.sign()
 

@@ -15,10 +15,16 @@ class Model(BaseModel):
 
 
 class Root(Model):
+    commonmark: "CommonMark"
     event: "Event"
     records: list["Record"] = Field(default_factory=list)
     resolve: "Resolve"
     state: "State"
+
+
+class CommonMark(Model):
+    spec: str
+    unicode: str
 
 
 class Event(Model):

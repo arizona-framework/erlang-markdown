@@ -7,6 +7,9 @@
 # LICENSE.md file in the root directory of this source tree.
 
 ---
+commonmark:
+  spec: /project/codegen/commonmark-spec.txt
+  unicode: /project/codegen/UnicodeData.txt
 event:
   name:
     - key: attention_sequence

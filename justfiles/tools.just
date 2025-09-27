@@ -16,6 +16,15 @@ codegen: docker-codegen
     just sign
 
 [linux]
+[working-directory: '/project/codegen']
+commonmark:
+    curl -Lfo /project/codegen/commonmark-spec.txt https://raw.githubusercontent.com/commonmark/commonmark-spec/0.31.2/spec.txt
+    curl -Lfo /project/codegen/UnicodeData.txt https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
+
+[macos]
+commonmark: docker-commonmark
+
+[linux]
 format: format-python-src
 
 [linux]

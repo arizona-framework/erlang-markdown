@@ -26,6 +26,11 @@ docker-codegen:
 
 [group('docker')]
 [macos]
+docker-commonmark:
+    @just _docker-exec just commonmark
+
+[group('docker')]
+[macos]
 docker-format:
     @just _docker-exec just format
 
