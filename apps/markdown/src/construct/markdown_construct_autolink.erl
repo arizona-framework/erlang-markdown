@@ -340,7 +340,8 @@ url_inside(Tokenizer1 = #markdown_tokenizer{current = Current}) ->
             State = markdown_state:nok(),
             {Tokenizer1, State};
         {some, Current2} when
-            Current2 =< 16#1F orelse Current2 =:= $\s orelse Current2 =:= $< orelse Current2 =:= 16#7F
+            (Current2 >= 16#00 andalso Current2 =< 16#1F) orelse Current2 =:= $\s orelse Current2 =:= $< orelse
+                Current2 =:= 16#7F
         ->
             State = markdown_state:nok(),
             {Tokenizer1, State};

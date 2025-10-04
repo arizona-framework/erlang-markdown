@@ -91,7 +91,7 @@ counter_reset() ->
 
 -spec doc() -> binary().
 doc() ->
-    <<"1. ```\n   foo\n   ```\n\n   bar"/utf8>>.
+    <<"[foo [bar](/uri)](/uri)\n"/utf8>>.
     % <<"*foo __bar *baz bim__ bam*"/utf8>>.
     % <<"[bar](/foo)">>.
     % %% erlfmt-ignore
@@ -261,7 +261,7 @@ mdast(Value, ParseOptions) ->
 
 -spec test() -> dynamic().
 test() ->
-    test(doc(), #{}, #{}).
+    test(doc(), #{}, #{allow_dangerous_html => true, allow_dangerous_protocol => true}).
 
 -spec test(dynamic()) -> dynamic().
 test(Value) ->
@@ -278,6 +278,7 @@ test(Value, ParseOptions) ->
 test(Value, ParseOptions, CompileOptions) ->
     case test(Value, ParseOptions) of
         {ok, {Events, ParseState}} ->
+            io:format("~ts\n", [markdown_debug:rust_debug_string(Events)]),
             Bytes = markdown_parse_state:bytes(ParseState),
             CompileOptions1 = markdown_compile_options:new(CompileOptions),
             markdown_html:compile(Events, Bytes, CompileOptions1);

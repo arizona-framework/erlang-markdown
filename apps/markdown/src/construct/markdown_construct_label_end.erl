@@ -216,6 +216,11 @@ That makes it easier to reuse and reorder footnotes.
     resource_between/1,
     resource_title_after/1,
     resource_end/1,
+    reference_full/1,
+    reference_full_after/1,
+    reference_full_missing/1,
+    reference_collapsed/1,
+    reference_collapsed_open/1,
     resolve/1
 ]).
 
@@ -400,9 +405,9 @@ ok(
                 markdown_vec:map(LabelStarts2, fun(_, LabelStartEntry) ->
                     case LabelStartEntry of
                         #markdown_label_start{kind = image} ->
-                            LabelStartEntry#markdown_label_start{inactive = true};
+                            LabelStartEntry;
                         _ ->
-                            LabelStartEntry
+                            LabelStartEntry#markdown_label_start{inactive = true}
                     end
                 end)
         end,
@@ -698,6 +703,122 @@ resource_end(Tokenizer1 = #markdown_tokenizer{current = Current}) ->
             State = markdown_state:nok(),
             {Tokenizer1, State}
     end.
+
+-doc """
+In reference (full), at `[`.
+```markdown
+> | [a][b] d
+       ^
+```
+""".
+-spec reference_full(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+reference_full(
+    Tokenizer1 = #markdown_tokenizer{current = {some, $[}, tokenize_state = TokenizeState1 = #markdown_tokenize_state{}}
+) ->
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{
+        token_1 = reference, token_2 = reference_marker, token_3 = reference_string
+    },
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    OkState = markdown_state:next(label_end_reference_full_after),
+    NokState = markdown_state:next(label_end_reference_full_missing),
+    Tokenizer3 = markdown_tokenizer:attempt(Tokenizer2, OkState, NokState),
+    State = markdown_state:retry(label_start),
+    {Tokenizer3, State}.
+
+-doc """
+In reference (full), after `]`.
+```markdown
+> | [a][b] d
+         ^
+```
+""".
+-spec reference_full_after(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+reference_full_after(
+    Tokenizer1 = #markdown_tokenizer{
+        events = Events,
+        parse_state = #markdown_parse_state{bytes = Bytes, definitions = Definitions},
+        tokenize_state = TokenizeState1 = #markdown_tokenize_state{}
+    }
+) ->
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{token_1 = data, token_2 = data, token_3 = data},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    EventsSize = markdown_vec:size(Events),
+    SkipIndex = markdown_util_skip:to_back(Events, EventsSize - 1, [reference_string]),
+    Position = markdown_position:from_exit_event(Events, SkipIndex),
+    Slice = markdown_slice:from_position(Bytes, Position),
+    %% We don’t care about virtual spaces, so `as_binary` is fine.
+    SliceBytes = markdown_slice:as_binary(Slice),
+    NormalizedIdentifier = markdown_util_normalize_identifier:normalize_identifier(SliceBytes),
+    State =
+        case markdown_vec:contains(Definitions, NormalizedIdentifier) of
+            true ->
+                markdown_state:ok();
+            false ->
+                markdown_state:nok()
+        end,
+    {Tokenizer2, State}.
+
+-doc """
+In reference (full) that was missing.
+
+```markdown
+> | [a][b d
+       ^
+```
+""".
+-spec reference_full_missing(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+reference_full_missing(Tokenizer1 = #markdown_tokenizer{tokenize_state = TokenizeState1 = #markdown_tokenize_state{}}) ->
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{token_1 = data, token_2 = data, token_3 = data},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    State = markdown_state:nok(),
+    {Tokenizer2, State}.
+
+-doc """
+In reference (collapsed), at `[`.
+
+> 👉 **Note**: we only get here if the label is defined.
+
+```markdown
+> | [a][] d
+       ^
+```
+""".
+-spec reference_collapsed(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+reference_collapsed(Tokenizer1 = #markdown_tokenizer{current = {some, $[}}) ->
+    %% We only attempt a collapsed label if there's a `[`.
+    Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, reference),
+    Tokenizer3 = markdown_tokenizer:enter(Tokenizer2, reference_marker),
+    Tokenizer4 = markdown_tokenizer:consume(Tokenizer3),
+    Tokenizer5 = markdown_tokenizer:exit(Tokenizer4, reference_marker),
+    State = markdown_state:next(label_end_reference_collapsed_open),
+    {Tokenizer5, State}.
+
+-doc """
+In reference (collapsed), at `]`.
+
+> 👉 **Note**: we only get here if the label is defined.
+
+```markdown
+> | [a][] d
+        ^
+```
+""".
+-spec reference_collapsed_open(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+reference_collapsed_open(Tokenizer1 = #markdown_tokenizer{current = {some, $]}}) ->
+    Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, reference_marker),
+    Tokenizer3 = markdown_tokenizer:consume(Tokenizer2),
+    Tokenizer4 = markdown_tokenizer:exit(Tokenizer3, reference_marker),
+    Tokenizer5 = markdown_tokenizer:exit(Tokenizer4, reference),
+    State = markdown_state:ok(),
+    {Tokenizer5, State};
+reference_collapsed_open(Tokenizer = #markdown_tokenizer{}) ->
+    State = markdown_state:nok(),
+    {Tokenizer, State}.
 
 -doc """
 Resolve images, links, and footnotes.

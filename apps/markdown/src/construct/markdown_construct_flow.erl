@@ -126,7 +126,7 @@ start(Tokenizer1 = #markdown_tokenizer{current = {some, ${}}) ->
         markdown_state:next(flow_after),
         markdown_state:next(flow_before_content)
     ),
-    State = markdown_state:retry(attribute_list_flow_start),
+    State = markdown_state:retry(mdx_expression_flow_start),
     {Tokenizer2, State};
 %% Actual parsing: blank line? Indented code? Indented anything?
 %% Tables, setext heading underlines, definitions, and Contents are
@@ -282,7 +282,7 @@ before_thematic_break(Tokenizer1) ->
     Tokenizer2 = markdown_tokenizer:attempt(
         Tokenizer1,
         markdown_state:next(flow_after),
-        markdown_state:next(flow_before_attribute_list)
+        markdown_state:next(flow_before_mdx_expression)
     ),
     State = markdown_state:retry(thematic_break_start),
     {Tokenizer2, State}.

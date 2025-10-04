@@ -260,14 +260,12 @@ open(Tokenizer1 = #markdown_tokenizer{current = {some, $!}}) ->
     Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
     State = markdown_state:next(html_flow_declaration_open),
     {Tokenizer2, State};
-open(
-    Tokenizer1 = #markdown_tokenizer{
-        current = {some, $/}, point = Point, tokenize_state = TokenizeState1 = #markdown_tokenize_state{}
-    }
-) ->
-    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
-    TokenizeState2 = TokenizeState1#markdown_tokenize_state{seen = true, start = Point#markdown_point.offset},
-    Tokenizer3 = Tokenizer2#markdown_tokenizer{tokenize_state = TokenizeState2},
+open(Tokenizer1 = #markdown_tokenizer{current = {some, $/}}) ->
+    Tokenizer2 =
+        #markdown_tokenizer{point = Point2, tokenize_state = TokenizeState2} =
+        markdown_tokenizer:consume(Tokenizer1),
+    TokenizeState3 = TokenizeState2#markdown_tokenize_state{seen = true, start = Point2#markdown_point.offset},
+    Tokenizer3 = Tokenizer2#markdown_tokenizer{tokenize_state = TokenizeState3},
     State = markdown_state:next(html_flow_tag_close_start),
     {Tokenizer3, State};
 open(
@@ -281,13 +279,13 @@ open(
     State = markdown_state:next(html_flow_continuation_declaration_inside),
     {Tokenizer3, State};
 open(
-    Tokenizer = #markdown_tokenizer{
+    Tokenizer1 = #markdown_tokenizer{
         current = {some, Current}, point = Point, tokenize_state = TokenizeState1 = #markdown_tokenize_state{}
     }
 ) when (Current >= $A andalso Current =< $Z) orelse (Current >= $a andalso Current =< $z) ->
     %% ASCII alphabetical.
     TokenizeState2 = TokenizeState1#markdown_tokenize_state{start = Point#markdown_point.offset},
-    Tokenizer2 = Tokenizer#markdown_tokenizer{tokenize_state = TokenizeState2},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
     State = markdown_state:retry(html_flow_tag_name),
     {Tokenizer2, State};
 open(Tokenizer = #markdown_tokenizer{}) ->
@@ -945,14 +943,12 @@ In raw continuation, after `<`, at `/`.
 """.
 -spec continuation_raw_tag_open(Tokenizer) -> {Tokenizer, State} when
     Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
-continuation_raw_tag_open(
-    Tokenizer1 = #markdown_tokenizer{
-        current = {some, $/}, point = Point, tokenize_state = TokenizeState1 = #markdown_tokenize_state{}
-    }
-) ->
-    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
-    TokenizeState2 = TokenizeState1#markdown_tokenize_state{start = Point#markdown_point.offset},
-    Tokenizer3 = Tokenizer2#markdown_tokenizer{tokenize_state = TokenizeState2},
+continuation_raw_tag_open(Tokenizer1 = #markdown_tokenizer{current = {some, $/}}) ->
+    Tokenizer2 =
+        #markdown_tokenizer{point = Point2, tokenize_state = TokenizeState2} =
+        markdown_tokenizer:consume(Tokenizer1),
+    TokenizeState3 = TokenizeState2#markdown_tokenize_state{start = Point2#markdown_point.offset},
+    Tokenizer3 = Tokenizer2#markdown_tokenizer{tokenize_state = TokenizeState3},
     State = markdown_state:next(html_flow_continuation_raw_end_tag),
     {Tokenizer3, State};
 continuation_raw_tag_open(Tokenizer = #markdown_tokenizer{}) ->
