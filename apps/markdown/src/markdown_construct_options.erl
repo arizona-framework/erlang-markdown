@@ -22,11 +22,17 @@
 %% API
 -export([
     commonmark/0,
+    commonmark/1,
     default/0,
+    default/1,
     gfm/0,
+    gfm/1,
     mdx/0,
+    mdx/1,
     new/1,
-    put/3
+    new/2,
+    put/3,
+    put/4
 ]).
 
 %% Types
@@ -35,6 +41,8 @@
     | castable_map().
 -type castable_keyword() :: [{key(), boolean()}].
 -type castable_map() :: #{key() => boolean()}.
+-type config() :: #{extend := extend()}.
+-type extend() :: commonmark | default | gfm | mdx | t().
 -type key() ::
     attention
     | attribute_list_flow
@@ -80,9 +88,14 @@
     castable/0,
     castable_keyword/0,
     castable_map/0,
+    config/0,
+    extend/0,
     key/0,
     t/0
 ]).
+
+%% Macros
+-define(DEFAULT_CONFIG, #{extend => default}).
 
 %%%=============================================================================
 %%% API functions
@@ -134,10 +147,18 @@ commonmark() ->
         thematic_break = true
     }.
 
+-spec commonmark(Castable) -> Constructs when Constructs :: t(), Castable :: castable().
+commonmark(Castable) ->
+    new(Castable, #{extend => commonmark}).
+
 -compile({inline, [default/0]}).
 -spec default() -> Constructs when Constructs :: t().
 default() ->
     commonmark().
+
+-spec default(Castable) -> Constructs when Constructs :: t(), Castable :: castable().
+default(Castable) ->
+    new(Castable, #{extend => default}).
 
 -compile({inline, [gfm/0]}).
 -spec gfm() -> Constructs when Constructs :: t().
@@ -151,6 +172,10 @@ gfm() ->
         gfm_table = true,
         gfm_task_list_item = true
     }.
+
+-spec gfm(Castable) -> Constructs when Constructs :: t(), Castable :: castable().
+gfm(Castable) ->
+    new(Castable, #{extend => gfm}).
 
 -compile({inline, [mdx/0]}).
 -spec mdx() -> Constructs when Constructs :: t().
@@ -167,6 +192,10 @@ mdx() ->
         mdx_jsx_flow = true,
         mdx_jsx_text = true
     }.
+
+-spec mdx(Castable) -> Constructs when Constructs :: t(), Castable :: castable().
+mdx(Castable) ->
+    new(Castable, #{extend => mdx}).
 
 % -spec iterator(Constructs) -> Iterator when Constructs :: t(), Iterator :: iterator().
 % iterator(Constructs = #markdown_construct_options{}) ->
@@ -196,16 +225,41 @@ mdx() ->
 new(Constructs = #markdown_construct_options{}) ->
     Constructs;
 new(Castable) ->
-    Constructs = default(),
+    new(Castable, ?DEFAULT_CONFIG).
+
+-spec new(Constructs | Castable, Config) -> Constructs when
+    Constructs :: t(), Castable :: castable(), Config :: config().
+new(Constructs = #markdown_construct_options{}, _Config) ->
+    Constructs;
+new(Castable, Config = #{extend := Extend}) ->
+    Constructs =
+        case Extend of
+            #markdown_construct_options{} ->
+                Extend;
+            commonmark ->
+                commonmark();
+            default ->
+                default();
+            gfm ->
+                gfm();
+            mdx ->
+                mdx()
+        end,
     case Castable of
         _Keyword = [] ->
             Constructs;
         Keyword = [{_, _} | _] ->
-            lists:foldl(fun cast_from_keyword_fold/2, Constructs, markdown_types:dynamic_cast(Keyword));
+            {Constructs2, Config} = lists:foldl(
+                fun cast_from_keyword_fold/2, {Constructs, Config}, markdown_types:dynamic_cast(Keyword)
+            ),
+            Constructs2;
         Map when is_map(Map) ->
-            maps:fold(fun cast_from_maps_fold/3, Constructs, markdown_types:dynamic_cast(Map));
+            {Constructs2, Config} = maps:fold(
+                fun cast_from_maps_fold/3, {Constructs, Config}, markdown_types:dynamic_cast(Map)
+            ),
+            Constructs2;
         _ ->
-            erlang:error(badarg, [Castable])
+            erlang:error(badarg, [Castable, Config])
     end.
 
 % -spec merge(ConstructsA, ConstructsB | CastableB) -> ConstructsC when
@@ -263,6 +317,11 @@ new(Castable) ->
 -spec put(Constructs, Key, Value) -> Constructs when
     Constructs :: t(), Key :: key(), Value :: boolean().
 put(Constructs = #markdown_construct_options{}, Key, Value) when is_boolean(Value) ->
+    put(Constructs, Key, Value, ?DEFAULT_CONFIG).
+
+-spec put(Constructs, Key, Value, Config) -> Constructs when
+    Constructs :: t(), Key :: key(), Value :: boolean(), Config :: config().
+put(Constructs = #markdown_construct_options{}, Key, Value, _Config) when is_boolean(Value) ->
     Index = key_to_index(Key),
     setelement(Index, Constructs, Value).
 
@@ -271,16 +330,18 @@ put(Constructs = #markdown_construct_options{}, Key, Value) when is_boolean(Valu
 %%%-----------------------------------------------------------------------------
 
 %% @private
--spec cast_from_keyword_fold({Key, Value}, Constructs) -> Constructs when
-    Key :: key(), Value :: boolean(), Constructs :: t().
-cast_from_keyword_fold({Key, Value}, Constructs) ->
-    put(Constructs, Key, Value).
+-spec cast_from_keyword_fold({Key, Value}, {Constructs, Config}) -> {Constructs, Config} when
+    Key :: key(), Value :: boolean(), Constructs :: t(), Config :: config().
+cast_from_keyword_fold({Key, Value}, {Constructs, Config}) ->
+    Constructs2 = put(Constructs, Key, Value, Config),
+    {Constructs2, Config}.
 
 %% @private
--spec cast_from_maps_fold(Key, Value, Constructs) -> Constructs when
-    Key :: key(), Value :: boolean(), Constructs :: t().
-cast_from_maps_fold(Key, Value, Constructs) ->
-    put(Constructs, Key, Value).
+-spec cast_from_maps_fold(Key, Value, {Constructs, Config}) -> {Constructs, Config} when
+    Key :: key(), Value :: boolean(), Constructs :: t(), Config :: config().
+cast_from_maps_fold(Key, Value, {Constructs, Config}) ->
+    Constructs2 = put(Constructs, Key, Value, Config),
+    {Constructs2, Config}.
 
 % %% @private
 % -compile({inline, [index_to_key/1]}).
@@ -361,3 +422,17 @@ key_to_index(mdx_expression_text) -> #markdown_construct_options.mdx_expression_
 key_to_index(mdx_jsx_flow) -> #markdown_construct_options.mdx_jsx_flow;
 key_to_index(mdx_jsx_text) -> #markdown_construct_options.mdx_jsx_text;
 key_to_index(thematic_break) -> #markdown_construct_options.thematic_break.
+
+% %% @private
+% -spec new(Constructs, Castable) -> Constructs when Extend :: Constructs, Castable :: castable(), Constructs :: t().
+% new(Constructs = #markdown_construct_options{}, Castable) ->
+%     case Castable of
+%         _Keyword = [] ->
+%             Constructs;
+%         Keyword = [{_, _} | _] ->
+%             lists:foldl(fun cast_from_keyword_fold/2, Constructs, markdown_types:dynamic_cast(Keyword));
+%         Map when is_map(Map) ->
+%             maps:fold(fun cast_from_maps_fold/3, Constructs, markdown_types:dynamic_cast(Map));
+%         _ ->
+%             erlang:error(badarg, [Castable])
+%     end.

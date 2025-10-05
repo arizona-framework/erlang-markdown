@@ -188,7 +188,10 @@ class TestCaseToHtmlWithOptions(TestCaseMixin):
         elif isinstance(self.options, TestSharedOptions):
             return f"?{self.options.name}"
         elif isinstance(self.options, TestSuiteOptions):
-            return self.ctx.erlang_map(self.options.as_dict)
+            if self.options.extend is None:
+                return self.ctx.erlang_map(self.options.as_dict)
+            else:
+                return f"markdown_options:{self.options.extend}({self.ctx.erlang_map(self.options.as_dict)})"
         else:
             raise ValueError(f"For TestCaseToHtmlWithOptions, options is invalid: {repr(self.options)}")
 
@@ -292,6 +295,10 @@ class TestSuiteOptions:
         if self.parse is not None:
             out["parse"] = self.parse.as_dict
         return out
+
+    @property
+    def extend(self) -> Optional[str]:
+        return self.schema.extend
 
 
 @dataclass

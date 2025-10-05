@@ -69,6 +69,7 @@ class ConstructOptions(Model):
 
 
 class Options(Model):
+    extend: Optional[Literal["commonmark", "default", "gfm", "mdx"]] = None
     compile: Optional["CompileOptions"] = None
     parse: Optional["ParseOptions"] = None
 

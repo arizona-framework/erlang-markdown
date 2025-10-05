@@ -586,6 +586,24 @@
     "Options": {
       "additionalProperties": false,
       "properties": {
+        "extend": {
+          "anyOf": [
+            {
+              "enum": [
+                "commonmark",
+                "default",
+                "gfm",
+                "mdx"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extend"
+        },
         "compile": {
           "anyOf": [
             {

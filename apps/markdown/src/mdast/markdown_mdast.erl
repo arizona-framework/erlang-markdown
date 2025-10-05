@@ -260,8 +260,9 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         % gfm_footnote_call -> on_enter_gfm_footnote_call(CompileContext1);
         % %% on_enter_gfm_footnote_definition
         % gfm_footnote_definition -> on_enter_gfm_footnote_definition(CompileContext1);
-        % %% on_enter_gfm_strikethrough
-        % gfm_strikethrough -> on_enter_gfm_strikethrough(CompileContext1);
+        %% on_enter_gfm_strikethrough
+        gfm_strikethrough ->
+            on_enter_gfm_strikethrough(CompileContext1);
         % %% on_enter_gfm_table
         % gfm_table -> on_enter_gfm_table(CompileContext1);
         % %% on_enter_gfm_table_row
@@ -524,6 +525,23 @@ on_enter_gfm_autolink_literal(CompileContext1 = #markdown_mdast_compile_context{
         {ok, CompileContext3} ?= on_enter_data(CompileContext2),
         {ok, CompileContext3}
     end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmStrikethrough`][Name::GfmStrikethrough].
+""".
+-spec on_enter_gfm_strikethrough(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_gfm_strikethrough(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:delete(#markdown_mdast_delete{
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
 
 %% @private
 -doc """
