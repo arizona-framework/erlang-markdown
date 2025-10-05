@@ -7,5 +7,6 @@
 """Generate Erlang code from YAML configurations using Jinja2."""
 from .code_generator import CodeGenerator
 from .schema import Root
+from .test_schema import TestRoot
 
-__all__ = ["CodeGenerator", "Root"]
+__all__ = ["CodeGenerator", "Root", "TestRoot"]

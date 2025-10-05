@@ -4968,3 +4968,4 @@ state:
     - key: title_nok
       mod: partial_title
       fun: nok
+test_path: /project/codegen/test

@@ -242,13 +242,18 @@
     },
     "state": {
       "$ref": "#/$defs/State"
+    },
+    "test_path": {
+      "title": "Test Path",
+      "type": "string"
     }
   },
   "required": [
     "commonmark",
     "event",
     "resolve",
-    "state"
+    "state",
+    "test_path"
   ],
   "title": "Root",
   "type": "object"

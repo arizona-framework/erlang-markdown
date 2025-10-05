@@ -13,11 +13,12 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13,<4"
 dependencies = [
     "click (>=8.3.0,<9.0.0)",
     "jinja2 (>=3.1.6,<4.0.0)",
     "jsonschema (>=4.25.1,<5.0.0)",
+    "option (>=2.1.0,<3.0.0)",
     "pydantic (>=2.11.9,<3.0.0)",
     "pyyaml (>=6.0.3,<7.0.0)",
 ]

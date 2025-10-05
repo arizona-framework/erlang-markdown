@@ -8,6 +8,7 @@
 [working-directory: '/project/codegen']
 codegen: poetry-install format
     poetry run erlang_markdown_codegen json-schema /project/codegen/schema.json
+    poetry run erlang_markdown_codegen json-schema-test /project/codegen/test/schema.json
     poetry run erlang_markdown_codegen generate /project/codegen/config.yaml /project /project/codegen/templates0 /project/codegen/templates1
 
 [macos]

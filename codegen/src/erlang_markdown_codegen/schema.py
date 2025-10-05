@@ -20,6 +20,7 @@ class Root(Model):
     records: list["Record"] = Field(default_factory=list)
     resolve: "Resolve"
     state: "State"
+    test_path: str
 
 
 class CommonMark(Model):

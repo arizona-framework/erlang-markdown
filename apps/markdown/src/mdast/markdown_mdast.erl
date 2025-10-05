@@ -235,8 +235,9 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         %% on_enter_code_text
         code_text ->
             on_enter_code_text(CompileContext1);
-        % %% on_enter_definition
-        % definition -> on_enter_definition(CompileContext1);
+        %% on_enter_definition
+        definition ->
+            on_enter_definition(CompileContext1);
         %% on_enter_emphasis
         emphasis ->
             on_enter_emphasis(CompileContext1);
@@ -423,6 +424,26 @@ on_enter_data(CompileContext1 = #markdown_mdast_compile_context{}) ->
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:[`Definition`][Name::Definition].
+""".
+-spec on_enter_definition(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_definition(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:definition(#markdown_mdast_definition{
+                url = <<>>,
+                identifier = <<>>,
+                label = none,
+                title = none,
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`Emphasis`][Name::Emphasis].
 """.
 -spec on_enter_emphasis(CompileContext) -> {ok, CompileContext} when
@@ -582,13 +603,17 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
             on_exit_raw_text(CompileContext1);
         math_text ->
             on_exit_raw_text(CompileContext1);
-        % %% on_exit_definition_destination_string
-        % definition_destination_string -> on_exit_definition_destination_string(CompileContext1);
-        % %% on_exit_definition_id
-        % definition_label_string -> on_exit_definition_id(CompileContext1);
-        % gfm_footnote_definition_label_string -> on_exit_definition_id(CompileContext1);
-        % %% on_exit_definition_title_string
-        % definition_title_string -> on_exit_definition_title_string(CompileContext1);
+        %% on_exit_definition_destination_string
+        definition_destination_string ->
+            on_exit_definition_destination_string(CompileContext1);
+        %% on_exit_definition_id
+        definition_label_string ->
+            on_exit_definition_id(CompileContext1);
+        gfm_footnote_definition_label_string ->
+            on_exit_definition_id(CompileContext1);
+        %% on_exit_definition_title_string
+        definition_title_string ->
+            on_exit_definition_title_string(CompileContext1);
         % %% on_exit_frontmatter
         % frontmatter -> on_exit_frontmatter(CompileContext1);
         % %% on_exit_gfm_autolink_literal
@@ -819,6 +844,103 @@ on_exit_data__node_mut_func(
     {Node2, none};
 on_exit_data__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
     ?'unreachable!'("expected text on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`DefinitionDestinationString`][Name::DefinitionDestinationString].
+""".
+-spec on_exit_definition_destination_string(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_definition_destination_string(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Value = markdown_mdast_node:to_string(Node),
+    NodeMutFunc = fun on_exit_definition_destination_string__node_mut_func/2,
+    {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+    {ok, CompileContext3}.
+
+%% @private
+-spec on_exit_definition_destination_string__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(), OptionValue :: markdown_option:t(Value), Value :: unicode:unicode_binary().
+on_exit_definition_destination_string__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Definition1 = #markdown_mdast_definition{}}, {some, Value}
+) ->
+    Definition2 = Definition1#markdown_mdast_definition{url = Value},
+    Node2 = Node1#markdown_mdast_node{inner = Definition2},
+    {Node2, none};
+on_exit_definition_destination_string__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected definition on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:{[`DefinitionLabelString`][Name::DefinitionLabelString],[`GfmFootnoteDefinitionLabelString`][Name::GfmFootnoteDefinitionLabelString]}.
+""".
+-spec on_exit_definition_id(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_definition_id(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Label = markdown_mdast_node:to_string(Node),
+    Bytes = CompileContext2#markdown_mdast_compile_context.bytes,
+    Events = CompileContext2#markdown_mdast_compile_context.events,
+    Index = CompileContext2#markdown_mdast_compile_context.index,
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    Identifier = markdown_types:unicode_binary(
+        string:casefold(markdown_util_normalize_identifier:normalize_identifier(SliceBytes))
+    ),
+    NodeMutFunc = fun on_exit_definition_id__node_mut_func/2,
+    Value = {Identifier, Label},
+    {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+    {ok, CompileContext3}.
+
+%% @private
+-spec on_exit_definition_id__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(),
+    OptionValue :: markdown_option:t(Value),
+    Value :: {Identifier, Label},
+    Identifier :: unicode:unicode_binary(),
+    Label :: unicode:unicode_binary().
+on_exit_definition_id__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Definition1 = #markdown_mdast_definition{}}, {some, {Identifier, Label}}
+) ->
+    Definition2 = Definition1#markdown_mdast_definition{identifier = Identifier, label = {some, Label}},
+    Node2 = Node1#markdown_mdast_node{inner = Definition2},
+    {Node2, none};
+on_exit_definition_id__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = FootnoteDefinition1 = #markdown_mdast_footnote_definition{}},
+    {some, {Identifier, Label}}
+) ->
+    FootnoteDefinition2 = FootnoteDefinition1#markdown_mdast_footnote_definition{
+        identifier = Identifier, label = {some, Label}
+    },
+    Node2 = Node1#markdown_mdast_node{inner = FootnoteDefinition2},
+    {Node2, none};
+on_exit_definition_id__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected definition or footnote definition on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`DefinitionTitleString`][Name::DefinitionTitleString].
+""".
+-spec on_exit_definition_title_string(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_definition_title_string(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Value = markdown_mdast_node:to_string(Node),
+    NodeMutFunc = fun on_exit_definition_title_string__node_mut_func/2,
+    {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+    {ok, CompileContext3}.
+
+%% @private
+-spec on_exit_definition_title_string__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(), OptionValue :: markdown_option:t(Value), Value :: unicode:unicode_binary().
+on_exit_definition_title_string__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Definition1 = #markdown_mdast_definition{}}, {some, Value}
+) ->
+    Definition2 = Definition1#markdown_mdast_definition{title = {some, Value}},
+    Node2 = Node1#markdown_mdast_node{inner = Definition2},
+    {Node2, none};
+on_exit_definition_title_string__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected definition on stack", []).
 
 %% @private
 -doc """

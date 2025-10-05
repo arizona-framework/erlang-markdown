@@ -7,11 +7,17 @@
 """Context models for codegen."""
 import abc
 import bisect
+import glob
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Iterator, Optional
 
+import yaml
+
+from option import Option
+
 from ..schema import Root as RootSchema
+from ..test_schema import TestRoot as TestRootSchema
 
 
 class NamesMixin:
@@ -59,6 +65,7 @@ class Context:
     event: "Event" = field(init=False)
     resolve: "Resolve" = field(init=False)
     state: "State" = field(init=False)
+    test: OrderedDict[str, "TestSuite"] = field(init=False)
 
     def __post_init__(self) -> None:
         from .commonmark import CommonMark
@@ -66,12 +73,19 @@ class Context:
         from .records import Records
         from .resolve import Resolve
         from .state import State
+        from .test import TestSuite
 
         self.commonmark = CommonMark(ctx=self, schema=self.schema.commonmark)
         self.event = Event(ctx=self, schema=self.schema.event)
         self.records = Records(ctx=self, schema=self.schema.records)
         self.resolve = Resolve(ctx=self, schema=self.schema.resolve)
         self.state = State(ctx=self, schema=self.schema.state)
+        self.test = OrderedDict()
+        for test_config_file in glob.iglob("*.yaml", root_dir=self.schema.test_path, recursive=True):
+            with open(f"{self.schema.test_path}/{test_config_file}", "r", encoding="utf-8") as f:
+                data: Any = yaml.safe_load(f)
+                test_schema: TestRootSchema = TestRootSchema(**data)
+                self.test[test_schema.suite] = TestSuite(ctx=self, schema=test_schema)
 
         return
 
@@ -95,6 +109,35 @@ class Context:
             return f", {str_args}"
         else:
             return ""
+
+    def erlang_comment(self, original_str: str) -> str:
+        comment: str = original_str.strip()
+        lines: list[str] = comment.split("\n")
+        return "\n".join(f"%% {line}" for line in lines)
+
+    def erlang_map(self, data: OrderedDict[str, Any]) -> str:
+        return f"#{{{''.join([f'{k} => {self.erlang_map_value(v)},' for k, v in data.items()])}}}"
+
+    def erlang_map_value(self, value: Any) -> str:
+        if isinstance(value, str):
+            return f'<<"{self.escape_string_for_erlang(value)}"/utf8>>'
+        elif isinstance(value, bool):
+            return "true" if value else "false"
+        elif isinstance(value, int):
+            return str(value)
+        elif isinstance(value, float):
+            return str(value)
+        elif isinstance(value, list):
+            return f"[{','.join([self.erlang_map_value(v) for v in value])}]"
+        elif isinstance(value, OrderedDict):
+            return self.erlang_map(value)
+        elif isinstance(value, Option):
+            if value.is_none():
+                return "none"
+            else:
+                return f"{{some, {self.erlang_map_value(value.unwrap())}}}"
+        else:
+            raise ValueError(f"unsupported type: {type(value)} -> {repr(value)}")
 
     def escape_string_for_erlang(self, original_str: str) -> str:
         result = []

@@ -1,0 +1,911 @@
+{
+  "$defs": {
+    "CompileOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_dangerous_html": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Allow Dangerous Html"
+        },
+        "allow_dangerous_protocol": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Allow Dangerous Protocol"
+        },
+        "allow_any_img_src": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Allow Any Img Src"
+        },
+        "default_line_ending": {
+          "anyOf": [
+            {
+              "enum": [
+                "carriage_return_line_feed",
+                "carriage_return",
+                "line_feed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default Line Ending"
+        },
+        "gfm_footnote_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Footnote Label"
+        },
+        "gfm_footnote_label_tag_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Footnote Label Tag Name"
+        },
+        "gfm_footnote_label_attributes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Footnote Label Attributes"
+        },
+        "gfm_footnote_back_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Footnote Back Label"
+        },
+        "gfm_footnote_clobber_prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Footnote Clobber Prefix"
+        },
+        "gfm_task_list_item_checkable": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Task List Item Checkable"
+        },
+        "gfm_tagfilter": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Tagfilter"
+        }
+      },
+      "title": "CompileOptions",
+      "type": "object"
+    },
+    "Constant": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/$defs/Options"
+        }
+      },
+      "required": [
+        "name",
+        "options"
+      ],
+      "title": "Constant",
+      "type": "object"
+    },
+    "ConstructOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "attention": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attention"
+        },
+        "attribute_list_flow": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attribute List Flow"
+        },
+        "attribute_list_text": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attribute List Text"
+        },
+        "autolink": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Autolink"
+        },
+        "block_quote": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Block Quote"
+        },
+        "character_escape": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Character Escape"
+        },
+        "character_reference": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Character Reference"
+        },
+        "code_indented": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Code Indented"
+        },
+        "code_fenced": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Code Fenced"
+        },
+        "code_text": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Code Text"
+        },
+        "definition": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition"
+        },
+        "frontmatter": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Frontmatter"
+        },
+        "gfm_autolink_literal": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Autolink Literal"
+        },
+        "gfm_label_start_footnote": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Label Start Footnote"
+        },
+        "gfm_footnote_definition": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Footnote Definition"
+        },
+        "gfm_strikethrough": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Strikethrough"
+        },
+        "gfm_table": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Table"
+        },
+        "gfm_task_list_item": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Task List Item"
+        },
+        "hard_break_escape": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hard Break Escape"
+        },
+        "hard_break_trailing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hard Break Trailing"
+        },
+        "heading_atx": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading Atx"
+        },
+        "heading_setext": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading Setext"
+        },
+        "html_flow": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Html Flow"
+        },
+        "html_text": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Html Text"
+        },
+        "label_start_image": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label Start Image"
+        },
+        "label_start_link": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label Start Link"
+        },
+        "label_end": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label End"
+        },
+        "list_item": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "List Item"
+        },
+        "math_flow": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Math Flow"
+        },
+        "math_text": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Math Text"
+        },
+        "mdx_esm": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mdx Esm"
+        },
+        "mdx_expression_flow": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mdx Expression Flow"
+        },
+        "mdx_expression_text": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mdx Expression Text"
+        },
+        "mdx_jsx_flow": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mdx Jsx Flow"
+        },
+        "mdx_jsx_text": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mdx Jsx Text"
+        },
+        "thematic_break": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Thematic Break"
+        }
+      },
+      "title": "ConstructOptions",
+      "type": "object"
+    },
+    "Options": {
+      "additionalProperties": false,
+      "properties": {
+        "compile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CompileOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "parse": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParseOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Options",
+      "type": "object"
+    },
+    "ParseOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "constructs": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConstructOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gfm_strikethrough_single_tilde": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gfm Strikethrough Single Tilde"
+        },
+        "math_text_single_dollar": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Math Text Single Dollar"
+        },
+        "mdx_expression_parse": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mdx Expression Parse"
+        },
+        "mdx_esm_parse": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mdx Esm Parse"
+        }
+      },
+      "title": "ParseOptions",
+      "type": "object"
+    },
+    "TestCaseToHtml": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "input": {
+          "title": "Input",
+          "type": "string"
+        },
+        "output": {
+          "title": "Output",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Comment"
+        },
+        "kind": {
+          "const": "to_html",
+          "default": "to_html",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "input",
+        "output",
+        "message"
+      ],
+      "title": "TestCaseToHtml",
+      "type": "object"
+    },
+    "TestCaseToHtmlWithOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "input": {
+          "title": "Input",
+          "type": "string"
+        },
+        "output": {
+          "title": "Output",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Comment"
+        },
+        "kind": {
+          "const": "to_html_with_options",
+          "default": "to_html_with_options",
+          "title": "Kind",
+          "type": "string"
+        },
+        "options": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Options"
+            }
+          ],
+          "title": "Options"
+        }
+      },
+      "required": [
+        "name",
+        "input",
+        "output",
+        "message",
+        "options"
+      ],
+      "title": "TestCaseToHtmlWithOptions",
+      "type": "object"
+    },
+    "TestCaseToMdast": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "input": {
+          "title": "Input",
+          "type": "string"
+        },
+        "output": {
+          "title": "Output",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Comment"
+        },
+        "kind": {
+          "const": "to_mdast",
+          "default": "to_mdast",
+          "title": "Kind",
+          "type": "string"
+        },
+        "options": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ParseOptions"
+            }
+          ],
+          "title": "Options"
+        }
+      },
+      "required": [
+        "name",
+        "input",
+        "output",
+        "message",
+        "options"
+      ],
+      "title": "TestCaseToMdast",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "suite": {
+      "title": "Suite",
+      "type": "string"
+    },
+    "created": {
+      "format": "date",
+      "title": "Created",
+      "type": "string"
+    },
+    "modified": {
+      "format": "date",
+      "title": "Modified",
+      "type": "string"
+    },
+    "constants": {
+      "items": {
+        "$ref": "#/$defs/Constant"
+      },
+      "title": "Constants",
+      "type": "array"
+    },
+    "test_cases": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/TestCaseToHtml"
+          },
+          {
+            "$ref": "#/$defs/TestCaseToHtmlWithOptions"
+          },
+          {
+            "$ref": "#/$defs/TestCaseToMdast"
+          }
+        ]
+      },
+      "title": "Test Cases",
+      "type": "array"
+    }
+  },
+  "required": [
+    "suite"
+  ],
+  "title": "TestRoot",
+  "type": "object"
+}

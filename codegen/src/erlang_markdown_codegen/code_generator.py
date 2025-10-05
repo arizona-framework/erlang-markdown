@@ -18,6 +18,7 @@ from jinja2.ext import Extension
 
 from .context import Context
 from .schema import Root as RootSchema
+from .test_schema import TestRoot as TestRootSchema
 
 TOKEN: str = "".join(["<<", "SignedSource", "::", "*O*zOeWoEQle#+L!plEphiEmie@IsG", ">>"])
 
@@ -72,13 +73,24 @@ class Stage:
             if os.path.isfile(os.path.join(self.templates_path, template_name)):
                 output_name, template_ext = os.path.splitext(template_name)
                 if template_ext == ".j2":
-                    self.targets.append(
-                        StageTarget(
-                            stage=self,
-                            template_name=template_name,
-                            output_name=output_name,
+                    if "<suite>" in output_name:
+                        for test_suite in self.codegen.test_suites:
+                            self.targets.append(
+                                StageTarget(
+                                    stage=self,
+                                    template_name=template_name,
+                                    output_name=output_name.replace("<suite>", test_suite),
+                                    test_suite=test_suite,
+                                )
+                            )
+                    else:
+                        self.targets.append(
+                            StageTarget(
+                                stage=self,
+                                template_name=template_name,
+                                output_name=output_name,
+                            )
                         )
-                    )
         self.c_env = Environment(
             loader=FileSystemLoader(self.templates_path, encoding="utf-8"),
             comment_start_string="/* clang-format ",
@@ -132,6 +144,7 @@ class StageTarget:
     output_path: str = field(init=False)
     output_file: str = field(init=False)
     is_erl: bool = field(init=False)
+    test_suite: Optional[str] = field(default=None)
 
     def __post_init__(self) -> None:
         _, output_ext = os.path.splitext(self.output_name)
@@ -167,10 +180,20 @@ class StageTarget:
         return
 
     def render(self) -> None:
+        if self.codegen.ctx is None:
+            raise Exception("codegen context is not initialized")
         os.makedirs(self.output_path, exist_ok=True)
         template: Template = self.env.get_template(self.template_name)
         print(f"[{self.label}] {self.output_name}")
-        template.stream(ctx=self.codegen.ctx).dump(self.output_file, encoding="utf-8")
+        if self.test_suite is not None:
+            template.stream(
+                ctx=self.codegen.ctx,
+                test=self.codegen.ctx.test[self.test_suite],
+            ).dump(self.output_file, encoding="utf-8")
+        else:
+            template.stream(
+                ctx=self.codegen.ctx,
+            ).dump(self.output_file, encoding="utf-8")
         return
 
     def sign(self) -> None:
@@ -178,7 +201,7 @@ class StageTarget:
         needle: re.Pattern = re.compile(rb"(?:SignedSource<<(?P<md5>[a-f0-9]{32})>>)|" + re.escape(token))
         with open(self.output_file, "rb+") as f:
             haystack: bytes = f.read()
-            md5: hashlib.md5 = hashlib.md5()
+            md5 = hashlib.md5()
             index: int = 0
             for match in needle.finditer(haystack):
                 if match.group(1) is None:
@@ -205,6 +228,7 @@ class CodeGenerator:
     ctx: Optional[Context] = field(init=False)
     stage0: Stage = field(init=False)
     stage1: Stage = field(init=False)
+    _test_suites: Optional[list[str]] = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if self.signing:
@@ -230,3 +254,26 @@ class CodeGenerator:
         self.stage0.sign()
         print("Stage1 Sign")
         self.stage1.sign()
+
+    @property
+    def test_suites(self) -> list[str]:
+        if self._test_suites is None:
+            if self.ctx is None:
+                self._test_suites = []
+                test_path: str = ""
+                with open(self.config_file, "r", encoding="utf-8") as f:
+                    data: Any = yaml.safe_load(f)
+                    schema: RootSchema = RootSchema(**data)
+                    test_path = schema.test_path
+                for test_config_file in glob.iglob("*.yaml", root_dir=test_path, recursive=True):
+                    with open(f"{test_path}/{test_config_file}", "r", encoding="utf-8") as f:
+                        data: Any = yaml.safe_load(f)
+                        test_schema: TestRootSchema = TestRootSchema(**data)
+                        self._test_suites.append(test_schema.suite)
+                self._test_suites.sort()
+                return self._test_suites
+            else:
+                self._test_suites = list(sorted(self.ctx.test.keys()))
+                return self._test_suites
+        else:
+            return self._test_suites

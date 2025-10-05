@@ -10,7 +10,7 @@ from pathlib import Path
 
 import click
 
-from . import CodeGenerator, Root
+from . import CodeGenerator, Root, TestRoot
 
 
 @click.group()
@@ -44,6 +44,15 @@ def json_schema(output_path: str):
     """Generate a JSON schema for the configuration file."""
 
     Path(output_path).write_text(json.dumps(Root.model_json_schema(), indent=2))
+    print(f"Wrote JSON schema to: {output_path}")
+
+
+@main.command("json-schema-test")
+@click.argument("output_path", type=click.Path())
+def json_schema(output_path: str):
+    """Generate a JSON schema for test cases."""
+
+    Path(output_path).write_text(json.dumps(TestRoot.model_json_schema(), indent=2))
     print(f"Wrote JSON schema to: {output_path}")
 
 
