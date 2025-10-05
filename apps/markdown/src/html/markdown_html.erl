@@ -705,11 +705,11 @@ exit(CompileContext1 = #markdown_html_compile_context{events = Events, index = I
             definition_title_string -> on_exit_definition_title_string(CompileContext1);
             emphasis -> on_exit_emphasis(CompileContext1);
             frontmatter -> on_exit_frontmatter(CompileContext1);
-            % gfm_autolink_literal_email -> on_exit_gfm_autolink_literal_email(CompileContext1);
-            % gfm_autolink_literal_mailto -> on_exit_gfm_autolink_literal_mailto(CompileContext1);
-            % gfm_autolink_literal_protocol -> on_exit_gfm_autolink_literal_protocol(CompileContext1);
-            % gfm_autolink_literal_www -> on_exit_gfm_autolink_literal_www(CompileContext1);
-            % gfm_autolink_literal_xmpp -> on_exit_gfm_autolink_literal_xmpp(CompileContext1);
+            gfm_autolink_literal_email -> on_exit_gfm_autolink_literal_email(CompileContext1);
+            gfm_autolink_literal_mailto -> on_exit_gfm_autolink_literal_mailto(CompileContext1);
+            gfm_autolink_literal_protocol -> on_exit_gfm_autolink_literal_protocol(CompileContext1);
+            gfm_autolink_literal_www -> on_exit_gfm_autolink_literal_www(CompileContext1);
+            gfm_autolink_literal_xmpp -> on_exit_gfm_autolink_literal_xmpp(CompileContext1);
             % gfm_footnote_call -> on_exit_gfm_footnote_call(CompileContext1);
             % gfm_footnote_definition_label_string -> on_exit_gfm_footnote_definition_label_string(CompileContext1);
             % gfm_footnote_definition_prefix -> on_exit_gfm_footnote_definition_prefix(CompileContext1);
@@ -1013,6 +1013,81 @@ on_exit_frontmatter(CompileContext1 = #markdown_html_compile_context{}) ->
     {CompileContext2, _Buffer} = markdown_html_compile_context:resume(CompileContext1),
     CompileContext3 = CompileContext2#markdown_html_compile_context{slurp_one_line_ending = true},
     CompileContext3.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmAutolinkLiteralEmail`][Name::GfmAutolinkLiteralEmail].
+""".
+-spec on_exit_gfm_autolink_literal_email(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_autolink_literal_email(
+    CompileContext1 = #markdown_html_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Position = markdown_position:from_exit_event(Events, Index),
+    Slice = markdown_slice:from_position(Bytes, Position),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    CompileContext2 = generate_autolink(CompileContext1, {some, <<"mailto:">>}, SliceBytes, true),
+    CompileContext2.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmAutolinkLiteralMailto`][Name::GfmAutolinkLiteralMailto].
+""".
+-spec on_exit_gfm_autolink_literal_mailto(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_autolink_literal_mailto(
+    CompileContext1 = #markdown_html_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Position = markdown_position:from_exit_event(Events, Index),
+    Slice = markdown_slice:from_position(Bytes, Position),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    CompileContext2 = generate_autolink(CompileContext1, none, SliceBytes, true),
+    CompileContext2.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmAutolinkLiteralProtocol`][Name::GfmAutolinkLiteralProtocol].
+""".
+-spec on_exit_gfm_autolink_literal_protocol(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_autolink_literal_protocol(
+    CompileContext1 = #markdown_html_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Position = markdown_position:from_exit_event(Events, Index),
+    Slice = markdown_slice:from_position(Bytes, Position),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    CompileContext2 = generate_autolink(CompileContext1, none, SliceBytes, true),
+    CompileContext2.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmAutolinkLiteralWww`][Name::GfmAutolinkLiteralWww].
+""".
+-spec on_exit_gfm_autolink_literal_www(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_autolink_literal_www(
+    CompileContext1 = #markdown_html_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Position = markdown_position:from_exit_event(Events, Index),
+    Slice = markdown_slice:from_position(Bytes, Position),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    CompileContext2 = generate_autolink(CompileContext1, {some, <<"http://">>}, SliceBytes, true),
+    CompileContext2.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmAutolinkLiteralXmpp`][Name::GfmAutolinkLiteralXmpp].
+""".
+-spec on_exit_gfm_autolink_literal_xmpp(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_autolink_literal_xmpp(
+    CompileContext1 = #markdown_html_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Position = markdown_position:from_exit_event(Events, Index),
+    Slice = markdown_slice:from_position(Bytes, Position),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    CompileContext2 = generate_autolink(CompileContext1, none, SliceBytes, true),
+    CompileContext2.
 
 %% @private
 -doc """

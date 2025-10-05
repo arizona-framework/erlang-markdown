@@ -6,7 +6,7 @@
 %%% This source code is licensed under the MIT license found in the
 %%% LICENSE.md file in the root directory of this source tree.
 %%%-----------------------------------------------------------------------------
--module(markdown_~J< test.suite >._SUITE).
+-module(markdown_~J< test.suite.name >._SUITE).
 -moduledoc """
 
 """.
@@ -40,10 +40,16 @@
 ~J{ endfor }.
 ]).
 
+~J{ if test.has_shared }.
 %% Macros
-~J{ for constant in test.constant_list }.
--define(~J< constant.name >., markdown_options:new(~J< ctx.erlang_map(constant.options.as_dict) >.)).
+~J{ for shared in test.shared_list }.
+~J{ if shared.kind == "shared_options" }.
+-define(~J< shared.name >., markdown_options:new(~J< ctx.erlang_map(shared.options.as_dict) >.)).
+~J{ else }.
+-define(~J< shared.name >., markdown_parse_options:new(~J< ctx.erlang_map(shared.parse_options.as_dict) >.)).
+~J{ endif }.
 ~J{ endfor }.
+~J{ endif }.
 
 %%%=============================================================================
 %%% ct_suite callbacks
@@ -102,7 +108,7 @@ end_per_group(_Group, _Config) ->
 ~J{ elif test_case.kind == "to_mdast" }.
     ?assertEqual(
         {ok, ~J< test_case.output >.},
-        markdown:to_mdast(<<"~J< ctx.escape_string_for_erlang(test_case.input) >."/utf8>>, ~J< test_case.options_for_erlang >.),
+        markdown:to_mdast(<<"~J< ctx.escape_string_for_erlang(test_case.input) >."/utf8>>, ~J< test_case.parse_options_for_erlang >.),
         "~J< ctx.escape_string_for_erlang(test_case.message) >."
     ),
 ~J{ else }.

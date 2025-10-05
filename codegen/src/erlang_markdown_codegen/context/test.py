@@ -5,46 +5,94 @@
 # LICENSE.md file in the root directory of this source tree.
 
 """Context Test models for codegen."""
+import abc
+import bisect
 from collections import OrderedDict
 from dataclasses import dataclass, field
+import re
 from typing import Any, Literal, Optional, Union
 
 from option import Option
 
 from ..test_schema import (
     CompileOptions as CompileOptionsSchema,
-    Constant as ConstantSchema,
     ConstructOptions as ConstructOptionsSchema,
     Options as OptionsSchema,
     ParseOptions as ParseOptionsSchema,
-    TestCase as TestCaseSchema,
+    SharedOptions as SharedOptionsSchema,
+    SharedParseOptions as SharedParseOptionsSchema,
+    TestCaseBase as TestCaseBaseSchema,
+    TestCaseToHtml as TestCaseToHtmlSchema,
+    TestCaseToHtmlWithOptions as TestCaseToHtmlWithOptionsSchema,
+    TestCaseToMdast as TestCaseToMdastSchema,
     TestRoot as TestRootSchema,
 )
 from . import Context
+
+
+TestCase = Union["TestCaseToHtml", "TestCaseToHtmlWithOptions", "TestCaseToMdast"]
+TestShared = Union["TestSharedOptions", "TestSharedParseOptions"]
+
+
+@dataclass
+class Test:
+    ctx: Context = field(repr=False)
+    schema: TestRootSchema = field(repr=False)
+    suite: "TestSuite" = field(init=False)
+    shared_dict: OrderedDict[str, TestShared] = field(init=False)
+    shared_list: list[TestShared] = field(init=False)
+    case_dict: OrderedDict[str, TestCase] = field(init=False)
+    case_list: list[TestCase] = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.suite = TestSuite(ctx=self.ctx, test=self, schema=self.schema.suite)
+        self.shared_dict = OrderedDict()
+        self.shared_list = []
+        for shared_options_schema in self.schema.shared_options:
+            shared_options: TestSharedOptions = TestSharedOptions(ctx=self.ctx, schema=shared_options_schema)
+            if shared_options.name in self.shared_dict:
+                raise ValueError(f"duplicate SharedOptions name found: {shared_options.name}")
+            self.shared_dict[shared_options.name] = shared_options
+            self.shared_list.append(shared_options)
+        for shared_parse_options_schema in self.schema.shared_parse_options:
+            shared_parse_options: TestSharedParseOptions = TestSharedParseOptions(ctx=self.ctx, schema=shared_parse_options_schema)
+            if shared_parse_options.name in self.shared_dict:
+                raise ValueError(f"duplicate SharedParseOptions name found: {shared_parse_options.name}")
+            self.shared_dict[shared_parse_options.name] = shared_parse_options
+            self.shared_list.append(shared_parse_options)
+        self.case_dict = OrderedDict()
+        self.case_list = []
+        for test_case_to_html_schema in self.schema.to_html:
+            test_case_to_html: TestCaseToHtml = TestCaseToHtml(ctx=self.ctx, test=self, schema=test_case_to_html_schema)
+            if test_case_to_html.name in self.case_dict:
+                raise ValueError(f"duplicate TestCaseToHtml name found: {test_case_to_html.name}")
+            self.case_dict[test_case_to_html.name] = test_case_to_html
+            bisect.insort(self.case_list, test_case_to_html, key=lambda x: x.key)
+        for test_case_to_html_with_options_schema in self.schema.to_html_with_options:
+            test_case_to_html_with_options: TestCaseToHtmlWithOptions = TestCaseToHtmlWithOptions(
+                ctx=self.ctx, test=self, schema=test_case_to_html_with_options_schema
+            )
+            if test_case_to_html_with_options.name in self.case_dict:
+                raise ValueError(f"duplicate TestCaseToHtmlWithOptions name found: {test_case_to_html_with_options.name}")
+            self.case_dict[test_case_to_html_with_options.name] = test_case_to_html_with_options
+            bisect.insort(self.case_list, test_case_to_html_with_options, key=lambda x: x.key)
+        for test_case_to_mdast_schema in self.schema.to_mdast:
+            test_case_to_mdast: TestCaseToMdast = TestCaseToMdast(ctx=self.ctx, test=self, schema=test_case_to_mdast_schema)
+            if test_case_to_mdast.name in self.case_dict:
+                raise ValueError(f"duplicate TestCaseToMdast name found: {test_case_to_mdast.name}")
+            self.case_dict[test_case_to_mdast.name] = test_case_to_mdast
+            bisect.insort(self.case_list, test_case_to_mdast, key=lambda x: x.key)
+
+    @property
+    def has_shared(self) -> bool:
+        return len(self.shared_list) > 0
 
 
 @dataclass
 class TestSuite:
     ctx: Context = field(repr=False)
     schema: TestRootSchema = field(repr=False)
-    constant_dict: OrderedDict[str, "TestSuiteConstant"] = field(init=False)
-    constant_list: list["TestSuiteConstant"] = field(init=False)
-    case_dict: OrderedDict[str, "TestSuiteCase"] = field(init=False)
-    case_list: list["TestSuiteCase"] = field(init=False)
-
-    def __post_init__(self) -> None:
-        self.constant_dict = OrderedDict()
-        self.constant_list = []
-        for constant_schema in self.schema.constants:
-            constant: TestSuiteConstant = TestSuiteConstant(ctx=self.ctx, schema=constant_schema)
-            self.constant_dict[constant.name] = constant
-            self.constant_list.append(constant)
-        self.case_dict = OrderedDict()
-        self.case_list = []
-        for test_case_schema in self.schema.test_cases:
-            test_case: TestSuiteCase = TestSuiteCase(ctx=self.ctx, suite=self, schema=test_case_schema)
-            self.case_dict[test_case.name] = test_case
-            self.case_list.append(test_case)
+    test: "Test" = field(repr=False)
 
     @property
     def created(self) -> str:
@@ -55,83 +103,142 @@ class TestSuite:
         return self.schema.modified.strftime("%Y-%m-%d")
 
     @property
-    def suite(self) -> str:
-        return self.schema.suite
-
-
-@dataclass
-class TestSuiteCase:
-    ctx: Context = field(repr=False)
-    suite: "TestSuite" = field(repr=False)
-    schema: TestCaseSchema = field(repr=False)
-    options: Optional[Union["TestSuiteConstant", "TestSuiteOptions", "TestSuiteParseOptions"]] = field(default=None)
-
-    def __post_init__(self) -> None:
-        if self.kind == "to_html_with_options":
-            if isinstance(self.schema.options, str):
-                constant: "TestSuiteConstant" = self.suite.constant_dict[self.schema.options]
-                self.options = constant
-            else:
-                self.options = TestSuiteOptions(ctx=self.ctx, schema=self.schema.options)
-        elif self.kind == "to_mdast":
-            self.options = TestSuiteParseOptions(ctx=self.ctx, schema=self.schema.parse_options)
-        else:
-            self.options = None
-
-    @property
-    def kind(self) -> Literal["to_html", "to_html_with_options", "to_mdast"]:
-        if self.schema.kind == "to_html_with_options":
-            return "to_html_with_options"
-        elif self.schema.kind == "to_mdast":
-            return "to_mdast"
-        else:
-            return "to_html"
-
-    @property
     def name(self) -> str:
         return self.schema.name
 
+
+class TestCaseMixin:
+    """A mixin that provides various test case functionality."""
+
+    @abc.abstractmethod
+    def _schema(self) -> TestCaseBaseSchema:
+        pass
+
+    @property
+    def key(self) -> list[int | str]:
+        return [int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", self.name)]
+
+    @property
+    def name(self) -> str:
+        return self._schema().name
+
     @property
     def input(self) -> str:
-        return self.schema.input
+        return self._schema().input
 
     @property
     def output(self) -> str:
-        return self.schema.output
+        return self._schema().output
 
     @property
     def message(self) -> str:
-        return self.schema.message
+        return self._schema().message
 
     @property
     def comment(self) -> Optional[str]:
-        return self.schema.comment
-
-    @property
-    def options_for_erlang(self) -> str:
-        if self.kind == "to_html_with_options":
-            if self.options is None:
-                raise ValueError(f"For TestCase of kind={self.kind}, options must be set")
-            elif isinstance(self.options, TestSuiteConstant):
-                return f"?{self.options.name}"
-            elif isinstance(self.options, TestSuiteOptions):
-                return self.ctx.erlang_map(self.options.as_dict)
-            else:
-                raise ValueError(f"For TestCase of kind={self.kind}, options must be a TestSuiteConstant or TestSuiteParseOptions")
-        elif self.kind == "to_mdast":
-            if self.options is None:
-                raise ValueError(f"For TestCase of kind={self.kind}, options must be set")
-            elif not isinstance(self.options, TestSuiteParseOptions):
-                raise ValueError(f"For TestCase of kind={self.kind}, options must be a TestSuiteParseOptions")
-            return self.ctx.erlang_map(self.options.as_dict)
-        else:
-            raise ValueError(f"For TestCase of kind={self.kind}, options are not allowed")
+        return self._schema().comment
 
 
 @dataclass
-class TestSuiteConstant:
+class TestCaseToHtml(TestCaseMixin):
     ctx: Context = field(repr=False)
-    schema: ConstantSchema = field(repr=False)
+    test: "Test" = field(repr=False)
+    schema: TestCaseToHtmlSchema = field(repr=False)
+
+    def _schema(self) -> TestCaseBaseSchema:
+        return self.schema
+
+    @property
+    def kind(self) -> Literal["to_html"]:
+        return "to_html"
+
+
+@dataclass
+class TestCaseToHtmlWithOptions(TestCaseMixin):
+    ctx: Context = field(repr=False)
+    test: "Test" = field(repr=False)
+    schema: TestCaseToHtmlWithOptionsSchema = field(repr=False)
+    options: Optional[Union[str, "TestSharedOptions", "TestSuiteOptions"]] = field(default=None)
+
+    def __post_init__(self) -> None:
+        if isinstance(self.schema.options, str):
+            if self.schema.options in self.test.shared_dict:
+                shared_options: TestShared = self.test.shared_dict[self.schema.options]
+                if not isinstance(shared_options, TestSharedOptions):
+                    raise ValueError(f"For TestCaseToHtmlWithOptions, options must be a TestSharedOptions or TestSuiteOptions")
+                self.options = shared_options
+            elif self.schema.options == "Options::gfm()":
+                self.options = "markdown_options:gfm()"
+            else:
+                raise ValueError(f"For TestCaseToHtmlWithOptions, options must be a TestSharedOptions or TestSuiteOptions")
+        else:
+            self.options = TestSuiteOptions(ctx=self.ctx, schema=self.schema.options)
+
+    def _schema(self) -> TestCaseBaseSchema:
+        return self.schema
+
+    @property
+    def kind(self) -> Literal["to_html_with_options"]:
+        return "to_html_with_options"
+
+    @property
+    def options_for_erlang(self) -> str:
+        if isinstance(self.options, str):
+            return self.options
+        elif isinstance(self.options, TestSharedOptions):
+            return f"?{self.options.name}"
+        elif isinstance(self.options, TestSuiteOptions):
+            return self.ctx.erlang_map(self.options.as_dict)
+        else:
+            raise ValueError(f"For TestCaseToHtmlWithOptions, options is invalid: {repr(self.options)}")
+
+
+@dataclass
+class TestCaseToMdast(TestCaseMixin):
+    ctx: Context = field(repr=False)
+    test: "Test" = field(repr=False)
+    schema: TestCaseToMdastSchema = field(repr=False)
+    parse_options: Union[str, "TestSharedParseOptions", "TestSuiteParseOptions"] = field(init=False)
+
+    def __post_init__(self) -> None:
+        if isinstance(self.schema.parse_options, str):
+            if self.schema.parse_options in self.test.shared_dict:
+                shared_parse_options: TestShared = self.test.shared_dict[self.schema.parse_options]
+                if not isinstance(shared_parse_options, TestSharedParseOptions):
+                    raise ValueError(
+                        f"For TestCaseToMdast, parse_options must be a TestSharedParseOptions or TestSuiteParseOptions"
+                    )
+                self.parse_options = shared_parse_options
+            elif self.schema.parse_options == "ParseOptions::gfm()":
+                self.parse_options = "markdown_parse_options:gfm()"
+            else:
+                raise ValueError(f"For TestCaseToMdast, parse_options must be a TestSharedParseOptions or TestSuiteParseOptions")
+        else:
+            self.parse_options = TestSuiteParseOptions(ctx=self.ctx, schema=self.schema.parse_options)
+
+    def _schema(self) -> TestCaseBaseSchema:
+        return self.schema
+
+    @property
+    def kind(self) -> Literal["to_mdast"]:
+        return "to_mdast"
+
+    @property
+    def parse_options_for_erlang(self) -> str:
+        if isinstance(self.parse_options, str):
+            return self.parse_options
+        elif isinstance(self.parse_options, TestSharedParseOptions):
+            return f"?{self.parse_options.name}"
+        elif isinstance(self.parse_options, TestSuiteParseOptions):
+            return self.ctx.erlang_map(self.parse_options.as_dict)
+        else:
+            raise ValueError(f"For TestCaseToMdast, parse_options is invalid: {repr(self.parse_options)}")
+
+
+@dataclass
+class TestSharedOptions:
+    ctx: Context = field(repr=False)
+    schema: SharedOptionsSchema = field(repr=False)
     options: "TestSuiteOptions" = field(init=False)
 
     def __post_init__(self) -> None:
@@ -140,6 +247,28 @@ class TestSuiteConstant:
     @property
     def name(self) -> str:
         return self.schema.name
+
+    @property
+    def kind(self) -> Literal["shared_options"]:
+        return "shared_options"
+
+
+@dataclass
+class TestSharedParseOptions:
+    ctx: Context = field(repr=False)
+    schema: SharedParseOptionsSchema = field(repr=False)
+    parse_options: "TestSuiteParseOptions" = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.parse_options = TestSuiteParseOptions(ctx=self.ctx, schema=self.schema.parse_options)
+
+    @property
+    def name(self) -> str:
+        return self.schema.name
+
+    @property
+    def kind(self) -> Literal["shared_parse_options"]:
+        return "shared_parse_options"
 
 
 @dataclass

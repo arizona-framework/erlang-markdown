@@ -221,8 +221,9 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
             on_enter_buffer(CompileContext1);
         resource_title_string ->
             on_enter_buffer(CompileContext1);
-        % %% on_enter_autolink
-        % autolink -> on_enter_autolink(CompileContext1);
+        %% on_enter_autolink
+        autolink ->
+            on_enter_autolink(CompileContext1);
         %% on_enter_block_quote
         block_quote ->
             on_enter_block_quote(CompileContext1);
@@ -244,12 +245,17 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         %% on_enter_frontmatter
         frontmatter ->
             on_enter_frontmatter(CompileContext1);
-        % %% on_enter_gfm_autolink_literal
-        % gfm_autolink_literal_email -> on_enter_gfm_autolink_literal(CompileContext1);
-        % gfm_autolink_literal_mailto -> on_enter_gfm_autolink_literal(CompileContext1);
-        % gfm_autolink_literal_protocol -> on_enter_gfm_autolink_literal(CompileContext1);
-        % gfm_autolink_literal_www -> on_enter_gfm_autolink_literal(CompileContext1);
-        % gfm_autolink_literal_xmpp -> on_enter_gfm_autolink_literal(CompileContext1);
+        %% on_enter_gfm_autolink_literal
+        gfm_autolink_literal_email ->
+            on_enter_gfm_autolink_literal(CompileContext1);
+        gfm_autolink_literal_mailto ->
+            on_enter_gfm_autolink_literal(CompileContext1);
+        gfm_autolink_literal_protocol ->
+            on_enter_gfm_autolink_literal(CompileContext1);
+        gfm_autolink_literal_www ->
+            on_enter_gfm_autolink_literal(CompileContext1);
+        gfm_autolink_literal_xmpp ->
+            on_enter_gfm_autolink_literal(CompileContext1);
         % %% on_enter_gfm_footnote_call
         % gfm_footnote_call -> on_enter_gfm_footnote_call(CompileContext1);
         % %% on_enter_gfm_footnote_definition
@@ -320,6 +326,25 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
             io:format("~ts\n", [markdown_debug:rust_debug_string(Event)]),
             {ok, CompileContext1}
     end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`Autolink`][Name::Autolink].
+""".
+-spec on_enter_autolink(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_autolink(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:link(#markdown_mdast_link{
+                url = <<>>,
+                title = none,
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
 
 %% @private
 -doc """
@@ -489,6 +514,19 @@ on_enter_frontmatter(CompileContext1 = #markdown_mdast_compile_context{events = 
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:{[`GfmAutolinkLiteralEmail`][Name::GfmAutolinkLiteralEmail],[`GfmAutolinkLiteralMailto`][Name::GfmAutolinkLiteralMailto],[`GfmAutolinkLiteralProtocol`][Name::GfmAutolinkLiteralProtocol],[`GfmAutolinkLiteralWww`][Name::GfmAutolinkLiteralWww],[`GfmAutolinkLiteralXmpp`][Name::GfmAutolinkLiteralXmpp]}.
+""".
+-spec on_enter_gfm_autolink_literal(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_gfm_autolink_literal(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    maybe
+        {ok, CompileContext2} ?= on_enter_autolink(CompileContext1),
+        {ok, CompileContext3} ?= on_enter_data(CompileContext2),
+        {ok, CompileContext3}
+    end.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`Paragraph`][Name::Paragraph].
 """.
 -spec on_enter_paragraph(CompileContext) -> {ok, CompileContext} when
@@ -589,10 +627,12 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         % %% on_exit_drop
         % mdx_jsx_tag_attribute_expression -> on_exit_drop(CompileContext1);
         % mdx_jsx_tag_attribute_value_expression -> on_exit_drop(CompileContext1);
-        % %% on_exit_autolink_protocol
-        % autolink_protocol -> on_exit_autolink_protocol(CompileContext1);
-        % %% on_exit_autolink_email
-        % autolink_email -> on_exit_autolink_email(CompileContext1);
+        %% on_exit_autolink_protocol
+        autolink_protocol ->
+            on_exit_autolink_protocol(CompileContext1);
+        %% on_exit_autolink_email
+        autolink_email ->
+            on_exit_autolink_email(CompileContext1);
         %% on_exit_character_reference_marker
         character_reference_marker ->
             on_exit_character_reference_marker(CompileContext1);
@@ -645,12 +685,17 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         %% on_exit_frontmatter
         frontmatter ->
             on_exit_frontmatter(CompileContext1);
-        % %% on_exit_gfm_autolink_literal
-        % gfm_autolink_literal_email -> on_exit_gfm_autolink_literal(CompileContext1);
-        % gfm_autolink_literal_mailto -> on_exit_gfm_autolink_literal(CompileContext1);
-        % gfm_autolink_literal_protocol -> on_exit_gfm_autolink_literal(CompileContext1);
-        % gfm_autolink_literal_www -> on_exit_gfm_autolink_literal(CompileContext1);
-        % gfm_autolink_literal_xmpp -> on_exit_gfm_autolink_literal(CompileContext1);
+        %% on_exit_gfm_autolink_literal
+        gfm_autolink_literal_email ->
+            on_exit_gfm_autolink_literal(CompileContext1);
+        gfm_autolink_literal_mailto ->
+            on_exit_gfm_autolink_literal(CompileContext1);
+        gfm_autolink_literal_protocol ->
+            on_exit_gfm_autolink_literal(CompileContext1);
+        gfm_autolink_literal_www ->
+            on_exit_gfm_autolink_literal(CompileContext1);
+        gfm_autolink_literal_xmpp ->
+            on_exit_gfm_autolink_literal(CompileContext1);
         % %% on_exit_media
         % gfm_footnote_call -> on_exit_media(CompileContext1);
         % image -> on_exit_media(CompileContext1);
@@ -726,6 +771,70 @@ Handle [`Exit`][Kind::Exit]:`*`.
     CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
 on_exit(CompileContext1 = #markdown_mdast_compile_context{}) ->
     markdown_mdast_compile_context:tail_pop(CompileContext1).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`AutolinkEmail`][Name::AutolinkEmail].
+""".
+-spec on_exit_autolink_email(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_autolink_email(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    maybe
+        {ok, CompileContext2} ?= on_exit_data(CompileContext1),
+        Bytes = CompileContext2#markdown_mdast_compile_context.bytes,
+        Events = CompileContext2#markdown_mdast_compile_context.events,
+        Index = CompileContext2#markdown_mdast_compile_context.index,
+        Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+        Value = markdown_slice:as_binary(Slice),
+        NodeMutFunc = fun on_exit_autolink_email__node_mut_func/2,
+        {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+        {ok, CompileContext3}
+    end.
+
+%% @private
+-spec on_exit_autolink_email__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(), OptionValue :: markdown_option:t(Value), Value :: unicode:unicode_binary().
+on_exit_autolink_email__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Link1 = #markdown_mdast_link{url = Url1}}, {some, Value}
+) ->
+    Url2 = <<Url1/bytes, "mailto:", Value/bytes>>,
+    Link2 = Link1#markdown_mdast_link{url = Url2},
+    Node2 = Node1#markdown_mdast_node{inner = Link2},
+    {Node2, none};
+on_exit_autolink_email__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected link on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`AutolinkProtocol`][Name::AutolinkProtocol].
+""".
+-spec on_exit_autolink_protocol(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_autolink_protocol(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    maybe
+        {ok, CompileContext2} ?= on_exit_data(CompileContext1),
+        Bytes = CompileContext2#markdown_mdast_compile_context.bytes,
+        Events = CompileContext2#markdown_mdast_compile_context.events,
+        Index = CompileContext2#markdown_mdast_compile_context.index,
+        Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+        Value = markdown_slice:as_binary(Slice),
+        NodeMutFunc = fun on_exit_autolink_protocol__node_mut_func/2,
+        {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+        {ok, CompileContext3}
+    end.
+
+%% @private
+-spec on_exit_autolink_protocol__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(), OptionValue :: markdown_option:t(Value), Value :: unicode:unicode_binary().
+on_exit_autolink_protocol__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Link1 = #markdown_mdast_link{url = Url1}}, {some, Value}
+) ->
+    Url2 = <<Url1/bytes, Value/bytes>>,
+    Link2 = Link1#markdown_mdast_link{url = Url2},
+    Node2 = Node1#markdown_mdast_node{inner = Link2},
+    {Node2, none};
+on_exit_autolink_protocol__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected link on stack", []).
 
 %% @private
 -doc """
@@ -1002,6 +1111,58 @@ on_exit_frontmatter__node_mut_func(
     {Node2, none};
 on_exit_frontmatter__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
     ?'unreachable!'("expected yaml/toml on stack for value", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:{[`GfmAutolinkLiteralEmail`][Name::GfmAutolinkLiteralEmail],[`GfmAutolinkLiteralMailto`][Name::GfmAutolinkLiteralMailto],[`GfmAutolinkLiteralProtocol`][Name::GfmAutolinkLiteralProtocol],[`GfmAutolinkLiteralWww`][Name::GfmAutolinkLiteralWww],[`GfmAutolinkLiteralXmpp`][Name::GfmAutolinkLiteralXmpp]}.
+""".
+-spec on_exit_gfm_autolink_literal(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_gfm_autolink_literal(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    maybe
+        {ok, CompileContext2} ?= on_exit_data(CompileContext1),
+        Bytes = CompileContext2#markdown_mdast_compile_context.bytes,
+        Events = CompileContext2#markdown_mdast_compile_context.events,
+        Index = CompileContext2#markdown_mdast_compile_context.index,
+        Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+        Value = markdown_slice:as_binary(Slice),
+        Event = markdown_vec:get(Events, Index),
+        Name = Event#markdown_event.name,
+        Prefix =
+            case Name of
+                gfm_autolink_literal_email -> {some, <<"mailto:">>};
+                gfm_autolink_literal_www -> {some, <<"http://">>};
+                _ -> none
+            end,
+        NodeMutFunc = fun(Node, OptionValue) ->
+            on_exit_gfm_autolink_literal__node_mut_func(Node, OptionValue, Prefix)
+        end,
+        {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+        {ok, CompileContext4} ?= on_exit(CompileContext3),
+        {ok, CompileContext4}
+    end.
+
+%% @private
+-spec on_exit_gfm_autolink_literal__node_mut_func(Node, OptionValue, Prefix) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(),
+    OptionValue :: markdown_option:t(Value),
+    Value :: unicode:unicode_binary(),
+    Prefix :: markdown_option:t(unicode:unicode_binary()).
+on_exit_gfm_autolink_literal__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Link1 = #markdown_mdast_link{url = Url1}}, {some, Value}, Prefix
+) ->
+    Url2 =
+        case Prefix of
+            {some, PrefixValue} ->
+                <<PrefixValue/bytes, Value/bytes>>;
+            none ->
+                <<Url1/bytes, Value/bytes>>
+        end,
+    Link2 = Link1#markdown_mdast_link{url = Url2},
+    Node2 = Node1#markdown_mdast_node{inner = Link2},
+    {Node2, none};
+on_exit_gfm_autolink_literal__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}, _Prefix) ->
+    ?'unreachable!'("expected link on stack", []).
 
 %% @private
 -doc """

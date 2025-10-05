@@ -171,7 +171,19 @@ The issues relating to autolink literals are:
     protocol_slashes_inside/1,
     www_start/1,
     www_after/1,
-    www_prefix_inside/1
+    www_prefix_inside/1,
+    www_prefix_after/1,
+    domain_inside/1,
+    domain_at_punctuation/1,
+    domain_after/1,
+    path_inside/1,
+    path_at_punctuation/1,
+    path_after/1,
+    trail/1,
+    trail_bracket_after/1,
+    trail_char_ref_start/1,
+    trail_char_ref_inside/1,
+    resolve/1
 ]).
 
 %%%=============================================================================
@@ -422,3 +434,658 @@ www_prefix_inside(Tokenizer1 = #markdown_tokenizer{current = Current, tokenize_s
             State = markdown_state:nok(),
             {Tokenizer2, State}
     end.
+
+-doc """
+After www prefix.
+
+```markdown
+> | www.example.com
+        ^
+```
+""".
+-spec www_prefix_after(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+www_prefix_after(Tokenizer = #markdown_tokenizer{current = none}) ->
+    State = markdown_state:nok(),
+    {Tokenizer, State};
+www_prefix_after(Tokenizer = #markdown_tokenizer{current = {some, _Current}}) ->
+    %% If there is *anything*, we can link.
+    State = markdown_state:ok(),
+    {Tokenizer, State}.
+
+-doc """
+In domain.
+
+```markdown
+> | https://example.com/a
+            ^^^^^^^^^^^
+```
+""".
+-spec domain_inside(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+domain_inside(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when Current =:= $. orelse Current =:= $_ ->
+    %% Check whether this marker, which is a trailing punctuation
+    %% marker, optionally followed by more trailing markers, and then
+    %% followed by an end.
+    Tokenizer2 = markdown_tokenizer:check(
+        Tokenizer1,
+        markdown_state:next(gfm_autolink_literal_domain_after),
+        markdown_state:next(gfm_autolink_literal_domain_at_punctuation)
+    ),
+    State = markdown_state:retry(gfm_autolink_literal_trail),
+    {Tokenizer2, State};
+domain_inside(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    Current =:= $- orelse (Current >= 16#80 andalso Current =< 16#BF)
+->
+    %% Dashes and continuation bytes are fine.
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_autolink_literal_domain_inside),
+    {Tokenizer2, State};
+domain_inside(
+    Tokenizer1 = #markdown_tokenizer{
+        parse_state = #markdown_parse_state{bytes = Bytes}, point = Point, tokenize_state = TokenizeState1
+    }
+) ->
+    %% Source: <https://github.com/github/cmark-gfm/blob/ef1cfcb/extensions/autolink.c#L12>.
+    case markdown_util_char:kind_after_index(Bytes, Point#markdown_point.offset) of
+        other ->
+            TokenizeState2 = TokenizeState1#markdown_tokenize_state{seen = true},
+            Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+            Tokenizer3 = markdown_tokenizer:consume(Tokenizer2),
+            State = markdown_state:next(gfm_autolink_literal_domain_inside),
+            {Tokenizer3, State};
+        _ ->
+            State = markdown_state:retry(gfm_autolink_literal_domain_after),
+            {Tokenizer1, State}
+    end.
+
+-doc """
+In domain, at potential trailing punctuation, that was not trailing.
+
+```markdown
+> | https://example.com
+                   ^
+```
+""".
+-spec domain_at_punctuation(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+domain_at_punctuation(Tokenizer1 = #markdown_tokenizer{current = {some, $_}, tokenize_state = TokenizeState1}) ->
+    %% There is an underscore in the last segment of the domain
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{marker = $_},
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2}),
+    State = markdown_state:next(gfm_autolink_literal_domain_inside),
+    {Tokenizer2, State};
+domain_at_punctuation(
+    Tokenizer1 = #markdown_tokenizer{tokenize_state = TokenizeState1 = #markdown_tokenize_state{marker = Marker}}
+) ->
+    %% Otherwise, it's a `.`: save the last segment underscore in the
+    %% penultimate segment slot.
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{marker_b = Marker, marker = 0},
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2}),
+    State = markdown_state:next(gfm_autolink_literal_domain_inside),
+    {Tokenizer2, State}.
+
+-doc """
+After domain
+
+```markdown
+> | https://example.com/a
+                       ^
+```
+""".
+-spec domain_after(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+domain_after(
+    Tokenizer1 = #markdown_tokenizer{
+        tokenize_state = TokenizeState1 = #markdown_tokenize_state{marker = Marker, marker_b = MarkerB, seen = Seen}
+    }
+) ->
+    %% No underscores allowed in last two segments.
+    Result =
+        case (MarkerB =:= $_ orelse Marker =:= $_) orelse not Seen of
+            true ->
+                %% At least one character must be seen.
+                %% Note: that's GH says a dot is needed, but it's not true:
+                %% <https://github.com/github/cmark-gfm/issues/279>
+                markdown_state:nok();
+            false ->
+                markdown_state:retry(gfm_autolink_literal_path_inside)
+        end,
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{seen = false, marker = 0, marker_b = 0},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    {Tokenizer2, Result}.
+
+-doc """
+In path.
+
+```markdown
+> | https://example.com/a
+                       ^^
+```
+""".
+-spec path_inside(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+path_inside(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    Current >= 16#80 andalso Current =< 16#BF
+->
+    %% Continuation bytes are fine, we've already checked the first one.
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_autolink_literal_path_inside),
+    {Tokenizer2, State};
+path_inside(
+    Tokenizer1 = #markdown_tokenizer{
+        current = {some, $(}, tokenize_state = TokenizeState1 = #markdown_tokenize_state{size = Size1}
+    }
+) ->
+    %% Count opening parens.
+    Size2 = Size1 + 1,
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{size = Size2},
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2}),
+    State = markdown_state:next(gfm_autolink_literal_path_inside),
+    {Tokenizer2, State};
+path_inside(
+    Tokenizer1 = #markdown_tokenizer{
+        current = {some, Current}, tokenize_state = #markdown_tokenize_state{size = Size, size_b = SizeB}
+    }
+) when
+    Current =:= $! orelse Current =:= $" orelse Current =:= $& orelse Current =:= $' orelse Current =:= $) orelse
+        Current =:= $* orelse Current =:= $, orelse Current =:= $. orelse Current =:= $: orelse Current =:= $; orelse
+        Current =:= $< orelse Current =:= $? orelse Current =:= $] orelse Current =:= $_ orelse Current =:= $~
+->
+    %% Check whether this trailing punctuation marker is optionally
+    %% followed by more trailing markers, and then followed
+    %% by an end.
+    %% If this is a paren (followed by trailing, then the end), we
+    %% *continue* if we saw less closing parens than opening parens.
+    Next =
+        case Current =:= $) andalso SizeB < Size of
+            true ->
+                gfm_autolink_literal_path_at_punctuation;
+            false ->
+                gfm_autolink_literal_path_after
+        end,
+    Tokenizer2 = markdown_tokenizer:check(
+        Tokenizer1, markdown_state:next(Next), markdown_state:next(gfm_autolink_literal_path_at_punctuation)
+    ),
+    State = markdown_state:retry(gfm_autolink_literal_trail),
+    {Tokenizer2, State};
+path_inside(
+    Tokenizer1 = #markdown_tokenizer{
+        current = Current, parse_state = #markdown_parse_state{bytes = Bytes}, point = #markdown_point{offset = Index}
+    }
+) ->
+    %% Source: <https://github.com/github/cmark-gfm/blob/ef1cfcb/extensions/autolink.c#L12>.
+    case Current =:= none orelse markdown_util_char:kind_after_index(Bytes, Index) =:= whitespace of
+        true ->
+            State = markdown_state:retry(gfm_autolink_literal_path_after),
+            {Tokenizer1, State};
+        false ->
+            Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+            State = markdown_state:next(gfm_autolink_literal_path_inside),
+            {Tokenizer2, State}
+    end.
+
+-doc """
+In path, at potential trailing punctuation, that was not trailing.
+
+```markdown
+> | https://example.com/a"b
+                         ^
+```
+""".
+-spec path_at_punctuation(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+path_at_punctuation(
+    Tokenizer1 = #markdown_tokenizer{
+        current = {some, $)}, tokenize_state = TokenizeState1 = #markdown_tokenize_state{size_b = SizeB1}
+    }
+) ->
+    %% Count closing parens.
+    SizeB2 = SizeB1 + 1,
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{size_b = SizeB2},
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2}),
+    State = markdown_state:next(gfm_autolink_literal_path_inside),
+    {Tokenizer2, State};
+path_at_punctuation(Tokenizer1 = #markdown_tokenizer{}) ->
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_autolink_literal_path_inside),
+    {Tokenizer2, State}.
+
+-doc """
+At end of path, reset parens.
+
+```markdown
+> | https://example.com/asd(qwe).
+                                ^
+```
+""".
+-spec path_after(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+path_after(Tokenizer1 = #markdown_tokenizer{tokenize_state = TokenizeState1}) ->
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{size = 0, size_b = 0},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    State = markdown_state:ok(),
+    {Tokenizer2, State}.
+
+-doc """
+In trail of domain or path.
+
+```markdown
+> | https://example.com").
+                       ^
+```
+""".
+-spec trail(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+trail(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    Current =:= $! orelse Current =:= $" orelse Current =:= $' orelse Current =:= $) orelse Current =:= $* orelse
+        Current =:= $, orelse Current =:= $. orelse Current =:= $: orelse Current =:= $; orelse Current =:= $? orelse
+        Current =:= $_ orelse Current =:= $~
+->
+    %% Regular trailing punctuation.
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_autolink_literal_trail),
+    {Tokenizer2, State};
+trail(Tokenizer1 = #markdown_tokenizer{current = {some, $&}}) ->
+    %% `&` followed by one or more alphabeticals and then a `;`, is
+    %% as a whole considered as trailing punctuation.
+    %% In all other cases, it is considered as continuation of the URL.
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_autolink_literal_trail_char_ref_start),
+    {Tokenizer2, State};
+trail(Tokenizer1 = #markdown_tokenizer{current = {some, $<}}) ->
+    %% `<` is an end.
+    State = markdown_state:ok(),
+    {Tokenizer1, State};
+trail(Tokenizer1 = #markdown_tokenizer{current = {some, $]}}) ->
+    %% Needed because we allow literals after `[`, as we fix:
+    %% <https://github.com/github/cmark-gfm/issues/278>.
+    %% Check that it is not followed by `(` or `[`.
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_autolink_literal_trail_bracket_after),
+    {Tokenizer2, State};
+trail(
+    Tokenizer1 = #markdown_tokenizer{
+        parse_state = #markdown_parse_state{bytes = Bytes}, point = #markdown_point{offset = Index}
+    }
+) ->
+    %% Whitespace is the end of the URL, anything else is continuation.
+    case markdown_util_char:kind_after_index(Bytes, Index) of
+        whitespace ->
+            State = markdown_state:ok(),
+            {Tokenizer1, State};
+        _ ->
+            State = markdown_state:nok(),
+            {Tokenizer1, State}
+    end.
+
+-doc """
+In trail, after `]`.
+
+> 👉 **Note**: this deviates from `cmark-gfm` to fix a bug.
+> See end of <https://github.com/github/cmark-gfm/issues/278> for more.
+
+```markdown
+> | https://example.com](
+                        ^
+```
+""".
+-spec trail_bracket_after(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+trail_bracket_after(Tokenizer1 = #markdown_tokenizer{current = Current}) when
+    Current =:= none orelse Current =:= {some, $\t} orelse Current =:= {some, $\n} orelse Current =:= {some, $\s} orelse
+        Current =:= {some, $(} orelse Current =:= {some, $[}
+->
+    %% Whitespace or something that could start a resource or reference is the end.
+    %% Switch back to trail otherwise.
+    State = markdown_state:ok(),
+    {Tokenizer1, State};
+trail_bracket_after(Tokenizer1 = #markdown_tokenizer{}) ->
+    State = markdown_state:retry(gfm_autolink_literal_trail),
+    {Tokenizer1, State}.
+
+-doc """
+In character-reference like trail, after `&`.
+
+```markdown
+> | https://example.com&amp;).
+                        ^
+```
+""".
+-spec trail_char_ref_start(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+trail_char_ref_start(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    (Current >= $A andalso Current =< $Z) orelse (Current >= $a andalso Current =< $z)
+->
+    State = markdown_state:retry(gfm_autolink_literal_trail_char_ref_inside),
+    {Tokenizer1, State};
+trail_char_ref_start(Tokenizer1 = #markdown_tokenizer{}) ->
+    State = markdown_state:nok(),
+    {Tokenizer1, State}.
+
+-doc """
+In character-reference like trail.
+
+```markdown
+> | https://example.com&amp;).
+                        ^
+```
+""".
+-spec trail_char_ref_inside(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+trail_char_ref_inside(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    (Current >= $A andalso Current =< $Z) orelse (Current >= $a andalso Current =< $z)
+->
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_autolink_literal_trail_char_ref_inside),
+    {Tokenizer2, State};
+trail_char_ref_inside(Tokenizer1 = #markdown_tokenizer{current = {some, $;}}) ->
+    %% Switch back to trail if this is well-formed.
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_autolink_literal_trail),
+    {Tokenizer2, State};
+trail_char_ref_inside(Tokenizer1 = #markdown_tokenizer{}) ->
+    State = markdown_state:nok(),
+    {Tokenizer1, State}.
+
+-doc """
+Resolve: postprocess text to find email autolink literals.
+""".
+-spec resolve(Tokenizer) -> Tokenizer when Tokenizer :: markdown_tokenizer:t().
+resolve(Tokenizer1 = #markdown_tokenizer{}) ->
+    Tokenizer2 = markdown_tokenizer:map_consume(Tokenizer1),
+    Events2 = Tokenizer2#markdown_tokenizer.events,
+    EventsIterator = markdown_vec:iterator(Events2),
+    Tokenizer3 = resolve_loop(EventsIterator, Tokenizer2, 0),
+    Tokenizer3.
+
+%%%-----------------------------------------------------------------------------
+%%% Internal functions
+%%%-----------------------------------------------------------------------------
+
+%% @private
+-spec resolve_loop(EventsIterator, Tokenizer, Links) -> Tokenizer when
+    EventsIterator :: markdown_vec:iterator(Event),
+    Event :: markdown_event:t(),
+    Tokenizer :: markdown_tokenizer:t(),
+    Links :: non_neg_integer().
+resolve_loop(EventsIterator1, Tokenizer1, Links1) ->
+    case markdown_vec:next(EventsIterator1) of
+        none ->
+            Tokenizer1;
+        {_Index, #markdown_event{kind = enter, name = link}, EventsIterator2} ->
+            Links2 = Links1 + 1,
+            resolve_loop(EventsIterator2, Tokenizer1, Links2);
+        {Index, #markdown_event{kind = exit, name = data}, EventsIterator2} when Links1 =:= 0 ->
+            Tokenizer2 = resolve_data(Tokenizer1, Index),
+            resolve_loop(EventsIterator2, Tokenizer2, Links1);
+        {_Index, #markdown_event{kind = exit, name = link}, EventsIterator2} ->
+            Links2 = Links1 - 1,
+            resolve_loop(EventsIterator2, Tokenizer1, Links2);
+        {_Index, _Event, EventsIterator2} ->
+            resolve_loop(EventsIterator2, Tokenizer1, Links1)
+    end.
+
+%% @private
+-spec resolve_data(Tokenizer, Index) -> Tokenizer when
+    Tokenizer :: markdown_tokenizer:t(), Index :: markdown_vec:index().
+resolve_data(
+    Tokenizer1 = #markdown_tokenizer{events = Events, parse_state = #markdown_parse_state{bytes = Bytes}}, Index
+) ->
+    Position = markdown_position:from_exit_event(Events, Index),
+    Slice = markdown_slice:from_position(Bytes, Position),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    EnterEvent = markdown_vec:get(Events, Index - 1),
+    Point1 = EnterEvent#markdown_event.point,
+    StartIndex = Point1#markdown_point.offset,
+    Replace = resolve_data_loop(SliceBytes, 0, Point1, 0, Bytes, StartIndex, markdown_vec:new()),
+    Tokenizer2 =
+        case not markdown_vec:is_empty(Replace) of
+            true ->
+                %% If there were links.
+                markdown_tokenizer:map_add(Tokenizer1, Index - 1, 2, Replace);
+            false ->
+                Tokenizer1
+        end,
+    Tokenizer2.
+
+%% @private
+-spec resolve_data_loop(SliceBytes, ByteIndex, Point, Min, Bytes, StartIndex, Replace) -> Replace when
+    SliceBytes :: binary(),
+    ByteIndex :: non_neg_integer(),
+    Point :: markdown_point:t(),
+    Min :: non_neg_integer(),
+    Bytes :: binary(),
+    StartIndex :: non_neg_integer(),
+    Replace :: markdown_vec:t(Event),
+    Event :: markdown_event:t().
+resolve_data_loop(SliceBytes, ByteIndex, Point1, Min1, Bytes, StartIndex, Replace1) when
+    ByteIndex < byte_size(SliceBytes)
+->
+    Byte = binary:at(SliceBytes, ByteIndex),
+    case Byte of
+        $@ ->
+            Range1 = {0, 0, gfm_autolink_literal_email},
+            Range2 =
+                case peek_bytes_atext(SliceBytes, Min1, ByteIndex) of
+                    none ->
+                        Range1;
+                    {some, Start1} ->
+                        {Start2, Kind1} = peek_protocol(SliceBytes, Min1, Start1),
+                        case peek_bytes_email_domain(SliceBytes, ByteIndex + 1, Kind1 =:= gfm_autolink_literal_xmpp) of
+                            none ->
+                                Range1;
+                            {some, End} ->
+                                %% Note: normally we’d truncate trailing
+                                %% punctuation from the link.
+                                %% However, email autolink literals cannot
+                                %% contain any of those markers, except for
+                                %% `.`, but that can only occur if it isn’t
+                                %% trailing.
+                                %% So we can ignore truncating while
+                                %% postprocessing!
+                                {Start2, End, Kind1}
+                        end
+                end,
+            {_RangeStart, RangeEnd, _RangeName} = Range2,
+            case RangeEnd =/= 0 of
+                true ->
+                    {RangeStart, RangeEnd, RangeName} = Range2,
+                    {Replace2, Point2} =
+                        case Min1 =/= RangeStart of
+                            true ->
+                                %% If there is something between the last link
+                                %% (or `min`) and this link.
+                                Replace1_1 = markdown_vec:push(Replace1, #markdown_event{
+                                    kind = enter, name = data, point = Point1, link = none
+                                }),
+                                Point1_1 = markdown_point:shift_to(Point1, Bytes, StartIndex + RangeStart),
+                                Replace1_2 = markdown_vec:push(Replace1_1, #markdown_event{
+                                    kind = exit, name = data, point = Point1_1, link = none
+                                }),
+                                {Replace1_2, Point1_1};
+                            false ->
+                                {Replace1, Point1}
+                        end,
+                    Replace3 = markdown_vec:push(Replace2, #markdown_event{
+                        kind = enter, name = RangeName, point = Point2, link = none
+                    }),
+                    Point3 = markdown_point:shift_to(Point2, Bytes, StartIndex + RangeEnd),
+                    Replace4 = markdown_vec:push(Replace3, #markdown_event{
+                        kind = exit, name = RangeName, point = Point3, link = none
+                    }),
+                    resolve_data_loop(SliceBytes, RangeEnd, Point3, RangeEnd, Bytes, StartIndex, Replace4);
+                false ->
+                    resolve_data_loop(SliceBytes, ByteIndex + 1, Point1, Min1, Bytes, StartIndex, Replace1)
+            end;
+        _ ->
+            resolve_data_loop(SliceBytes, ByteIndex + 1, Point1, Min1, Bytes, StartIndex, Replace1)
+    end;
+resolve_data_loop(SliceBytes, _ByteIndex, Point1, Min1, Bytes, StartIndex, Replace1) ->
+    Replace2 =
+        case Min1 =/= 0 andalso Min1 < byte_size(SliceBytes) of
+            true ->
+                Replace1_1 = markdown_vec:push(Replace1, #markdown_event{
+                    kind = enter, name = data, point = Point1, link = none
+                }),
+                Point2 = markdown_point:shift_to(Point1, Bytes, StartIndex + byte_size(SliceBytes)),
+                Replace1_2 = markdown_vec:push(Replace1_1, #markdown_event{
+                    kind = exit, name = data, point = Point2, link = none
+                }),
+                Replace1_2;
+            false ->
+                Replace1
+        end,
+    Replace2.
+
+%% @private
+-doc """
+Move back past atext.
+
+Moving back is only used when post processing text: so for the email address
+algorithm.
+
+```markdown
+> | a contact@example.org b
+             ^-- from
+      ^-- to
+```
+""".
+-spec peek_bytes_atext(Bytes, Min, End) -> none | {some, Index} when
+    Bytes :: binary(), Min :: non_neg_integer(), End :: non_neg_integer(), Index :: non_neg_integer().
+peek_bytes_atext(Bytes, Min, End) ->
+    Index = peek_bytes_atext_loop(Bytes, Min, End),
+    case Index =:= End orelse (Index > Min andalso binary:at(Bytes, Index - 1) =:= $/) of
+        true ->
+            none;
+        false ->
+            {some, Index}
+    end.
+
+%% @private
+-spec peek_bytes_atext_loop(Bytes, Min, Index) -> Index when
+    Bytes :: binary(), Min :: non_neg_integer(), Index :: non_neg_integer().
+peek_bytes_atext_loop(Bytes, Min, Index) when Index > Min ->
+    Byte = binary:at(Bytes, Index - 1),
+    case Byte of
+        $+ -> peek_bytes_atext_loop(Bytes, Min, Index - 1);
+        $- -> peek_bytes_atext_loop(Bytes, Min, Index - 1);
+        $. -> peek_bytes_atext_loop(Bytes, Min, Index - 1);
+        B when B >= $0 andalso B =< $9 -> peek_bytes_atext_loop(Bytes, Min, Index - 1);
+        B when B >= $A andalso B =< $Z -> peek_bytes_atext_loop(Bytes, Min, Index - 1);
+        $_ -> peek_bytes_atext_loop(Bytes, Min, Index - 1);
+        B when B >= $a andalso B =< $z -> peek_bytes_atext_loop(Bytes, Min, Index - 1);
+        _ -> Index
+    end;
+peek_bytes_atext_loop(_Bytes, _Min, Index) ->
+    Index.
+
+%% @private
+-doc """
+Move back past a `mailto:` or `xmpp:` protocol.
+
+Moving back is only used when post processing text: so for the email address
+algorithm.
+
+```markdown
+> | a mailto:contact@example.org b
+             ^-- from
+      ^-- to
+```
+""".
+-spec peek_protocol(Bytes, Min, End) -> {Index, Name} when
+    Bytes :: binary(),
+    Min :: non_neg_integer(),
+    End :: non_neg_integer(),
+    Index :: non_neg_integer(),
+    Name :: markdown_token:name().
+peek_protocol(Bytes, Min, End) when End > Min ->
+    case binary:at(Bytes, End - 1) of
+        $: ->
+            Index1 = End - 1,
+            Index2 = peek_protocol_loop(Bytes, Min, Index1),
+            Slice = markdown_slice:from_indices(Bytes, Index2, End - 1),
+            SliceStr = markdown_slice:as_string(Slice),
+            Name = string:lowercase(SliceStr),
+            case Name of
+                "xmpp" ->
+                    {Index2, gfm_autolink_literal_xmpp};
+                "mailto" ->
+                    {Index2, gfm_autolink_literal_mailto};
+                _ ->
+                    {End, gfm_autolink_literal_email}
+            end;
+        _ ->
+            {End, gfm_autolink_literal_email}
+    end;
+peek_protocol(_Bytes, _Min, End) ->
+    {End, gfm_autolink_literal_email}.
+
+%% @private
+-spec peek_protocol_loop(Bytes, Min, Index) -> Index when
+    Bytes :: binary(), Min :: non_neg_integer(), Index :: non_neg_integer().
+peek_protocol_loop(Bytes, Min, Index) when Index > Min ->
+    Byte = binary:at(Bytes, Index - 1),
+    case Byte of
+        B when (B >= $0 andalso B =< $9) orelse (B >= $A andalso B =< $Z) orelse (B >= $a andalso B =< $z) ->
+            peek_protocol_loop(Bytes, Min, Index - 1);
+        _ ->
+            Index
+    end;
+peek_protocol_loop(_Bytes, _Min, Index) ->
+    Index.
+
+%% @private
+-doc """
+Move past email domain.
+
+Peeking like this only used when post processing text: so for the email
+address algorithm.
+
+```markdown
+> | a contact@example.org b
+              ^-- from
+                        ^-- to
+```
+""".
+-spec peek_bytes_email_domain(Bytes, Start, Xmpp) -> none | {some, Index} when
+    Bytes :: binary(), Start :: non_neg_integer(), Xmpp :: boolean(), Index :: non_neg_integer().
+peek_bytes_email_domain(Bytes, Start, Xmpp) ->
+    {Index, Dot} = peek_bytes_email_domain_loop(Bytes, Start, Xmpp, false),
+    case Index > Start andalso Dot of
+        true ->
+            LastByte = binary:at(Bytes, Index - 1),
+            case LastByte of
+                $. -> {some, Index};
+                B when (B >= $A andalso B =< $Z) orelse (B >= $a andalso B =< $z) -> {some, Index};
+                _ -> none
+            end;
+        false ->
+            none
+    end.
+
+%% @private
+-spec peek_bytes_email_domain_loop(Bytes, Index, Xmpp, Dot) -> {Index, Dot} when
+    Bytes :: binary(), Index :: non_neg_integer(), Xmpp :: boolean(), Dot :: boolean().
+peek_bytes_email_domain_loop(Bytes, Index, Xmpp, Dot) when Index < byte_size(Bytes) ->
+    Byte = binary:at(Bytes, Index),
+    case Byte of
+        $- ->
+            peek_bytes_email_domain_loop(Bytes, Index + 1, Xmpp, Dot);
+        B when B >= $0 andalso B =< $9 -> peek_bytes_email_domain_loop(Bytes, Index + 1, Xmpp, Dot);
+        B when B >= $A andalso B =< $Z -> peek_bytes_email_domain_loop(Bytes, Index + 1, Xmpp, Dot);
+        $_ ->
+            peek_bytes_email_domain_loop(Bytes, Index + 1, Xmpp, Dot);
+        B when B >= $a andalso B =< $z -> peek_bytes_email_domain_loop(Bytes, Index + 1, Xmpp, Dot);
+        $/ when Xmpp -> peek_bytes_email_domain_loop(Bytes, Index + 1, Xmpp, Dot);
+        $. when Index + 1 < byte_size(Bytes) ->
+            NextByte = binary:at(Bytes, Index + 1),
+            case NextByte of
+                B when (B >= $0 andalso B =< $9) orelse (B >= $A andalso B =< $Z) orelse (B >= $a andalso B =< $z) ->
+                    peek_bytes_email_domain_loop(Bytes, Index + 1, Xmpp, true);
+                _ ->
+                    {Index, Dot}
+            end;
+        _ ->
+            {Index, Dot}
+    end;
+peek_bytes_email_domain_loop(_Bytes, Index, _Xmpp, Dot) ->
+    {Index, Dot}.

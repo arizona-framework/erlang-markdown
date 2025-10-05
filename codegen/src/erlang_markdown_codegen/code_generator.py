@@ -269,7 +269,7 @@ class CodeGenerator:
                     with open(f"{test_path}/{test_config_file}", "r", encoding="utf-8") as f:
                         data: Any = yaml.safe_load(f)
                         test_schema: TestRootSchema = TestRootSchema(**data)
-                        self._test_suites.append(test_schema.suite)
+                        self._test_suites.append(test_schema.suite.name)
                 self._test_suites.sort()
                 return self._test_suites
             else:

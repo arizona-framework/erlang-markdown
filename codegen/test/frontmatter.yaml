@@ -7,137 +7,193 @@
 # LICENSE.md file in the root directory of this source tree.
 
 ---
-suite: frontmatter
-created: 2025-10-03
-modified: 2025-10-03
-constants:
-  - name: frontmatter
-    options:
-      parse:
-        constructs:
-          frontmatter: true
-test_cases:
+suite:
+  name: frontmatter
+  created: 2025-10-03
+  modified: 2025-10-03
+shared_options:
+- name: frontmatter
+  options:
+    parse:
+      constructs:
+        frontmatter: true
+shared_parse_options:
+- name: frontmatter_parse
+  parse_options:
+    constructs:
+      frontmatter: true
+to_html:
 - name: test_frontmatter_case_1
-  input: "---\ntitle: Jupyter\n---"
-  output: "<hr />\n<h2>title: Jupyter</h2>"
+  input: |-
+    ---
+    title: Jupyter
+    ---
+  output: |-
+    <hr />
+    <h2>title: Jupyter</h2>
   message: should not support frontmatter by default
+to_html_with_options:
 - name: test_frontmatter_case_2
-  input: "---\ntitle: Jupyter\n---"
+  input: |-
+    ---
+    title: Jupyter
+    ---
   output: ''
   message: should support frontmatter (yaml)
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_3
-  input: "+++\ntitle = \"Jupyter\"\n+++"
+  input: |-
+    +++
+    title = "Jupyter"
+    +++
   output: ''
   message: should support frontmatter (toml)
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_4
-  input: "---\n---"
+  input: |-
+    ---
+    ---
   output: ''
   message: should support empty frontmatter
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_5
-  input: "--\n---"
+  input: |-
+    --
+    ---
   output: <h2>--</h2>
   message: should not support 2 markers in an opening fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_6
-  input: "----\n---"
-  output: "<hr />\n<hr />"
+  input: |-
+    ----
+    ---
+  output: |-
+    <hr />
+    <hr />
   message: should not support 4 markers in an opening fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_7
-  input: "---\n--"
-  output: "<hr />\n<p>--</p>"
+  input: |-
+    ---
+    --
+  output: |-
+    <hr />
+    <p>--</p>
   message: should not support 2 markers in a closing fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_8
-  input: "---\n--\n"
-  output: "<hr />\n<p>--</p>\n"
+  input: |
+    ---
+    --
+  output: |
+    <hr />
+    <p>--</p>
   message: should not panic if newline after 2 marker closing fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_9
-  input: "---\n----"
-  output: "<hr />\n<hr />"
+  input: |-
+    ---
+    ----
+  output: |-
+    <hr />
+    <hr />
   message: should not support 4 markers in a closing fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_10
-  input: "---\n---\n## Neptune"
+  input: |-
+    ---
+    ---
+    ## Neptune
   output: <h2>Neptune</h2>
   message: should support content after frontmatter
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_11
   input: "--- \t\n---"
   output: ''
   message: should support spaces and tabs after opening fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_12
   input: "---\n---\t "
   output: ''
   message: should support spaces and tabs after closing fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_13
-  input: "---\n---\na\nb"
-  output: "<p>a\nb</p>"
+  input: |-
+    ---
+    ---
+    a
+    b
+  output: |-
+    <p>a
+    b</p>
   message: should support line endings after frontmatter
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_14
-  input: "--- a\n---"
+  input: |-
+    --- a
+    ---
   output: <h2>--- a</h2>
   message: should not support content after opening fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_15
-  input: "---\n--- b"
-  output: "<hr />\n<p>--- b</p>"
+  input: |-
+    ---
+    --- b
+  output: |-
+    <hr />
+    <p>--- b</p>
   message: should not support content after closing fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_16
-  input: "## Neptune\n---\n---"
-  output: "<h2>Neptune</h2>\n<hr />\n<hr />"
+  input: |-
+    ## Neptune
+    ---
+    ---
+  output: |-
+    <h2>Neptune</h2>
+    <hr />
+    <hr />
   message: should not support frontmatter after content
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_17
-  input: "> ---\n> ---\n> ## Neptune"
-  output: "<blockquote>\n<hr />\n<hr />\n<h2>Neptune</h2>\n</blockquote>"
+  input: |-
+    > ---
+    > ---
+    > ## Neptune
+  output: |-
+    <blockquote>
+    <hr />
+    <hr />
+    <h2>Neptune</h2>
+    </blockquote>
   message: should not support frontmatter in a container
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_18
   input: '---'
   output: <hr />
   message: should not support just an opening fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_19
-  input: "---\ntitle: Neptune"
-  output: "<hr />\n<p>title: Neptune</p>"
+  input: |-
+    ---
+    title: Neptune
+  output: |-
+    <hr />
+    <p>title: Neptune</p>
   message: should not support a missing closing fence
-  kind: to_html_with_options
   options: frontmatter
 - name: test_frontmatter_case_20
   input: "---\na\n\nb\n \t\nc\n---"
   output: ''
   message: should support blank lines in frontmatter
-  kind: to_html_with_options
   options: frontmatter
+to_mdast:
 - name: test_frontmatter_case_21
-  input: "---\na: b\n---"
-  output: |
+  input: |-
+    ---
+    a: b
+    ---
+  output: |-
     markdown_mdast_node:root(#markdown_mdast_root{
       children = ?'vec!'([
         markdown_mdast_node:yaml(#markdown_mdast_yaml{
@@ -148,13 +204,13 @@ test_cases:
       position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 12)}
     })
   message: "should support yaml as `Yaml`s in mdast"
-  kind: to_mdast
-  parse_options:
-    constructs:
-      frontmatter: true
+  parse_options: frontmatter_parse
 - name: test_frontmatter_case_22
-  input: "+++\ntitle = \"Jupyter\"\n+++"
-  output: |
+  input: |-
+    +++
+    title = "Jupyter"
+    +++
+  output: |-
     markdown_mdast_node:root(#markdown_mdast_root{
       children = ?'vec!'([
         markdown_mdast_node:toml(#markdown_mdast_toml{
@@ -165,7 +221,4 @@ test_cases:
       position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 25)}
     })
   message: "should support toml as `Toml`s in mdast"
-  kind: to_mdast
-  parse_options:
-    constructs:
-      frontmatter: true
+  parse_options: frontmatter_parse

@@ -91,7 +91,8 @@ counter_reset() ->
 
 -spec doc() -> binary().
 doc() ->
-    <<"[foo [bar](/uri)](/uri)\n"/utf8>>.
+    <<"user@example.com"/utf8>>.
+    % <<"[foo [bar](/uri)](/uri)\n"/utf8>>.
     % <<"*foo __bar *baz bim__ bam*"/utf8>>.
     % <<"[bar](/foo)">>.
     % %% erlfmt-ignore

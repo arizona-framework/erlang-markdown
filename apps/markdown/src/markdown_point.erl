@@ -20,13 +20,17 @@ The interface for the location in the document comes from unist
 -compile(warn_missing_spec_all).
 -oncall("whatsapp_clr").
 
+-include_lib("markdown/include/markdown_const.hrl").
 -include_lib("markdown/include/markdown_parser.hrl").
 -include_lib("markdown/include/markdown_util.hrl").
+
+-include_lib("stdlib/include/assert.hrl").
 
 %% API
 -export([
     fmt/1,
     new/4,
+    shift_to/3,
     to_index/1,
     to_unist/1
 ]).
@@ -75,6 +79,20 @@ new(Line, Column, Offset, Virtual) when
 ->
     #markdown_point{line = Line, column = Column, offset = Offset, virtual = Virtual}.
 
+-doc """
+Create a new point, that is shifted from the close earlier current
+point, to `index`.
+""".
+-spec shift_to(Point, Bytes, Index) -> NewPoint when
+    Point :: t(), Bytes :: binary(), Index :: non_neg_integer(), NewPoint :: t().
+shift_to(Point = #markdown_point{}, Bytes, Index) when
+    is_binary(Bytes) andalso ?is_non_neg_integer(Index)
+->
+    %% BEGIN: assertions
+    ?assert(Index > Point#markdown_point.offset, "expected to shift forward"),
+    %% END: assertions
+    shift_to_loop(Point, Bytes, Index).
+
 -spec to_index(Point) -> Index when Point :: t(), Index :: markdown_index:t().
 to_index(Point = #markdown_point{}) ->
     #markdown_index{offset = Point#markdown_point.offset, virtual = Point#markdown_point.virtual}.
@@ -85,3 +103,46 @@ Create a unist point.
 -spec to_unist(Point) -> UnistPoint when Point :: t(), UnistPoint :: markdown_unist_point:t().
 to_unist(Point = #markdown_point{}) ->
     markdown_unist_point:new(Point#markdown_point.line, Point#markdown_point.column, Point#markdown_point.offset).
+
+%%%-----------------------------------------------------------------------------
+%%% Internal functions
+%%%-----------------------------------------------------------------------------
+
+%% @private
+-compile({inline, [mod/2]}).
+-spec mod(Base, Modulus) -> Result when Base :: integer(), Modulus :: integer(), Result :: integer().
+mod(B, M) ->
+    (B rem M + M) rem M.
+
+%% @private
+-spec shift_to_loop(Point, Bytes, TargetIndex) -> NewPoint when
+    Point :: t(), Bytes :: binary(), TargetIndex :: non_neg_integer(), NewPoint :: t().
+shift_to_loop(Point = #markdown_point{offset = Offset, column = Column}, Bytes, TargetIndex) when
+    Offset < TargetIndex
+->
+    case binary:at(Bytes, Offset) of
+        $\n ->
+            ?'unreachable!'("cannot move past line endings", []);
+        $\r ->
+            ?'unreachable!'("cannot move past line endings", []);
+        $\t ->
+            Remainder = mod(Column, ?TAB_SIZE),
+            Vs =
+                case Remainder of
+                    0 -> 0;
+                    _ -> ?TAB_SIZE - Remainder
+                end,
+            NextPoint = Point#markdown_point{
+                offset = Offset + 1,
+                column = Column + 1 + Vs
+            },
+            shift_to_loop(NextPoint, Bytes, TargetIndex);
+        _ ->
+            NextPoint = Point#markdown_point{
+                offset = Offset + 1,
+                column = Column + 1
+            },
+            shift_to_loop(NextPoint, Bytes, TargetIndex)
+    end;
+shift_to_loop(Point = #markdown_point{}, _Bytes, _TargetIndex) ->
+    Point.

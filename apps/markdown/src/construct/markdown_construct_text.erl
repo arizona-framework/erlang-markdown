@@ -333,7 +333,8 @@ resolve(
         parse_state = #markdown_parse_state{
             options = #markdown_parse_options{
                 constructs = #markdown_construct_options{
-                    hard_break_trailing = HardBreakTrailing, gfm_autolink_literal = _GfmAutolinkLiteral
+                    gfm_autolink_literal = GfmAutolinkLiteral,
+                    hard_break_trailing = HardBreakTrailing
                 }
             }
         }
@@ -341,15 +342,13 @@ resolve(
 ) ->
     % io:format("\n\n[~w] BEFORE text:resolve\n\n~ts\n\n", [markdown:counter_get(), markdown_debug:rust_debug_string(Tokenizer1)]),
     Tokenizer2 = markdown_construct_partial_whitespace:resolve_whitespace(Tokenizer1, HardBreakTrailing, true),
-    Tokenizer3 = Tokenizer2,
-    %% TODO: gfm_autolink_literal
-    % Tokenizer3 =
-    %     case GfmAutolinkLiteral of
-    %         true ->
-    %             resolve_gfm_autolink_literal(Tokenizer2);
-    %         false ->
-    %             Tokenizer2
-    %     end,
+    Tokenizer3 =
+        case GfmAutolinkLiteral of
+            true ->
+                markdown_construct_gfm_autolink_literal:resolve(Tokenizer2);
+            false ->
+                Tokenizer2
+        end,
     #markdown_tokenizer{events = Events3, map = EditMap3} = Tokenizer3,
     {EditMap4, Events4} = markdown_edit_map:consume(EditMap3, Events3),
     Tokenizer4 = Tokenizer3#markdown_tokenizer{events = Events4, map = EditMap4},

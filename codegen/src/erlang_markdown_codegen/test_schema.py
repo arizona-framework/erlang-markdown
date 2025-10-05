@@ -6,13 +6,9 @@
 
 """Models for codegen for tests."""
 import datetime
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt
-
-# from typing import Any, Literal, Optional
-
-# from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Model(BaseModel):
@@ -31,11 +27,6 @@ class CompileOptions(Model):
     gfm_footnote_clobber_prefix: Optional[str] = None
     gfm_task_list_item_checkable: Optional[bool] = None
     gfm_tagfilter: Optional[bool] = None
-
-
-class Constant(Model):
-    name: str
-    options: "Options"
 
 
 class ConstructOptions(Model):
@@ -90,6 +81,16 @@ class ParseOptions(Model):
     mdx_esm_parse: Optional[str] = None
 
 
+class SharedOptions(Model):
+    name: str
+    options: Options
+
+
+class SharedParseOptions(Model):
+    name: str
+    parse_options: ParseOptions
+
+
 class TestCaseBase(Model):
     name: str
     input: str
@@ -109,16 +110,19 @@ class TestCaseToHtmlWithOptions(TestCaseBase):
 
 class TestCaseToMdast(TestCaseBase):
     kind: Literal["to_mdast"] = "to_mdast"
-    parse_options: ParseOptions
+    parse_options: str | ParseOptions
 
 
-# Union type for TestCase
-TestCase = Union[TestCaseToHtml, TestCaseToHtmlWithOptions, TestCaseToMdast]
+class TestSuite(Model):
+    name: str
+    created: datetime.date = Field(default_factory=lambda: datetime.date(2025, 3, 4))
+    modified: datetime.date = Field(default_factory=lambda: datetime.date(2025, 10, 3))
 
 
 class TestRoot(Model):
-    suite: str
-    created: datetime.date = Field(default_factory=lambda: datetime.date(2025, 3, 4))
-    modified: datetime.date = Field(default_factory=lambda: datetime.date(2025, 10, 3))
-    constants: list[Constant] = Field(default_factory=list)
-    test_cases: list[TestCase] = Field(default_factory=list)
+    suite: TestSuite
+    shared_options: list[SharedOptions] = Field(default_factory=list)
+    shared_parse_options: list[SharedParseOptions] = Field(default_factory=list)
+    to_html: list[TestCaseToHtml] = Field(default_factory=list)
+    to_html_with_options: list[TestCaseToHtmlWithOptions] = Field(default_factory=list)
+    to_mdast: list[TestCaseToMdast] = Field(default_factory=list)

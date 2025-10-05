@@ -7,106 +7,184 @@
 # LICENSE.md file in the root directory of this source tree.
 
 ---
-suite: definition
-created: 2025-10-03
-modified: 2025-10-03
-constants:
+suite:
+  name: definition
+  created: 2025-10-03
+  modified: 2025-10-03
+shared_options:
   - name: danger
     options:
       compile:
         allow_dangerous_html: true
         allow_dangerous_protocol: true
-test_cases:
+to_html:
 - name: test_definition_case_1
-  input: "[foo]: /url \"title\"\n\n[foo]"
+  input: |-
+    [foo]: /url "title"
+
+    [foo]
   output: "<p><a href=\"/url\" title=\"title\">foo</a></p>"
   message: should support link definitions
 - name: test_definition_case_2
-  input: "[foo]:\n\n/url\n\n[foo]"
-  output: "<p>[foo]:</p>\n<p>/url</p>\n<p>[foo]</p>"
+  input: |-
+    [foo]:
+
+    /url
+
+    [foo]
+  output: |-
+    <p>[foo]:</p>
+    <p>/url</p>
+    <p>[foo]</p>
   message: should not support blank lines before destination
 - name: test_definition_case_3
   input: "   [foo]: \n      /url  \n           'the title'  \n\n[foo]"
   output: "<p><a href=\"/url\" title=\"the title\">foo</a></p>"
   message: should support whitespace and line endings in definitions
 - name: test_definition_case_4
-  input: "[a]:b 'c'\n\n[a]"
+  input: |-
+    [a]:b 'c'
+
+    [a]
   output: "<p><a href=\"b\" title=\"c\">a</a></p>"
   message: should support no whitespace after `:` in definitions
 - name: test_definition_case_5
-  input: "[Foo*bar\\]]:my_(url) 'title (with parens)'\n\n[Foo*bar\\]]"
+  input: |-
+    [Foo*bar\]]:my_(url) 'title (with parens)'
+
+    [Foo*bar\]]
   output: "<p><a href=\"my_(url)\" title=\"title (with parens)\">Foo*bar]</a></p>"
   message: should support complex definitions (1)
 - name: test_definition_case_6
-  input: "[Foo bar]:\n<my url>\n'title'\n\n[Foo bar]"
+  input: |-
+    [Foo bar]:
+    <my url>
+    'title'
+
+    [Foo bar]
   output: "<p><a href=\"my%20url\" title=\"title\">Foo bar</a></p>"
   message: should support complex definitions (2)
 - name: test_definition_case_7
-  input: "[foo]: /url '\ntitle\nline1\nline2\n'\n\n[foo]"
-  output: "<p><a href=\"/url\" title=\"\ntitle\nline1\nline2\n\">foo</a></p>"
+  input: |-
+    [foo]: /url '
+    title
+    line1
+    line2
+    '
+
+    [foo]
+  output: |-
+    <p><a href="/url" title="
+    title
+    line1
+    line2
+    ">foo</a></p>
   message: should support line endings in titles
 - name: test_definition_case_8
-  input: "[foo]: /url 'title\n\nwith blank line'\n\n[foo]"
-  output: "<p>[foo]: /url 'title</p>\n<p>with blank line'</p>\n<p>[foo]</p>"
+  input: |-
+    [foo]: /url 'title
+
+    with blank line'
+
+    [foo]
+  output: |-
+    <p>[foo]: /url 'title</p>
+    <p>with blank line'</p>
+    <p>[foo]</p>
   message: should not support blank lines in titles
 - name: test_definition_case_9
-  input: "[foo]:\n/url\n\n[foo]"
+  input: |-
+    [foo]:
+    /url
+
+    [foo]
   output: "<p><a href=\"/url\">foo</a></p>"
   message: should support definitions w/o title
 - name: test_definition_case_10
-  input: "[foo]:\n\n[foo]"
-  output: "<p>[foo]:</p>\n<p>[foo]</p>"
+  input: |-
+    [foo]:
+
+    [foo]
+  output: |-
+    <p>[foo]:</p>
+    <p>[foo]</p>
   message: should not support definitions w/o destination
 - name: test_definition_case_11
-  input: "[foo]: <>\n\n[foo]"
+  input: |-
+    [foo]: <>
+
+    [foo]
   output: "<p><a href=\"\">foo</a></p>"
   message: should support definitions w/ explicit empty destinations
-- name: test_definition_case_12
-  input: "[foo]: <bar>(baz)\n\n[foo]"
-  output: "<p>[foo]: <bar>(baz)</p>\n<p>[foo]</p>"
-  message: should not support definitions w/ no whitespace between destination and title
-  kind: to_html_with_options
-  options: danger
 - name: test_definition_case_13
-  input: "[foo]: /url\\bar\\*baz \"foo\\\"bar\\baz\"\n\n[foo]"
+  input: |-
+    [foo]: /url\bar\*baz "foo\"bar\baz"
+
+    [foo]
   output: "<p><a href=\"/url%5Cbar*baz\" title=\"foo&quot;bar\\baz\">foo</a></p>"
   message: should support character escapes in destinations and titles
 - name: test_definition_case_14
-  input: "[foo]\n\n[foo]: url"
-  output: "<p><a href=\"url\">foo</a></p>\n"
+  input: |-
+    [foo]
+
+    [foo]: url
+  output: |
+    <p><a href="url">foo</a></p>
   message: should support a link before a definition
 - name: test_definition_case_15
-  input: "[foo]: first\n[foo]: second\n\n[foo]"
+  input: |-
+    [foo]: first
+    [foo]: second
+
+    [foo]
   output: "<p><a href=\"first\">foo</a></p>"
   message: should match w/ the first definition
 - name: test_definition_case_16
-  input: "[FOO]: /url\n\n[Foo]"
+  input: |-
+    [FOO]: /url
+
+    [Foo]
   output: "<p><a href=\"/url\">Foo</a></p>"
   message: should match w/ case-insensitive (1)
 - name: test_definition_case_17
-  input: "[ΑΓΩ]: /φου\n\n[αγω]"
+  input: |-
+    [ΑΓΩ]: /φου
+
+    [αγω]
   output: "<p><a href=\"/%CF%86%CE%BF%CF%85\">αγω</a></p>"
   message: should match w/ case-insensitive (2)
 - name: test_definition_case_18
-  input: "[ı]: a\n\n[I]"
+  input: |-
+    [ı]: a
+
+    [I]
   output: "<p><a href=\"a\">I</a></p>"
   message: should match w/ undotted turkish i (1)
 - name: test_definition_case_19
-  input: "[I]: a\n\n[ı]"
+  input: |-
+    [I]: a
+
+    [ı]
   output: "<p><a href=\"a\">ı</a></p>"
   message: should match w/ undotted turkish i (2)
 - name: test_definition_case_20
-  input: "[i]: a\n\n[İ]"
+  input: |-
+    [i]: a
+
+    [İ]
   output: <p>[İ]</p>
   message: should *not* match w/ dotted turkish i (1)
-  comment: |
+  comment: |-
     Ref: <https://spec.commonmark.org/dingus/?text=%5Bi%5D%3A%20a%0A%0A%5Bİ%5D>
     GFM parses the same (last checked: 2022-07-11).
 - name: test_definition_case_21
-  input: "[İ]: a\n\n[i]"
+  input: |-
+    [İ]: a
+
+    [i]
   output: <p>[i]</p>
   message: should *not* match w/ dotted turkish i (2)
-  comment: |
+  comment: |-
     Ref: <https://spec.commonmark.org/dingus/?text=%5Bİ%5D%3A%20a%0A%0A%5Bi%5D>
     GFM parses the same (last checked: 2022-07-11).
 - name: test_definition_case_22
@@ -114,7 +192,11 @@ test_cases:
   output: ''
   message: should not contribute anything w/o reference (1)
 - name: test_definition_case_23
-  input: "[\nfoo\n]: /url\nbar"
+  input: |-
+    [
+    foo
+    ]: /url
+    bar
   output: <p>bar</p>
   message: should not contribute anything w/o reference (2)
 - name: test_definition_case_24
@@ -130,74 +212,164 @@ test_cases:
   output: '<p>[foo]: /url &quot;title&quot; ok</p>'
   message: should not support non-whitespace content after definitions (1)
 - name: test_definition_case_27
-  input: "[foo]: /url\n\"title\" ok"
+  input: |-
+    [foo]: /url
+    "title" ok
   output: <p>&quot;title&quot; ok</p>
   message: should not support non-whitespace content after definitions (2)
 - name: test_definition_case_28
-  input: "    [foo]: /url \"title\"\n\n[foo]"
-  output: "<pre><code>[foo]: /url &quot;title&quot;\n</code></pre>\n<p>[foo]</p>"
+  input: |2-
+        [foo]: /url "title"
+
+    [foo]
+  output: |-
+    <pre><code>[foo]: /url &quot;title&quot;
+    </code></pre>
+    <p>[foo]</p>
   message: should prefer indented code over definitions
 - name: test_definition_case_29
-  input: "```\n[foo]: /url\n```\n\n[foo]"
-  output: "<pre><code>[foo]: /url\n</code></pre>\n<p>[foo]</p>"
+  input: |-
+    ```
+    [foo]: /url
+    ```
+
+    [foo]
+  output: |-
+    <pre><code>[foo]: /url
+    </code></pre>
+    <p>[foo]</p>
   message: should not support definitions in fenced code
 - name: test_definition_case_30
-  input: "Foo\n[bar]: /baz\n\n[bar]"
-  output: "<p>Foo\n[bar]: /baz</p>\n<p>[bar]</p>"
+  input: |-
+    Foo
+    [bar]: /baz
+
+    [bar]
+  output: |-
+    <p>Foo
+    [bar]: /baz</p>
+    <p>[bar]</p>
   message: should not support definitions in paragraphs
 - name: test_definition_case_31
-  input: "# [Foo]\n[foo]: /url\n> bar"
-  output: "<h1><a href=\"/url\">Foo</a></h1>\n<blockquote>\n<p>bar</p>\n</blockquote>"
+  input: |-
+    # [Foo]
+    [foo]: /url
+    > bar
+  output: |-
+    <h1><a href="/url">Foo</a></h1>
+    <blockquote>
+    <p>bar</p>
+    </blockquote>
   message: should not support definitions in headings
 - name: test_definition_case_32
-  input: "[foo]: /url\nbar\n===\n[foo]"
-  output: "<h1>bar</h1>\n<p><a href=\"/url\">foo</a></p>"
+  input: |-
+    [foo]: /url
+    bar
+    ===
+    [foo]
+  output: |-
+    <h1>bar</h1>
+    <p><a href="/url">foo</a></p>
   message: should support setext headings after definitions
 - name: test_definition_case_33
-  input: "[a]: b\n="
+  input: |-
+    [a]: b
+    =
   output: <p>=</p>
   message: should not support setext heading underlines after definitions (1)
 - name: test_definition_case_34
-  input: "[foo]: /url\n===\n[foo]"
-  output: "<p>===\n<a href=\"/url\">foo</a></p>"
+  input: |-
+    [foo]: /url
+    ===
+    [foo]
+  output: |-
+    <p>===
+    <a href="/url">foo</a></p>
   message: should not support setext heading underlines after definitions (2)
 - name: test_definition_case_35
-  input: "[foo]: /foo-url \"foo\"\n[bar]: /bar-url\n  \"bar\"\n[baz]: /baz-url\n\n[foo],\n[bar],\n[baz]"
-  output: "<p><a href=\"/foo-url\" title=\"foo\">foo</a>,\n<a href=\"/bar-url\" title=\"bar\">bar</a>,\n<a href=\"/baz-url\">baz</a></p>"
+  input: |-
+    [foo]: /foo-url "foo"
+    [bar]: /bar-url
+      "bar"
+    [baz]: /baz-url
+
+    [foo],
+    [bar],
+    [baz]
+  output: |-
+    <p><a href="/foo-url" title="foo">foo</a>,
+    <a href="/bar-url" title="bar">bar</a>,
+    <a href="/baz-url">baz</a></p>
   message: should support definitions after definitions
 - name: test_definition_case_36
-  input: "> [foo]: /url\n\n[foo]"
-  output: "<blockquote>\n</blockquote>\n<p><a href=\"/url\">foo</a></p>"
+  input: |-
+    > [foo]: /url
+
+    [foo]
+  output: |-
+    <blockquote>
+    </blockquote>
+    <p><a href="/url">foo</a></p>
   message: should support definitions in block quotes (1)
 - name: test_definition_case_37
-  input: "> [a]: <> 'b\n> c'"
-  output: "<blockquote>\n</blockquote>"
+  input: |-
+    > [a]: <> 'b
+    > c'
+  output: |-
+    <blockquote>
+    </blockquote>
   message: should support definitions in block quotes (2)
 - name: test_definition_case_38
-  input: "> [a]\n\n[a]: b (c\n)"
-  output: "<blockquote>\n<p><a href=\"b\" title=\"c\n\">a</a></p>\n</blockquote>\n"
+  input: |-
+    > [a]
+
+    [a]: b (c
+    )
+  output: |
+    <blockquote>
+    <p><a href="b" title="c
+    ">a</a></p>
+    </blockquote>
   message: should support definitions in block quotes (3)
 - name: test_definition_case_39
-  input: "[\\[\\+\\]]: example.com\n\nLink: [\\[\\+\\]]."
+  input: |-
+    [\[\+\]]: example.com
+
+    Link: [\[\+\]].
   output: "<p>Link: <a href=\"example.com\">[+]</a>.</p>"
   message: should match w/ character escapes
-  comment: |
-    Extra
+  comment: Extra
 - name: test_definition_case_40
-  input: "[x]: \\\"&#x20;\\(\\)\\\"\n\n[x]"
+  input: |-
+    [x]: \"&#x20;\(\)\"
+
+    [x]
   output: "<p><a href=\"%22%20()%22\">x</a></p>"
   message: should support character escapes & references in unenclosed destinations
 - name: test_definition_case_41
-  input: "[x]: <\\>&#x20;\\+\\>>\n\n[x]"
+  input: |-
+    [x]: <\>&#x20;\+\>>
+
+    [x]
   output: "<p><a href=\"%3E%20+%3E\">x</a></p>"
   message: should support character escapes & references in enclosed destinations
 - name: test_definition_case_42
-  input: "[x]: <\n\n[x]"
-  output: "<p>[x]: &lt;</p>\n<p>[x]</p>"
+  input: |-
+    [x]: <
+
+    [x]
+  output: |-
+    <p>[x]: &lt;</p>
+    <p>[x]</p>
   message: should not support a line ending at start of enclosed destination
 - name: test_definition_case_43
-  input: "[x]: <x\n\n[x]"
-  output: "<p>[x]: &lt;x</p>\n<p>[x]</p>"
+  input: |-
+    [x]: <x
+
+    [x]
+  output: |-
+    <p>[x]: &lt;x</p>
+    <p>[x]</p>
   message: should not support a line ending in enclosed destination
 - name: test_definition_case_44
   input: "[x]: \u000ba\n\n[x]"
@@ -208,40 +380,69 @@ test_cases:
   output: "<p>[x]: a\u000bb</p>\n<p>[x]</p>"
   message: should not support ascii control characters in destination
 - name: test_definition_case_46
-  input: "[x]: <\u000ba>\n\n[x]"
+  input: "[x]: <\u000ba>
+
+    [x]"
   output: "<p><a href=\"%0Ba\">x</a></p>"
   message: should support ascii control characters at the start of enclosed destination
 - name: test_definition_case_47
-  input: "[x]: <a\u000bb>\n\n[x]"
+  input: "[x]: <a\u000bb>
+
+    [x]"
   output: "<p><a href=\"a%0Bb\">x</a></p>"
   message: should support ascii control characters in enclosed destinations
 - name: test_definition_case_48
-  input: "[x]: a \"\\\"\"\n\n[x]"
+  input: |-
+    [x]: a "\""
+
+    [x]
   output: "<p><a href=\"a\" title=\"&quot;\">x</a></p>"
   message: should support character escapes at the start of a title
 - name: test_definition_case_49
-  input: "[x]: a \"'\"\n\n[x]"
+  input: |-
+    [x]: a "'"
+
+    [x]
   output: "<p><a href=\"a\" title=\"'\">x</a></p>"
   message: should support double quoted titles
 - name: test_definition_case_50
-  input: "[x]: a '\"'\n\n[x]"
+  input: |-
+    [x]: a '"'
+
+    [x]
   output: "<p><a href=\"a\" title=\"&quot;\">x</a></p>"
   message: should support single quoted titles
 - name: test_definition_case_51
-  input: "[x]: a (\"')\n\n[x]"
+  input: |-
+    [x]: a ("')
+
+    [x]
   output: "<p><a href=\"a\" title=\"&quot;'\">x</a></p>"
   message: should support paren enclosed titles
 - name: test_definition_case_52
-  input: "[x]: a(()\n\n[x]"
-  output: "<p>[x]: a(()</p>\n<p>[x]</p>"
+  input: |-
+    [x]: a(()
+
+    [x]
+  output: |-
+    <p>[x]: a(()</p>
+    <p>[x]</p>
   message: should not support more opening than closing parens in the destination
 - name: test_definition_case_53
-  input: "[x]: a(())\n\n[x]"
+  input: |-
+    [x]: a(())
+
+    [x]
   output: "<p><a href=\"a(())\">x</a></p>"
   message: should support balanced opening and closing parens in the destination
 - name: test_definition_case_54
-  input: "[x]: a())\n\n[x]"
-  output: "<p>[x]: a())</p>\n<p>[x]</p>"
+  input: |-
+    [x]: a())
+
+    [x]
+  output: |-
+    <p>[x]: a())</p>
+    <p>[x]</p>
   message: should not support more closing than opening parens in the destination
 - name: test_definition_case_55
   input: "[x]: a  \t\n\n[x]"
@@ -252,11 +453,18 @@ test_cases:
   output: "<p><a href=\"a\" title=\"X\">x</a></p>"
   message: should support trailing whitespace after a title
 - name: test_definition_case_57
-  input: "[&amp;&copy;&]: example.com/&amp;&copy;& \"&amp;&copy;&\"\n\n[&amp;&copy;&]"
+  input: |-
+    [&amp;&copy;&]: example.com/&amp;&copy;& "&amp;&copy;&"
+
+    [&amp;&copy;&]
   output: "<p><a href=\"example.com/&amp;%C2%A9&amp;\" title=\"&amp;©&amp;\">&amp;©&amp;</a></p>"
   message: should support character references in definitions
 - name: test_definition_case_58
-  input: "[x]:\nexample.com\n\n[x]"
+  input: |-
+    [x]:
+    example.com
+
+    [x]
   output: "<p><a href=\"example.com\">x</a></p>"
   message: should support a line ending before a destination
 - name: test_definition_case_59
@@ -264,97 +472,202 @@ test_cases:
   output: "<p><a href=\"example.com\">x</a></p>"
   message: should support whitespace before a destination
 - name: test_definition_case_60
-  input: "[x]: <> \"\"\n[][x]"
+  input: |-
+    [x]: <> ""
+    [][x]
   output: "<p><a href=\"\"></a></p>"
   message: should ignore an empty title
-  comment: |
-    See: <https://github.com/commonmark/commonmark.js/issues/192>
-- name: test_definition_case_61
-  input: "[a]\n\n[a]: <b<c>"
-  output: "<p>[a]</p>\n<p>[a]: &lt;b<c></p>"
-  message: should not support a less than in an enclosed destination
-  kind: to_html_with_options
-  options: danger
+  comment: 'See: <https://github.com/commonmark/commonmark.js/issues/192>'
 - name: test_definition_case_62
-  input: "[a]\n\n[a]: b(c"
-  output: "<p>[a]</p>\n<p>[a]: b(c</p>"
+  input: |-
+    [a]
+
+    [a]: b(c
+  output: |-
+    <p>[a]</p>
+    <p>[a]: b(c</p>
   message: should not support an extra left paren (`(`) in a raw destination
 - name: test_definition_case_63
-  input: "[a]\n\n[a]: b)c"
-  output: "<p>[a]</p>\n<p>[a]: b)c</p>"
+  input: |-
+    [a]
+
+    [a]: b)c
+  output: |-
+    <p>[a]</p>
+    <p>[a]: b)c</p>
   message: should not support an extra right paren (`)`) in a raw destination
 - name: test_definition_case_64
-  input: "[a]\n\n[a]: b)c"
-  output: "<p>[a]</p>\n<p>[a]: b)c</p>"
+  input: |-
+    [a]
+
+    [a]: b)c
+  output: |-
+    <p>[a]</p>
+    <p>[a]: b)c</p>
   message: should not support an extra right paren (`)`) in a raw destination
 - name: test_definition_case_65
-  input: "[a]\n\n[a]: a(1(2(3(4()))))b"
-  output: "<p><a href=\"a(1(2(3(4()))))b\">a</a></p>\n"
-  message: should support 4 or more sets of parens in a raw destination (link resources don’t)
+  input: |-
+    [a]
+
+    [a]: a(1(2(3(4()))))b
+  output: |
+    <p><a href="a(1(2(3(4()))))b">a</a></p>
+  message: "should support 4 or more sets of parens in a raw destination (link resources don’t)"
 - name: test_definition_case_66
-  input: "[a]\n\n[a]: aaa)"
-  output: "<p>[a]</p>\n<p>[a]: aaa)</p>"
+  input: |-
+    [a]
+
+    [a]: aaa)
+  output: |-
+    <p>[a]</p>
+    <p>[a]: aaa)</p>
   message: should not support a final (unbalanced) right paren in a raw destination
 - name: test_definition_case_67
-  input: "[a]\n\n[a]: aaa) \"a\""
-  output: "<p>[a]</p>\n<p>[a]: aaa) &quot;a&quot;</p>"
-  message: should not support a final (unbalanced) right paren in a raw destination “before” a title
+  input: |-
+    [a]
+
+    [a]: aaa) "a"
+  output: |-
+    <p>[a]</p>
+    <p>[a]: aaa) &quot;a&quot;</p>
+  message: "should not support a final (unbalanced) right paren in a raw destination “before” a title"
 - name: test_definition_case_68
   input: " [a]: b \"c\"\n  [d]: e\n   [f]: g \"h\"\n    [i]: j\n\t[k]: l (m)\n\t n [k] o"
   output: "<p>n <a href=\"l\" title=\"m\">k</a> o</p>"
   message: should support subsequent indented definitions
 - name: test_definition_case_69
-  input: "[a\n  b]: c\n\n[a\n  b]"
-  output: "<p><a href=\"c\">a\nb</a></p>"
+  input: |-
+    [a
+      b]: c
+
+    [a
+      b]
+  output: |-
+    <p><a href="c">a
+    b</a></p>
   message: should support line prefixes in definition labels
 - name: test_definition_case_70
-  input: "[a]: )\n\n[a]"
-  output: "<p>[a]: )</p>\n<p>[a]</p>"
+  input: |-
+    [a]: )
+
+    [a]
+  output: |-
+    <p>[a]: )</p>
+    <p>[a]</p>
   message: should not support definitions w/ only a closing paren as a raw destination
 - name: test_definition_case_71
-  input: "[a]: )b\n\n[a]"
-  output: "<p>[a]: )b</p>\n<p>[a]</p>"
+  input: |-
+    [a]: )b
+
+    [a]
+  output: |-
+    <p>[a]: )b</p>
+    <p>[a]</p>
   message: should not support definitions w/ closing paren + more text as a raw destination
 - name: test_definition_case_72
-  input: "[a]: b)\n\n[a]"
-  output: "<p>[a]: b)</p>\n<p>[a]</p>"
+  input: |-
+    [a]: b)
+
+    [a]
+  output: |-
+    <p>[a]: b)</p>
+    <p>[a]</p>
   message: should not support definitions w/ text + a closing paren as a raw destination
 - name: test_definition_case_73
-  input: "[\na\n=\n]: b"
-  output: "<h1>[\na</h1>\n<p>]: b</p>"
+  input: |-
+    [
+    a
+    =
+    ]: b
+  output: |-
+    <h1>[
+    a</h1>
+    <p>]: b</p>
   message: should prefer setext headings over definition labels
 - name: test_definition_case_74
-  input: "[a]: b '\nc\n=\n'"
-  output: "<h1>[a]: b '\nc</h1>\n<p>'</p>"
+  input: |-
+    [a]: b '
+    c
+    =
+    '
+  output: |-
+    <h1>[a]: b '
+    c</h1>
+    <p>'</p>
   message: should prefer setext headings over definition titles
 - name: test_definition_case_75
-  input: "[\n***\n]: b"
-  output: "<p>[</p>\n<hr />\n<p>]: b</p>"
+  input: |-
+    [
+    ***
+    ]: b
+  output: |-
+    <p>[</p>
+    <hr />
+    <p>]: b</p>
   message: should prefer thematic breaks over definition labels
 - name: test_definition_case_76
-  input: "[a]: b '\n***\n'"
-  output: "<p>[a]: b '</p>\n<hr />\n<p>'</p>"
+  input: |-
+    [a]: b '
+    ***
+    '
+  output: |-
+    <p>[a]: b '</p>
+    <hr />
+    <p>'</p>
   message: should prefer thematic breaks over definition titles
 - name: test_definition_case_77
-  input: "[\n```\n]: b"
-  output: "<p>[</p>\n<pre><code>]: b\n</code></pre>\n"
+  input: |-
+    [
+    ```
+    ]: b
+  output: |
+    <p>[</p>
+    <pre><code>]: b
+    </code></pre>
   message: should prefer code (fenced) over definition labels
 - name: test_definition_case_78
-  input: "[a]: b '\n```\n'"
-  output: "<p>[a]: b '</p>\n<pre><code>'\n</code></pre>\n"
+  input: |-
+    [a]: b '
+    ```
+    '
+  output: |
+    <p>[a]: b '</p>
+    <pre><code>'
+    </code></pre>
   message: should prefer code (fenced) over definition titles
+to_html_with_options:
+- name: test_definition_case_12
+  input: |-
+    [foo]: <bar>(baz)
+
+    [foo]
+  output: |-
+    <p>[foo]: <bar>(baz)</p>
+    <p>[foo]</p>
+  message: should not support definitions w/ no whitespace between destination and title
+  options: danger
+- name: test_definition_case_61
+  input: |-
+    [a]
+
+    [a]: <b<c>
+  output: |-
+    <p>[a]</p>
+    <p>[a]: &lt;b<c></p>
+  message: should not support a less than in an enclosed destination
+  options: danger
 - name: test_definition_case_79
   input: "[foo]: /url \"title\""
   output: '<p>[foo]: /url &quot;title&quot;</p>'
   message: should support turning off definitions
-  kind: to_html_with_options
   options:
     parse:
       constructs:
         definition: false
+to_mdast:
 - name: test_definition_case_80
-  input: "[a]: <b> 'c'"
-  output: |
+  input: '[a]: <b> ''c'''
+  output: |-
     markdown_mdast_node:root(#markdown_mdast_root{
       children = ?'vec!'([
         markdown_mdast_node:definition(#markdown_mdast_definition{
@@ -368,5 +681,4 @@ test_cases:
       position = {some, markdown_unist_position:new(1, 1, 0, 1, 13, 12)}
     })
   message: "should support definitions as `Definition`s in mdast"
-  kind: to_mdast
   parse_options: {}

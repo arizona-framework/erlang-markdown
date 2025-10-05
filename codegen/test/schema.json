@@ -144,24 +144,6 @@
       "title": "CompileOptions",
       "type": "object"
     },
-    "Constant": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
-        "options": {
-          "$ref": "#/$defs/Options"
-        }
-      },
-      "required": [
-        "name",
-        "options"
-      ],
-      "title": "Constant",
-      "type": "object"
-    },
     "ConstructOptions": {
       "additionalProperties": false,
       "properties": {
@@ -696,6 +678,42 @@
       "title": "ParseOptions",
       "type": "object"
     },
+    "SharedOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/$defs/Options"
+        }
+      },
+      "required": [
+        "name",
+        "options"
+      ],
+      "title": "SharedOptions",
+      "type": "object"
+    },
+    "SharedParseOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "parse_options": {
+          "$ref": "#/$defs/ParseOptions"
+        }
+      },
+      "required": [
+        "name",
+        "parse_options"
+      ],
+      "title": "SharedParseOptions",
+      "type": "object"
+    },
     "TestCaseToHtml": {
       "additionalProperties": false,
       "properties": {
@@ -840,7 +858,15 @@
           "type": "string"
         },
         "parse_options": {
-          "$ref": "#/$defs/ParseOptions"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ParseOptions"
+            }
+          ],
+          "title": "Parse Options"
         }
       },
       "required": [
@@ -852,46 +878,70 @@
       ],
       "title": "TestCaseToMdast",
       "type": "object"
+    },
+    "TestSuite": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "created": {
+          "format": "date",
+          "title": "Created",
+          "type": "string"
+        },
+        "modified": {
+          "format": "date",
+          "title": "Modified",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "TestSuite",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
     "suite": {
-      "title": "Suite",
-      "type": "string"
+      "$ref": "#/$defs/TestSuite"
     },
-    "created": {
-      "format": "date",
-      "title": "Created",
-      "type": "string"
-    },
-    "modified": {
-      "format": "date",
-      "title": "Modified",
-      "type": "string"
-    },
-    "constants": {
+    "shared_options": {
       "items": {
-        "$ref": "#/$defs/Constant"
+        "$ref": "#/$defs/SharedOptions"
       },
-      "title": "Constants",
+      "title": "Shared Options",
       "type": "array"
     },
-    "test_cases": {
+    "shared_parse_options": {
       "items": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/TestCaseToHtml"
-          },
-          {
-            "$ref": "#/$defs/TestCaseToHtmlWithOptions"
-          },
-          {
-            "$ref": "#/$defs/TestCaseToMdast"
-          }
-        ]
+        "$ref": "#/$defs/SharedParseOptions"
       },
-      "title": "Test Cases",
+      "title": "Shared Parse Options",
+      "type": "array"
+    },
+    "to_html": {
+      "items": {
+        "$ref": "#/$defs/TestCaseToHtml"
+      },
+      "title": "To Html",
+      "type": "array"
+    },
+    "to_html_with_options": {
+      "items": {
+        "$ref": "#/$defs/TestCaseToHtmlWithOptions"
+      },
+      "title": "To Html With Options",
+      "type": "array"
+    },
+    "to_mdast": {
+      "items": {
+        "$ref": "#/$defs/TestCaseToMdast"
+      },
+      "title": "To Mdast",
       "type": "array"
     }
   },

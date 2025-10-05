@@ -73,7 +73,7 @@ class Context:
         from .records import Records
         from .resolve import Resolve
         from .state import State
-        from .test import TestSuite
+        from .test import Test
 
         self.commonmark = CommonMark(ctx=self, schema=self.schema.commonmark)
         self.event = Event(ctx=self, schema=self.schema.event)
@@ -85,7 +85,9 @@ class Context:
             with open(f"{self.schema.test_path}/{test_config_file}", "r", encoding="utf-8") as f:
                 data: Any = yaml.safe_load(f)
                 test_schema: TestRootSchema = TestRootSchema(**data)
-                self.test[test_schema.suite] = TestSuite(ctx=self, schema=test_schema)
+                if test_schema.suite.name in self.test:
+                    raise ValueError(f"duplicate TestSuite name found: {test_schema.suite.name}")
+                self.test[test_schema.suite.name] = Test(ctx=self, schema=test_schema)
 
         return
 
