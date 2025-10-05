@@ -369,4 +369,4 @@ test_cases:
     })
   message: "should support definitions as `Definition`s in mdast"
   kind: to_mdast
-  options: {}
+  parse_options: {}

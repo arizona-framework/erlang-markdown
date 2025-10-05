@@ -109,7 +109,7 @@ class TestCaseToHtmlWithOptions(TestCaseBase):
 
 class TestCaseToMdast(TestCaseBase):
     kind: Literal["to_mdast"] = "to_mdast"
-    options: str | ParseOptions
+    parse_options: ParseOptions
 
 
 # Union type for TestCase

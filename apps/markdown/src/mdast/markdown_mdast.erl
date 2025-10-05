@@ -241,8 +241,9 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         %% on_enter_emphasis
         emphasis ->
             on_enter_emphasis(CompileContext1);
-        % %% on_enter_frontmatter
-        % frontmatter -> on_enter_frontmatter(CompileContext1);
+        %% on_enter_frontmatter
+        frontmatter ->
+            on_enter_frontmatter(CompileContext1);
         % %% on_enter_gfm_autolink_literal
         % gfm_autolink_literal_email -> on_enter_gfm_autolink_literal(CompileContext1);
         % gfm_autolink_literal_mailto -> on_enter_gfm_autolink_literal(CompileContext1);
@@ -461,6 +462,33 @@ on_enter_emphasis(CompileContext1 = #markdown_mdast_compile_context{}) ->
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:[`Frontmatter`][Name::Frontmatter].
+""".
+-spec on_enter_frontmatter(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_frontmatter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = Index, bytes = Bytes}) ->
+    Event = markdown_vec:get(Events, Index),
+    ByteIndex = Event#markdown_event.point#markdown_point.offset,
+    Byte = binary:at(Bytes, ByteIndex),
+    Node =
+        case Byte of
+            $+ ->
+                markdown_mdast_node:toml(#markdown_mdast_toml{
+                    value = <<>>,
+                    position = none
+                });
+            _ ->
+                markdown_mdast_node:yaml(#markdown_mdast_yaml{
+                    value = <<>>,
+                    position = none
+                })
+        end,
+    CompileContext2 = markdown_mdast_compile_context:tail_push(CompileContext1, Node),
+    CompileContext3 = markdown_mdast_compile_context:buffer(CompileContext2),
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`Paragraph`][Name::Paragraph].
 """.
 -spec on_enter_paragraph(CompileContext) -> {ok, CompileContext} when
@@ -614,8 +642,9 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         %% on_exit_definition_title_string
         definition_title_string ->
             on_exit_definition_title_string(CompileContext1);
-        % %% on_exit_frontmatter
-        % frontmatter -> on_exit_frontmatter(CompileContext1);
+        %% on_exit_frontmatter
+        frontmatter ->
+            on_exit_frontmatter(CompileContext1);
         % %% on_exit_gfm_autolink_literal
         % gfm_autolink_literal_email -> on_exit_gfm_autolink_literal(CompileContext1);
         % gfm_autolink_literal_mailto -> on_exit_gfm_autolink_literal(CompileContext1);
@@ -941,6 +970,38 @@ on_exit_definition_title_string__node_mut_func(
     {Node2, none};
 on_exit_definition_title_string__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
     ?'unreachable!'("expected definition on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`Frontmatter`][Name::Frontmatter].
+""".
+-spec on_exit_frontmatter(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_frontmatter(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Value1 = markdown_mdast_node:to_string(Node),
+    Value2 = trim_eol(Value1, true, true),
+    NodeMutFunc = fun on_exit_frontmatter__node_mut_func/2,
+    {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value2}, NodeMutFunc),
+    on_exit(CompileContext3).
+
+%% @private
+-spec on_exit_frontmatter__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(), OptionValue :: markdown_option:t(Value), Value :: unicode:unicode_binary().
+on_exit_frontmatter__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Yaml1 = #markdown_mdast_yaml{}}, {some, Value}
+) ->
+    Yaml2 = Yaml1#markdown_mdast_yaml{value = Value},
+    Node2 = Node1#markdown_mdast_node{inner = Yaml2},
+    {Node2, none};
+on_exit_frontmatter__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Toml1 = #markdown_mdast_toml{}}, {some, Value}
+) ->
+    Toml2 = Toml1#markdown_mdast_toml{value = Value},
+    Node2 = Node1#markdown_mdast_node{inner = Toml2},
+    {Node2, none};
+on_exit_frontmatter__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected yaml/toml on stack for value", []).
 
 %% @private
 -doc """

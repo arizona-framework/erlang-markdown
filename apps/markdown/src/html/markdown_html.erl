@@ -332,7 +332,7 @@ enter(CompileContext1 = #markdown_html_compile_context{events = Events, index = 
             definition -> on_enter_definition(CompileContext1);
             definition_destination_string -> on_enter_definition_destination_string(CompileContext1);
             emphasis -> on_enter_emphasis(CompileContext1);
-            % frontmatter -> on_enter_frontmatter(CompileContext1);
+            frontmatter -> on_enter_frontmatter(CompileContext1);
             % gfm_footnote_definition -> on_enter_gfm_footnote_definition(CompileContext1);
             % gfm_footnote_call -> on_enter_gfm_footnote_call(CompileContext1);
             gfm_strikethrough -> on_enter_gfm_strikethrough(CompileContext1);
@@ -424,6 +424,15 @@ on_enter_emphasis(CompileContext1 = #markdown_html_compile_context{image_alt_ins
     CompileContext2;
 on_enter_emphasis(CompileContext1 = #markdown_html_compile_context{}) ->
     CompileContext1.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`Frontmatter`][Name::Frontmatter].
+""".
+-spec on_enter_frontmatter(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_enter_frontmatter(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext2 = markdown_html_compile_context:buffer(CompileContext1),
+    CompileContext2.
 
 %% @private
 -doc """
@@ -695,7 +704,7 @@ exit(CompileContext1 = #markdown_html_compile_context{events = Events, index = I
             definition_label_string -> on_exit_definition_label_string(CompileContext1);
             definition_title_string -> on_exit_definition_title_string(CompileContext1);
             emphasis -> on_exit_emphasis(CompileContext1);
-            % frontmatter -> on_exit_frontmatter(CompileContext1);
+            frontmatter -> on_exit_frontmatter(CompileContext1);
             % gfm_autolink_literal_email -> on_exit_gfm_autolink_literal_email(CompileContext1);
             % gfm_autolink_literal_mailto -> on_exit_gfm_autolink_literal_mailto(CompileContext1);
             % gfm_autolink_literal_protocol -> on_exit_gfm_autolink_literal_protocol(CompileContext1);
@@ -991,6 +1000,16 @@ Resumes, ignores what was resumed, and slurps the following line ending.
 """.
 -spec on_exit_drop_slurp(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
 on_exit_drop_slurp(CompileContext1 = #markdown_html_compile_context{}) ->
+    {CompileContext2, _Buffer} = markdown_html_compile_context:resume(CompileContext1),
+    CompileContext3 = CompileContext2#markdown_html_compile_context{slurp_one_line_ending = true},
+    CompileContext3.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`Frontmatter`][Name::Frontmatter].
+""".
+-spec on_exit_frontmatter(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_exit_frontmatter(CompileContext1 = #markdown_html_compile_context{}) ->
     {CompileContext2, _Buffer} = markdown_html_compile_context:resume(CompileContext1),
     CompileContext3 = CompileContext2#markdown_html_compile_context{slurp_one_line_ending = true},
     CompileContext3.

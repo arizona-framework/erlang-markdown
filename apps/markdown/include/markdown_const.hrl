@@ -2493,6 +2493,13 @@
 %% [raw_flow]: crate::construct::raw_flow
 -define(CODE_FENCED_SEQUENCE_SIZE_MIN, 3).
 
+%% The number of markers needed for [frontmatter][] to form.
+%%
+%% Like many things in markdown, the number is `3`.
+%%
+%% [frontmatter]: crate::construct::frontmatter
+-define(FRONTMATTER_SEQUENCE_SIZE, 3).
+
 %% The number of preceding spaces needed for a [hard break
 %% (trailing)][whitespace] to form.
 %%

@@ -74,7 +74,7 @@ class TestSuiteCase:
             else:
                 self.options = TestSuiteOptions(ctx=self.ctx, schema=self.schema.options)
         elif self.kind == "to_mdast":
-            self.options = TestSuiteParseOptions(ctx=self.ctx, schema=self.schema.options)
+            self.options = TestSuiteParseOptions(ctx=self.ctx, schema=self.schema.parse_options)
         else:
             self.options = None
 

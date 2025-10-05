@@ -839,16 +839,8 @@
           "title": "Kind",
           "type": "string"
         },
-        "options": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/ParseOptions"
-            }
-          ],
-          "title": "Options"
+        "parse_options": {
+          "$ref": "#/$defs/ParseOptions"
         }
       },
       "required": [
@@ -856,7 +848,7 @@
         "input",
         "output",
         "message",
-        "options"
+        "parse_options"
       ],
       "title": "TestCaseToMdast",
       "type": "object"
