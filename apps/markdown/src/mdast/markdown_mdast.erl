@@ -266,12 +266,15 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         %% on_enter_gfm_strikethrough
         gfm_strikethrough ->
             on_enter_gfm_strikethrough(CompileContext1);
-        % %% on_enter_gfm_table
-        % gfm_table -> on_enter_gfm_table(CompileContext1);
-        % %% on_enter_gfm_table_row
-        % gfm_table_row -> on_enter_gfm_table_row(CompileContext1);
-        % %% on_enter_gfm_table_cell
-        % gfm_table_cell -> on_enter_gfm_table_cell(CompileContext1);
+        %% on_enter_gfm_table
+        gfm_table ->
+            on_enter_gfm_table(CompileContext1);
+        %% on_enter_gfm_table_row
+        gfm_table_row ->
+            on_enter_gfm_table_row(CompileContext1);
+        %% on_enter_gfm_table_cell
+        gfm_table_cell ->
+            on_enter_gfm_table_cell(CompileContext1);
         %% on_enter_hard_break
         hard_break_escape ->
             on_enter_hard_break(CompileContext1);
@@ -597,6 +600,60 @@ on_enter_gfm_strikethrough(CompileContext1 = #markdown_mdast_compile_context{}) 
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTable`][Name::GfmTable].
+""".
+-spec on_enter_gfm_table(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_gfm_table(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = Index}) ->
+    Align = markdown_util_infer:gfm_table_align(Events, Index),
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:table(#markdown_mdast_table{
+                align = Align,
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    CompileContext3 = CompileContext2#markdown_mdast_compile_context{gfm_table_inside = true},
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTableRow`][Name::GfmTableRow].
+""".
+-spec on_enter_gfm_table_row(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_gfm_table_row(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:table_row(#markdown_mdast_table_row{
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTableCell`][Name::GfmTableCell].
+""".
+-spec on_enter_gfm_table_cell(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_gfm_table_cell(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:table_cell(#markdown_mdast_table_cell{
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`HardBreakEscape`][Name::HardBreakEscape].
 """.
 -spec on_enter_hard_break(CompileContext) -> {ok, CompileContext} when
@@ -911,8 +968,9 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
             on_exit_media(CompileContext1);
         link ->
             on_exit_media(CompileContext1);
-        % %% on_exit_gfm_table
-        % gfm_table -> on_exit_gfm_table(CompileContext1);
+        %% on_exit_gfm_table
+        gfm_table ->
+            on_exit_gfm_table(CompileContext1);
         % %% on_exit_gfm_task_list_item_value
         % gfm_task_list_item_value_unchecked -> on_exit_gfm_task_list_item_value(CompileContext1);
         % gfm_task_list_item_value_checked -> on_exit_gfm_task_list_item_value(CompileContext1);
@@ -1380,6 +1438,19 @@ on_exit_gfm_autolink_literal__node_mut_func(
     {Node2, none};
 on_exit_gfm_autolink_literal__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}, _Prefix) ->
     ?'unreachable!'("expected link on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmTable`][Name::GfmTable].
+""".
+-spec on_exit_gfm_table(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_gfm_table(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    maybe
+        {ok, CompileContext2} ?= on_exit(CompileContext1),
+        CompileContext3 = CompileContext2#markdown_mdast_compile_context{gfm_table_inside = false},
+        {ok, CompileContext3}
+    end.
 
 %% @private
 -doc """

@@ -596,11 +596,11 @@ enter(CompileContext1 = #markdown_html_compile_context{events = Events, index = 
             gfm_footnote_definition -> on_enter_gfm_footnote_definition(CompileContext1);
             gfm_footnote_call -> on_enter_gfm_footnote_call(CompileContext1);
             gfm_strikethrough -> on_enter_gfm_strikethrough(CompileContext1);
-            % gfm_table -> on_enter_gfm_table(CompileContext1);
-            % gfm_table_body -> on_enter_gfm_table_body(CompileContext1);
-            % gfm_table_cell -> on_enter_gfm_table_cell(CompileContext1);
-            % gfm_table_head -> on_enter_gfm_table_head(CompileContext1);
-            % gfm_table_row -> on_enter_gfm_table_row(CompileContext1);
+            gfm_table -> on_enter_gfm_table(CompileContext1);
+            gfm_table_body -> on_enter_gfm_table_body(CompileContext1);
+            gfm_table_cell -> on_enter_gfm_table_cell(CompileContext1);
+            gfm_table_head -> on_enter_gfm_table_head(CompileContext1);
+            gfm_table_row -> on_enter_gfm_table_row(CompileContext1);
             % gfm_task_list_item_check -> on_enter_gfm_task_list_item_check(CompileContext1);
             html_flow -> on_enter_html_flow(CompileContext1);
             html_text -> on_enter_html_text(CompileContext1);
@@ -723,10 +723,93 @@ Handle [`Enter`][Kind::Enter]:[`GfmStrikethrough`][Name::GfmStrikethrough].
 -spec on_enter_gfm_strikethrough(CompileContext) -> CompileContext when
     CompileContext :: markdown_html_compile_context:t().
 on_enter_gfm_strikethrough(CompileContext1 = #markdown_html_compile_context{image_alt_inside = false}) ->
-    CompileContext2 = markdown_html_compile_context:push(CompileContext1, <<"<del>">>),
+    CompileContext2 = markdown_html_compile_context:push(CompileContext1, <<"<del>"/utf8>>),
     CompileContext2;
 on_enter_gfm_strikethrough(CompileContext1 = #markdown_html_compile_context{}) ->
     CompileContext1.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTable`][Name::GfmTable].
+""".
+-spec on_enter_gfm_table(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_enter_gfm_table(CompileContext1 = #markdown_html_compile_context{events = Events, index = Index}) ->
+    Align = markdown_util_infer:gfm_table_align(Events, Index),
+    CompileContext2 = CompileContext1#markdown_html_compile_context{gfm_table_align = {some, Align}},
+    CompileContext3 = markdown_html_compile_context:line_ending_if_needed(CompileContext2),
+    CompileContext4 = markdown_html_compile_context:push(CompileContext3, <<"<table>"/utf8>>),
+    CompileContext4.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTableBody`][Name::GfmTableBody].
+""".
+-spec on_enter_gfm_table_body(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_enter_gfm_table_body(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext2 = markdown_html_compile_context:push(CompileContext1, <<"<tbody>"/utf8>>),
+    CompileContext2.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTableCell`][Name::GfmTableCell].
+""".
+-spec on_enter_gfm_table_cell(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_enter_gfm_table_cell(
+    CompileContext1 = #markdown_html_compile_context{
+        gfm_table_column = Column,
+        gfm_table_align = {some, Align},
+        gfm_table_in_head = GfmTableInHead
+    }
+) ->
+    case Column >= ?markdown_vec_size(Align) of
+        true ->
+            %% Capture cell to ignore it.
+            CompileContext2 = markdown_html_compile_context:buffer(CompileContext1),
+            CompileContext2;
+        false ->
+            Value = markdown_vec:get(Align, Column),
+            CompileContext2 = markdown_html_compile_context:line_ending_if_needed(CompileContext1),
+            CompileContext3 =
+                case GfmTableInHead of
+                    true ->
+                        markdown_html_compile_context:push(CompileContext2, <<"<th"/utf8>>);
+                    false ->
+                        markdown_html_compile_context:push(CompileContext2, <<"<td"/utf8>>)
+                end,
+            CompileContext4 =
+                case Value of
+                    left -> markdown_html_compile_context:push(CompileContext3, <<" align=\"left\""/utf8>>);
+                    right -> markdown_html_compile_context:push(CompileContext3, <<" align=\"right\""/utf8>>);
+                    center -> markdown_html_compile_context:push(CompileContext3, <<" align=\"center\""/utf8>>);
+                    none -> CompileContext3
+                end,
+            CompileContext5 = markdown_html_compile_context:push(CompileContext4, <<">"/utf8>>),
+            CompileContext5
+    end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTableHead`][Name::GfmTableHead].
+""".
+-spec on_enter_gfm_table_head(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_enter_gfm_table_head(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext2 = markdown_html_compile_context:line_ending_if_needed(CompileContext1),
+    CompileContext3 = markdown_html_compile_context:push(CompileContext2, <<"<thead>"/utf8>>),
+    CompileContext4 = CompileContext3#markdown_html_compile_context{gfm_table_in_head = true},
+    CompileContext4.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTableRow`][Name::GfmTableRow].
+""".
+-spec on_enter_gfm_table_row(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_enter_gfm_table_row(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext2 = markdown_html_compile_context:line_ending_if_needed(CompileContext1),
+    CompileContext3 = markdown_html_compile_context:push(CompileContext2, <<"<tr>"/utf8>>),
+    CompileContext3.
 
 %% @private
 -doc """
@@ -997,11 +1080,11 @@ exit(CompileContext1 = #markdown_html_compile_context{events = Events, index = I
             gfm_footnote_definition_prefix -> on_exit_gfm_footnote_definition_prefix(CompileContext1);
             gfm_footnote_definition -> on_exit_gfm_footnote_definition(CompileContext1);
             gfm_strikethrough -> on_exit_gfm_strikethrough(CompileContext1);
-            % gfm_table -> on_exit_gfm_table(CompileContext1);
-            % gfm_table_body -> on_exit_gfm_table_body(CompileContext1);
-            % gfm_table_cell -> on_exit_gfm_table_cell(CompileContext1);
-            % gfm_table_head -> on_exit_gfm_table_head(CompileContext1);
-            % gfm_table_row -> on_exit_gfm_table_row(CompileContext1);
+            gfm_table -> on_exit_gfm_table(CompileContext1);
+            gfm_table_body -> on_exit_gfm_table_body(CompileContext1);
+            gfm_table_cell -> on_exit_gfm_table_cell(CompileContext1);
+            gfm_table_head -> on_exit_gfm_table_head(CompileContext1);
+            gfm_table_row -> on_exit_gfm_table_row(CompileContext1);
             % gfm_task_list_item_check -> on_exit_gfm_task_list_item_check(CompileContext1);
             % gfm_task_list_item_value_checked -> on_exit_gfm_task_list_item_value_checked(CompileContext1);
             hard_break_escape -> on_exit_break(CompileContext1);
@@ -1553,10 +1636,103 @@ Handle [`Exit`][Kind::Exit]:[`GfmStrikethrough`][Name::GfmStrikethrough].
 -spec on_exit_gfm_strikethrough(CompileContext) -> CompileContext when
     CompileContext :: markdown_html_compile_context:t().
 on_exit_gfm_strikethrough(CompileContext1 = #markdown_html_compile_context{image_alt_inside = false}) ->
-    CompileContext2 = markdown_html_compile_context:push(CompileContext1, <<"</del>">>),
+    CompileContext2 = markdown_html_compile_context:push(CompileContext1, <<"</del>"/utf8>>),
     CompileContext2;
 on_exit_gfm_strikethrough(CompileContext1 = #markdown_html_compile_context{}) ->
     CompileContext1.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmTable`][Name::GfmTable].
+""".
+-spec on_exit_gfm_table(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_table(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext2 = CompileContext1#markdown_html_compile_context{gfm_table_align = none},
+    CompileContext3 = markdown_html_compile_context:line_ending_if_needed(CompileContext2),
+    CompileContext4 = markdown_html_compile_context:push(CompileContext3, <<"</table>"/utf8>>),
+    CompileContext4.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmTableBody`][Name::GfmTableBody].
+""".
+-spec on_exit_gfm_table_body(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_table_body(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext2 = markdown_html_compile_context:line_ending_if_needed(CompileContext1),
+    CompileContext3 = markdown_html_compile_context:push(CompileContext2, <<"</tbody>"/utf8>>),
+    CompileContext3.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmTableCell`][Name::GfmTableCell].
+""".
+-spec on_exit_gfm_table_cell(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_table_cell(
+    CompileContext1 = #markdown_html_compile_context{
+        gfm_table_column = Column,
+        gfm_table_align = {some, Align}
+    }
+) ->
+    CompileContext2 =
+        case Column < ?markdown_vec_size(Align) of
+            true ->
+                case CompileContext1#markdown_html_compile_context.gfm_table_in_head of
+                    true ->
+                        markdown_html_compile_context:push(CompileContext1, <<"</th>"/utf8>>);
+                    false ->
+                        markdown_html_compile_context:push(CompileContext1, <<"</td>"/utf8>>)
+                end;
+            false ->
+                %% Stop capturing.
+                {CompileContext1_1, _Buffer} = markdown_html_compile_context:resume(CompileContext1),
+                CompileContext1_1
+        end,
+    CompileContext3 = CompileContext2#markdown_html_compile_context{gfm_table_column = Column + 1},
+    CompileContext3.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmTableHead`][Name::GfmTableHead].
+""".
+-spec on_exit_gfm_table_head(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_table_head(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext2 = CompileContext1#markdown_html_compile_context{gfm_table_in_head = false},
+    CompileContext3 = markdown_html_compile_context:line_ending_if_needed(CompileContext2),
+    CompileContext4 = markdown_html_compile_context:push(CompileContext3, <<"</thead>"/utf8>>),
+    CompileContext4.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmTableRow`][Name::GfmTableRow].
+""".
+-spec on_exit_gfm_table_row(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_table_row(
+    CompileContext1 = #markdown_html_compile_context{
+        gfm_table_column = Column,
+        gfm_table_align = {some, Align}
+    }
+) ->
+    %% Add "phantom" cells, for body rows that are shorter than the delimiter
+    %% row (which is equal to the head row).
+    CompileContext2 = on_exit_gfm_table_row__phantom_cells(CompileContext1, Column, ?markdown_vec_size(Align)),
+    CompileContext3 = CompileContext2#markdown_html_compile_context{gfm_table_column = 0},
+    CompileContext4 = markdown_html_compile_context:line_ending_if_needed(CompileContext3),
+    CompileContext5 = markdown_html_compile_context:push(CompileContext4, <<"</tr>"/utf8>>),
+    CompileContext5.
+
+%% @private
+-spec on_exit_gfm_table_row__phantom_cells(CompileContext, Column, Len) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t(),
+    Column :: non_neg_integer(),
+    Len :: non_neg_integer().
+on_exit_gfm_table_row__phantom_cells(CompileContext1 = #markdown_html_compile_context{}, Column, Len) when
+    Column < Len
+->
+    CompileContext2 = on_enter_gfm_table_cell(CompileContext1),
+    CompileContext3 = on_exit_gfm_table_cell(CompileContext2),
+    on_exit_gfm_table_row__phantom_cells(CompileContext3, Column + 1, Len);
+on_exit_gfm_table_row__phantom_cells(CompileContext, _Column, _Len) ->
+    CompileContext.
 
 %% @private
 -doc """

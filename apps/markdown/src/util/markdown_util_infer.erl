@@ -27,6 +27,7 @@ Used to share between `to_html` and `to_mdast`.
 
 %% API
 -export([
+    gfm_table_align/2,
     list_loose/3,
     list_item_loose/2
 ]).
@@ -34,6 +35,23 @@ Used to share between `to_html` and `to_mdast`.
 %%%=============================================================================
 %%% API functions
 %%%=============================================================================
+
+-doc """
+Figure out the alignment of a GFM table.
+""".
+-spec gfm_table_align(Events, Index) -> Align when
+    Events :: markdown_vec:t(Event),
+    Event :: markdown_event:t(),
+    Index :: markdown_vec:index(),
+    Align :: markdown_vec:t(AlignKind),
+    AlignKind :: markdown_align_kind:t().
+gfm_table_align(Events = #markdown_vec{}, Index) when
+    Index >= 0 andalso Index < ?markdown_vec_size(Events)
+->
+    %% BEGIN: assertions
+    ?assert((markdown_vec:get(Events, Index))#markdown_event.name =:= gfm_table, "expected table"),
+    %% END: assertions
+    gfm_table_align_loop(Events, Index, false, markdown_vec:new()).
 
 -doc """
 Figure out if a list is spread or not.
@@ -148,6 +166,64 @@ check_empty_item_or_quote_direct(Events, Before) ->
             empty_list_item;
         _ ->
             none
+    end.
+
+%% @private
+-spec gfm_table_align_loop(Events, Index, InDelimiterRow, Align) -> Align when
+    Events :: markdown_vec:t(Event),
+    Event :: markdown_event:t(),
+    Index :: markdown_vec:index(),
+    InDelimiterRow :: boolean(),
+    Align :: markdown_vec:t(AlignKind),
+    AlignKind :: markdown_align_kind:t().
+gfm_table_align_loop(Events, Index, InDelimiterRow, Align1) when
+    Index >= 0 andalso Index < ?markdown_vec_size(Events)
+->
+    Event = markdown_vec:get(Events, Index),
+    case InDelimiterRow of
+        false ->
+            case Event of
+                #markdown_event{kind = enter, name = gfm_table_delimiter_cell_value} ->
+                    %% Start of alignment value: set a new column.
+                    NextEvent = markdown_vec:get(Events, Index + 1),
+                    AlignKind =
+                        case NextEvent of
+                            #markdown_event{name = gfm_table_delimiter_marker} ->
+                                markdown_align_kind:left();
+                            _ ->
+                                markdown_align_kind:none()
+                        end,
+                    Align2 = markdown_vec:push(Align1, AlignKind),
+                    gfm_table_align_loop(Events, Index + 1, InDelimiterRow, Align2);
+                #markdown_event{kind = exit, name = gfm_table_delimiter_cell_value} ->
+                    PrevEvent = markdown_vec:get(Events, Index - 1),
+                    case PrevEvent of
+                        #markdown_event{name = gfm_table_delimiter_marker} ->
+                            %% End of alignment value: change the column.
+                            AlignKind =
+                                case markdown_vec:last(Align1) of
+                                    left ->
+                                        markdown_align_kind:center();
+                                    _ ->
+                                        markdown_align_kind:right()
+                                end,
+                            Align2 = markdown_vec:set_last(Align1, AlignKind),
+                            gfm_table_align_loop(Events, Index + 1, InDelimiterRow, Align2);
+                        _ ->
+                            gfm_table_align_loop(Events, Index + 1, InDelimiterRow, Align1)
+                    end;
+                #markdown_event{kind = exit, name = gfm_table_delimiter_row} ->
+                    Align1;
+                _ ->
+                    gfm_table_align_loop(Events, Index + 1, InDelimiterRow, Align1)
+            end;
+        true ->
+            case Event of
+                #markdown_event{kind = enter, name = gfm_table_delimiter_row} ->
+                    gfm_table_align_loop(Events, Index + 1, true, Align1);
+                _ ->
+                    gfm_table_align_loop(Events, Index + 1, InDelimiterRow, Align1)
+            end
     end.
 
 %% @private

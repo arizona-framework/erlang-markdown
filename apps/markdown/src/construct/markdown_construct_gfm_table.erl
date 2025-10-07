@@ -244,7 +244,10 @@ The issue relating to tables is:
 
 -include_lib("markdown/include/markdown_const.hrl").
 -include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 -include_lib("markdown/include/markdown_vec.hrl").
+
+-include_lib("stdlib/include/assert.hrl").
 
 %% API
 -export([
@@ -262,8 +265,51 @@ The issue relating to tables is:
     head_delimiter_filler/1,
     head_delimiter_right_alignment_after/1,
     head_delimiter_cell_after/1,
-    head_delimiter_nok/1
+    head_delimiter_nok/1,
+    body_row_start/1,
+    body_row_break/1,
+    body_row_data/1,
+    body_row_escape/1,
+    resolve/1
 ]).
+
+%% Internal Types
+-record(cell, {
+    %% ```markdown
+    %% > | | aa | bb | cc |
+    %%          ^-- exit
+    %%           ^^^^-- this cell
+    %% ```
+    exit = 0 :: non_neg_integer(),
+    %% ```markdown
+    %% > | | aa | bb | cc |
+    %%           ^-- enter
+    %%           ^^^^-- this cell
+    %% ```
+    enter = 0 :: non_neg_integer(),
+    %% ```markdown
+    %% > | | aa | bb | cc |
+    %%            ^-- enter
+    %%             ^-- exit
+    %%           ^^^^-- this cell
+    %% ```
+    data_enter = 0 :: non_neg_integer(),
+    data_exit = 0 :: non_neg_integer()
+}).
+-record(resolve, {
+    index :: non_neg_integer(),
+    in_first_cell_awaiting_pipe :: boolean(),
+    in_row :: boolean(),
+    in_delimiter_row :: boolean(),
+    last_cell :: cell(),
+    cell :: cell(),
+    after_head_awaiting_first_body_row :: boolean(),
+    last_table_end :: non_neg_integer(),
+    last_table_has_body :: boolean()
+}).
+
+-type cell() :: #cell{}.
+-type resolve() :: #resolve{}.
 
 %%%=============================================================================
 %%% API functions
@@ -651,11 +697,12 @@ After `|`, before delimiter cell.
 head_delimiter_cell_before(Tokenizer1 = #markdown_tokenizer{current = Current}) ->
     case Current of
         {some, C} when C =:= $\t orelse C =:= $\s ->
-            {Tokenizer2, SpaceOrTabState} = markdown_tokenizer:attempt(
+            Tokenizer2 = markdown_tokenizer:attempt(
                 Tokenizer1, markdown_state:next(gfm_table_head_delimiter_value_before), markdown_state:nok()
             ),
+            {Tokenizer3, SpaceOrTabState} = markdown_construct_partial_space_or_tab:space_or_tab(Tokenizer2),
             State = markdown_state:retry(SpaceOrTabState),
-            {Tokenizer2, State};
+            {Tokenizer3, State};
         _ ->
             State = markdown_state:retry(gfm_table_head_delimiter_value_before),
             {Tokenizer1, State}
@@ -883,3 +930,539 @@ head_delimiter_nok(Tokenizer1 = #markdown_tokenizer{tokenize_state = TokenizeSta
     Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
     State = markdown_state:nok(),
     {Tokenizer2, State}.
+
+-doc """
+Before table body row.
+
+```markdown
+  | | a |
+  | | - |
+> | | b |
+    ^
+```
+""".
+-spec body_row_start(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+body_row_start(Tokenizer1 = #markdown_tokenizer{lazy = true}) ->
+    State = markdown_state:nok(),
+    {Tokenizer1, State};
+body_row_start(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    Current =:= $\t orelse Current =:= $\s
+->
+    Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, gfm_table_row),
+    Tokenizer3 = markdown_tokenizer:attempt(
+        Tokenizer2, markdown_state:next(gfm_table_body_row_break), markdown_state:nok()
+    ),
+    %% We're parsing a body row.
+    %% If we're here, we already attempted blank lines and indented
+    %% code.
+    %% So parse as much whitespace as needed:
+    {Tokenizer4, SpaceOrTabState} = markdown_construct_partial_space_or_tab:space_or_tab_min_max(
+        Tokenizer3, 0, markdown_types:usize_max()
+    ),
+    State = markdown_state:retry(SpaceOrTabState),
+    {Tokenizer4, State};
+body_row_start(Tokenizer1 = #markdown_tokenizer{}) ->
+    Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, gfm_table_row),
+    State = markdown_state:retry(gfm_table_body_row_break),
+    {Tokenizer2, State}.
+
+-doc """
+At break in table body row.
+
+```markdown
+  | | a |
+  | | - |
+> | | b |
+    ^
+      ^
+        ^
+```
+""".
+-spec body_row_break(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+body_row_break(Tokenizer1 = #markdown_tokenizer{current = Current}) when
+    ?is_option_none(Current) orelse ?is_option_some(Current, $\n)
+->
+    Tokenizer2 = markdown_tokenizer:exit(Tokenizer1, gfm_table_row),
+    State = markdown_state:ok(),
+    {Tokenizer2, State};
+body_row_break(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    Current =:= $\t orelse Current =:= $\s
+->
+    Tokenizer2 = markdown_tokenizer:attempt(
+        Tokenizer1, markdown_state:next(gfm_table_body_row_break), markdown_state:nok()
+    ),
+    {Tokenizer3, SpaceOrTabState} = markdown_construct_partial_space_or_tab:space_or_tab(Tokenizer2),
+    State = markdown_state:retry(SpaceOrTabState),
+    {Tokenizer3, State};
+body_row_break(Tokenizer1 = #markdown_tokenizer{current = {some, $|}}) ->
+    Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, gfm_table_cell_divider),
+    Tokenizer3 = markdown_tokenizer:consume(Tokenizer2),
+    Tokenizer4 = markdown_tokenizer:exit(Tokenizer3, gfm_table_cell_divider),
+    State = markdown_state:next(gfm_table_body_row_break),
+    {Tokenizer4, State};
+body_row_break(Tokenizer1 = #markdown_tokenizer{}) ->
+    %% Anything else is cell content.
+    Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, data),
+    State = markdown_state:retry(gfm_table_body_row_data),
+    {Tokenizer2, State}.
+
+-doc """
+In table body row data.
+
+```markdown
+  | | a |
+  | | - |
+> | | b |
+      ^
+```
+""".
+-spec body_row_data(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+body_row_data(Tokenizer1 = #markdown_tokenizer{current = none}) ->
+    Tokenizer2 = markdown_tokenizer:exit(Tokenizer1, data),
+    State = markdown_state:retry(gfm_table_body_row_break),
+    {Tokenizer2, State};
+body_row_data(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    Current =:= $\t orelse Current =:= $\n orelse Current =:= $\s orelse Current =:= $|
+->
+    Tokenizer2 = markdown_tokenizer:exit(Tokenizer1, data),
+    State = markdown_state:retry(gfm_table_body_row_break),
+    {Tokenizer2, State};
+body_row_data(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) ->
+    Name =
+        case Current of
+            $\\ -> gfm_table_body_row_escape;
+            _ -> gfm_table_body_row_data
+        end,
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(Name),
+    {Tokenizer2, State}.
+
+-doc """
+In table body row escape.
+
+```markdown
+  | | a    |
+  | | ---- |
+> | | b\-c |
+        ^
+```
+""".
+-spec body_row_escape(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+body_row_escape(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when
+    Current =:= $\\ orelse Current =:= $|
+->
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    State = markdown_state:next(gfm_table_body_row_data),
+    {Tokenizer2, State};
+body_row_escape(Tokenizer1 = #markdown_tokenizer{}) ->
+    State = markdown_state:retry(gfm_table_body_row_data),
+    {Tokenizer1, State}.
+
+-doc """
+Resolve GFM table.
+""".
+-spec resolve(Tokenizer) -> {Tokenizer, Result} when
+    Tokenizer :: markdown_tokenizer:t(),
+    Result :: {ok, OptionSubresult} | {error, Message},
+    OptionSubresult :: markdown_types:option(Subresult),
+    Subresult :: markdown_subresult:t(),
+    Message :: markdown_message:t().
+resolve(Tokenizer1 = #markdown_tokenizer{}) ->
+    State1 = #resolve{
+        index = 0,
+        in_first_cell_awaiting_pipe = true,
+        in_row = false,
+        in_delimiter_row = false,
+        last_cell = #cell{exit = 0, enter = 0, data_enter = 0, data_exit = 0},
+        cell = #cell{exit = 0, enter = 0, data_enter = 0, data_exit = 0},
+        after_head_awaiting_first_body_row = false,
+        last_table_end = 0,
+        last_table_has_body = false
+    },
+    {
+        Tokenizer2,
+        #resolve{last_table_end = LastTableEnd, last_table_has_body = LastTableHasBody}
+    } = resolve_loop(Tokenizer1, State1),
+    Tokenizer3 =
+        case LastTableEnd of
+            0 ->
+                Tokenizer2;
+            _ ->
+                resolve__flush_table_end(Tokenizer2, LastTableEnd, LastTableHasBody)
+        end,
+    Tokenizer4 = markdown_tokenizer:map_consume(Tokenizer3),
+    {Tokenizer4, {ok, none}}.
+
+%%%-----------------------------------------------------------------------------
+%%% Internal functions
+%%%-----------------------------------------------------------------------------
+
+%% @private
+-spec resolve_loop(Tokenizer, State) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: resolve().
+resolve_loop(Tokenizer1 = #markdown_tokenizer{events = Events}, State1 = #resolve{index = Index}) when
+    Index >= 0 andalso Index < ?markdown_vec_size(Events)
+->
+    Event = markdown_vec:get(Events, Index),
+    {Tokenizer2, State2} =
+        case Event of
+            %% Enter events.
+            #markdown_event{kind = enter} ->
+                case Event#markdown_event.name of
+                    %% Start of head.
+                    gfm_table_head ->
+                        resolve__enter_gfm_table_head(Tokenizer1, State1, Event);
+                    Name when Name =:= gfm_table_row orelse Name =:= gfm_table_delimiter_row ->
+                        resolve__enter_gfm_table_row(Tokenizer1, State1, Event);
+                    %% Cell data.
+                    Name when
+                        State1#resolve.in_row =:= true andalso
+                            (Name =:= data orelse Name =:= gfm_table_delimiter_marker orelse
+                                Name =:= gfm_table_delimiter_filler)
+                    ->
+                        resolve__enter_data(Tokenizer1, State1, Event);
+                    gfm_table_cell_divider ->
+                        resolve__enter_gfm_table_cell_divider(Tokenizer1, State1, Event);
+                    _ ->
+                        {Tokenizer1, State1}
+                end;
+            %% Exit events.
+            #markdown_event{kind = exit} ->
+                case Event#markdown_event.name of
+                    gfm_table_head ->
+                        resolve__exit_gfm_table_head(Tokenizer1, State1, Event);
+                    Name when Name =:= gfm_table_row orelse Name =:= gfm_table_delimiter_row ->
+                        resolve__exit_gfm_table_row(Tokenizer1, State1, Event);
+                    Name when
+                        State1#resolve.in_row =:= true andalso
+                            (Name =:= data orelse Name =:= gfm_table_delimiter_marker orelse
+                                Name =:= gfm_table_delimiter_filler)
+                    ->
+                        resolve__exit_data(Tokenizer1, State1, Event);
+                    _ ->
+                        {Tokenizer1, State1}
+                end
+        end,
+    State3 = State2#resolve{index = State2#resolve.index + 1},
+    resolve_loop(Tokenizer2, State3);
+resolve_loop(Tokenizer1 = #markdown_tokenizer{}, State1 = #resolve{}) ->
+    {Tokenizer1, State1}.
+
+-spec cell_to_string(cell()) -> dynamic().
+cell_to_string(#cell{exit = Exit, enter = Enter, data_enter = DataEnter, data_exit = DataExit}) ->
+    markdown_debug:rust_debug_string({Exit, Enter, DataEnter, DataExit}).
+
+%% @private
+-spec resolve__enter_data(Tokenizer, State, Event) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: resolve(), Event :: markdown_event:t().
+resolve__enter_data(
+    Tokenizer1 = #markdown_tokenizer{},
+    State1 = #resolve{index = Index, in_delimiter_row = InDelimiterRow, last_cell = LastCell1, cell = Cell1},
+    _Event = #markdown_event{}
+) ->
+    % io:format("\n\n[~w:~w] BEFORE resolve__enter_data\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    State2 = State1#resolve{in_first_cell_awaiting_pipe = false},
+    case Cell1#cell.data_enter of
+        0 ->
+            %% First value in cell.
+            {Tokenizer3, State4} =
+                case LastCell1#cell.enter of
+                    0 ->
+                        {Tokenizer1, State2};
+                    _ ->
+                        % io:format("\n\n[~w:~w] BEFORE resolve__enter_data:resolve__flush_cell\ncell = ~ts\nlast_cell = ~ts\nin_delimiter_row = ~ts\n\n", [markdown:counter_get(), markdown:stack_push(), cell_to_string(Cell1), cell_to_string(LastCell1), markdown_debug:rust_debug_string(InDelimiterRow)]),
+                        Tokenizer2 = resolve__flush_cell(Tokenizer1, LastCell1, InDelimiterRow, none),
+                        State3 = State2#resolve{
+                            last_cell = #cell{exit = 0, enter = 0, data_enter = 0, data_exit = 0},
+                            cell = Cell1#cell{exit = Cell1#cell.enter}
+                        },
+                        % io:format("\n\n[~w:~w] AFTER resolve__enter_data:resolve__flush_cell\ncell = ~ts\nlast_cell = ~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), cell_to_string(State3#resolve.cell), cell_to_string(State3#resolve.last_cell)]),
+                        {Tokenizer2, State3}
+                end,
+            Cell2 = State4#resolve.cell,
+            Cell3 = Cell2#cell{data_enter = Index},
+            State5 = State4#resolve{cell = Cell3},
+            % io:format("\n\n[~w:~w] AFTER resolve__enter_data\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer3)]),
+            {Tokenizer3, State5};
+        _ ->
+            % io:format("\n\n[~w:~w] AFTER resolve__enter_data\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer1)]),
+            {Tokenizer1, State2}
+    end.
+
+%% @private
+-spec resolve__enter_gfm_table_cell_divider(Tokenizer, State, Event) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: resolve(), Event :: markdown_event:t().
+resolve__enter_gfm_table_cell_divider(
+    Tokenizer1 = #markdown_tokenizer{},
+    State1 = #resolve{in_first_cell_awaiting_pipe = true},
+    _Event = #markdown_event{}
+) ->
+    % io:format("\n\n[~w:~w] BEFORE resolve__enter_gfm_table_cell_divider\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    State2 = State1#resolve{in_first_cell_awaiting_pipe = false},
+    % io:format("\n\n[~w:~w] AFTER resolve__enter_gfm_table_cell_divider\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    {Tokenizer1, State2};
+resolve__enter_gfm_table_cell_divider(
+    Tokenizer1 = #markdown_tokenizer{},
+    State1 = #resolve{index = Index, last_cell = LastCell1, cell = Cell1},
+    _Event = #markdown_event{}
+) ->
+    % io:format("\n\n[~w:~w] BEFORE resolve__enter_gfm_table_cell_divider\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    {Tokenizer3, State3} =
+        case LastCell1#cell.enter of
+            0 ->
+                {Tokenizer1, State1};
+            _ ->
+                Cell2 = Cell1#cell{exit = Cell1#cell.enter},
+                State2 = State1#resolve{cell = Cell2},
+                Tokenizer2 = resolve__flush_cell(Tokenizer1, LastCell1, State1#resolve.in_delimiter_row, none),
+                {Tokenizer2, State2}
+        end,
+    Cell3 = State3#resolve.cell,
+    LastCell2 = Cell3,
+    Cell4 = Cell3#cell{exit = LastCell2#cell.enter, enter = Index, data_enter = 0, data_exit = 0},
+    State4 = State3#resolve{last_cell = LastCell2, cell = Cell4},
+    % io:format("\n\n[~w:~w] AFTER resolve__enter_gfm_table_cell_divider\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer3)]),
+    {Tokenizer3, State4}.
+
+%% @private
+-spec resolve__enter_gfm_table_head(Tokenizer, State, Event) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: resolve(), Event :: markdown_event:t().
+resolve__enter_gfm_table_head(
+    Tokenizer1 = #markdown_tokenizer{},
+    State1 = #resolve{index = Index, last_table_end = LastTableEnd1, last_table_has_body = LastTableHasBody1},
+    Event = #markdown_event{}
+) ->
+    % io:format("\n\n[~w:~w] BEFORE resolve__enter_gfm_table_head\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    State2 = State1#resolve{after_head_awaiting_first_body_row = false},
+    {Tokenizer2, State3} =
+        case LastTableEnd1 of
+            0 ->
+                {Tokenizer1, State2};
+            _ ->
+                %% Inject previous (body end and) table end.
+                Tokenizer1_1 = Tokenizer1,
+                Tokenizer1_2 = resolve__flush_table_end(Tokenizer1_1, LastTableEnd1, LastTableHasBody1),
+                State2_1 = State2,
+                State2_2 = State2_1#resolve{last_table_end = 0, last_table_has_body = false},
+                {Tokenizer1_2, State2_2}
+        end,
+    %% Inject table start.
+    EnterEvent = markdown_event:gfm_table(enter, Event#markdown_event.point, none),
+    Tokenizer3 = markdown_tokenizer:map_add(Tokenizer2, Index, 0, [EnterEvent]),
+    % io:format("\n\n[~w:~w] AFTER resolve__enter_gfm_table_head\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer3)]),
+    {Tokenizer3, State3}.
+
+%% @private
+-spec resolve__enter_gfm_table_row(Tokenizer, State, Event) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: resolve(), Event :: markdown_event:t().
+resolve__enter_gfm_table_row(
+    Tokenizer1 = #markdown_tokenizer{},
+    State1 = #resolve{index = Index, after_head_awaiting_first_body_row = AfterHeadAwaitingFirstBodyRow1},
+    Event = #markdown_event{}
+) ->
+    % io:format("\n\n[~w:~w] BEFORE resolve__enter_gfm_table_row\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    State2 = State1#resolve{
+        in_delimiter_row = Event#markdown_event.name =:= gfm_table_delimiter_row,
+        in_first_cell_awaiting_pipe = true,
+        in_row = true,
+        last_cell = #cell{exit = 0, enter = 0, data_enter = 0, data_exit = 0},
+        cell = #cell{exit = 0, enter = Index + 1, data_enter = 0, data_exit = 0}
+    },
+    {Tokenizer2, State3} =
+        case AfterHeadAwaitingFirstBodyRow1 of
+            false ->
+                {Tokenizer1, State2};
+            true ->
+                %% Inject table body start.
+                State2_1 = State2,
+                State2_2 = State2_1#resolve{after_head_awaiting_first_body_row = false, last_table_has_body = true},
+                EnterEvent = markdown_event:gfm_table_body(enter, Event#markdown_event.point, none),
+                Tokenizer1_1 = Tokenizer1,
+                Tokenizer1_2 = markdown_tokenizer:map_add(Tokenizer1_1, Index, 0, [EnterEvent]),
+                {Tokenizer1_2, State2_2}
+        end,
+    % io:format("\n\n[~w:~w] AFTER resolve__enter_gfm_table_row\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer2)]),
+    {Tokenizer2, State3}.
+
+%% @private
+-spec resolve__exit_data(Tokenizer, State, Event) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: resolve(), Event :: markdown_event:t().
+resolve__exit_data(
+    Tokenizer1 = #markdown_tokenizer{}, State1 = #resolve{index = Index, cell = Cell1}, _Event = #markdown_event{}
+) ->
+    % io:format("\n\n[~w:~w] BEFORE resolve__exit_data\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    Cell2 = Cell1#cell{data_exit = Index},
+    State2 = State1#resolve{cell = Cell2},
+    % io:format("\n\n[~w:~w] AFTER resolve__exit_data\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    {Tokenizer1, State2}.
+
+%% @private
+-spec resolve__exit_gfm_table_head(Tokenizer, State, Event) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: resolve(), Event :: markdown_event:t().
+resolve__exit_gfm_table_head(
+    Tokenizer1 = #markdown_tokenizer{}, State1 = #resolve{index = Index}, _Event = #markdown_event{}
+) ->
+    % io:format("\n\n[~w:~w] BEFORE resolve__exit_gfm_table_head\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    State2 = State1#resolve{after_head_awaiting_first_body_row = true, last_table_end = Index},
+    % io:format("\n\n[~w:~w] AFTER resolve__exit_gfm_table_head\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    {Tokenizer1, State2}.
+
+%% @private
+-spec resolve__exit_gfm_table_row(Tokenizer, State, Event) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: resolve(), Event :: markdown_event:t().
+resolve__exit_gfm_table_row(
+    Tokenizer1 = #markdown_tokenizer{}, State1 = #resolve{index = Index}, _Event = #markdown_event{}
+) ->
+    % io:format("\n\n[~w:~w] BEFORE resolve__exit_gfm_table_row\n~ts\n\n", [markdown:counter_get(), markdown:stack_push(), markdown_debug:rust_debug_string(Tokenizer1)]),
+    State2 = State1#resolve{in_row = false, last_table_end = Index},
+    case State2 of
+        #resolve{last_cell = LastCell1 = #cell{enter = LastCellEnter}} when LastCellEnter =/= 0 ->
+            Cell1 = State2#resolve.cell,
+            Cell2 = Cell1#cell{exit = Cell1#cell.enter},
+            State3 = State2#resolve{cell = Cell2},
+            Tokenizer2 = resolve__flush_cell(Tokenizer1, LastCell1, State2#resolve.in_delimiter_row, {some, Index}),
+            % io:format("\n\n[~w:~w] AFTER resolve__exit_gfm_table_row\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer2)]),
+            {Tokenizer2, State3};
+        #resolve{cell = Cell1 = #cell{enter = CellEnter}} when CellEnter =/= 0 ->
+            Tokenizer2 = resolve__flush_cell(Tokenizer1, Cell1, State2#resolve.in_delimiter_row, {some, Index}),
+            % io:format("\n\n[~w:~w] AFTER resolve__exit_gfm_table_row\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer2)]),
+            {Tokenizer2, State2};
+        _ ->
+            % io:format("\n\n[~w:~w] AFTER resolve__exit_gfm_table_row\n~ts\n\n", [markdown:counter_get(), markdown:stack_pop(), markdown_debug:rust_debug_string(Tokenizer1)]),
+            {Tokenizer1, State2}
+    end.
+
+%% @private
+-doc """
+Generate a cell.
+""".
+-spec resolve__flush_cell(Tokenizer, Range, InDelimiterRow, OptionRowEnd) -> Tokenizer when
+    Tokenizer :: markdown_tokenizer:t(),
+    Range :: cell(),
+    InDelimiterRow :: boolean(),
+    OptionRowEnd :: markdown_option:t(RowEnd),
+    RowEnd :: markdown_types:usize().
+resolve__flush_cell(Tokenizer1 = #markdown_tokenizer{}, Range = #cell{}, InDelimiterRow, OptionRowEnd) ->
+    {MakeGroupEvent, MakeValueEvent} =
+        case InDelimiterRow of
+            true ->
+                {fun markdown_event:gfm_table_delimiter_cell/3, fun markdown_event:gfm_table_delimiter_cell_value/3};
+            false ->
+                {fun markdown_event:gfm_table_cell/3, fun markdown_event:gfm_table_cell_text/3}
+        end,
+    %% Insert an exit for the previous cell, if there is one.
+    %%
+    %% ```markdown
+    %% > | | aa | bb | cc |
+    %%          ^-- exit
+    %%           ^^^^-- this cell
+    %% ```
+    Tokenizer2 =
+        case Range#cell.exit of
+            0 ->
+                Tokenizer1;
+            RangeExit ->
+                RangeExitEvent = markdown_vec:get(Tokenizer1#markdown_tokenizer.events, RangeExit),
+                ExitEvent = MakeGroupEvent(exit, RangeExitEvent#markdown_event.point, none),
+                markdown_tokenizer:map_add(Tokenizer1, RangeExit, 0, [ExitEvent])
+        end,
+    %% Insert enter of this cell.
+    %%
+    %% ```markdown
+    %% > | | aa | bb | cc |
+    %%           ^-- enter
+    %%           ^^^^-- this cell
+    %% ```
+    RangeEnter = Range#cell.enter,
+    RangeEnterEvent = markdown_vec:get(Tokenizer2#markdown_tokenizer.events, RangeEnter),
+    EnterEvent = MakeGroupEvent(enter, RangeEnterEvent#markdown_event.point, none),
+    Tokenizer3 = markdown_tokenizer:map_add(Tokenizer2, RangeEnter, 0, [EnterEvent]),
+    %% Insert text start at first data start and end at last data end, and
+    %% remove events between.
+    %%
+    %% ```markdown
+    %% > | | aa | bb | cc |
+    %%            ^-- enter
+    %%             ^-- exit
+    %%           ^^^^-- this cell
+    %% ```
+    Tokenizer7 =
+        case Range#cell.data_enter of
+            0 ->
+                Tokenizer3;
+            RangeDataEnter ->
+                RangeDataEnterEvent1 = markdown_vec:get(Tokenizer3#markdown_tokenizer.events, RangeDataEnter),
+                DataEnterEvent = MakeValueEvent(enter, RangeDataEnterEvent1#markdown_event.point, none),
+                Tokenizer4 = markdown_tokenizer:map_add(Tokenizer3, RangeDataEnter, 0, [DataEnterEvent]),
+                RangeDataExit = Range#cell.data_exit,
+                %% BEGIN: assertions
+                ?assert(RangeDataExit =/= 0, "expected RangeDataExit to be non-zero"),
+                %% END: assertions
+                Tokenizer6 =
+                    case InDelimiterRow of
+                        false ->
+                            Events4 = Tokenizer4#markdown_tokenizer.events,
+                            RangeDataEnterEvent2 = markdown_vec:get(Events4, RangeDataEnter),
+                            RangeDataEnterEvent3 = RangeDataEnterEvent2#markdown_event{
+                                link = {some, markdown_event_link:new(none, none, text)}
+                            },
+                            Events5 = markdown_vec:set(Events4, RangeDataEnter, RangeDataEnterEvent3),
+                            Tokenizer5 = Tokenizer4#markdown_tokenizer{events = Events5},
+                            case RangeDataExit > RangeDataEnter + 1 of
+                                false ->
+                                    Tokenizer5;
+                                true ->
+                                    %% To do: positional info of the remaining `data` nodes likely have
+                                    %% to be fixed.
+                                    A = RangeDataEnter + 1,
+                                    B = RangeDataExit - RangeDataEnter - 1,
+                                    markdown_tokenizer:map_add(Tokenizer5, A, B, [])
+                            end;
+                        true ->
+                            Tokenizer4
+                    end,
+                RangeDataExitEvent = markdown_vec:get(Tokenizer6#markdown_tokenizer.events, RangeDataExit),
+                DataExitEvent = MakeValueEvent(exit, RangeDataExitEvent#markdown_event.point, none),
+                markdown_tokenizer:map_add(Tokenizer6, RangeDataExit + 1, 0, [DataExitEvent])
+        end,
+    %% Insert an exit for the last cell, if at the row end.
+    %%
+    %% ```markdown
+    %% > | | aa | bb | cc |
+    %%                    ^-- exit
+    %%               ^^^^^^-- this cell (the last one contains two “between” parts)
+    %% ```
+    case OptionRowEnd of
+        none ->
+            Tokenizer7;
+        {some, RowEnd} ->
+            RowEndEvent = markdown_vec:get(Tokenizer7#markdown_tokenizer.events, RowEnd),
+            RowEndExitEvent = MakeGroupEvent(exit, RowEndEvent#markdown_event.point, none),
+            markdown_tokenizer:map_add(Tokenizer7, RowEnd, 0, [RowEndExitEvent])
+    end.
+
+%% @private
+-doc """
+Generate table end (and table body end).
+""".
+-spec resolve__flush_table_end(Tokenizer, Index, Body) -> Tokenizer when
+    Tokenizer :: markdown_tokenizer:t(), Index :: markdown_types:usize(), Body :: boolean().
+resolve__flush_table_end(Tokenizer1 = #markdown_tokenizer{events = Events}, Index, Body) ->
+    Event = markdown_vec:get(Events, Index),
+    Point = Event#markdown_event.point,
+    Exits1 = markdown_vec:new(),
+    Exits2 =
+        case Body of
+            true ->
+                TableBodyExitEvent = markdown_event:gfm_table_body(exit, Point, none),
+                markdown_vec:push(Exits1, TableBodyExitEvent);
+            false ->
+                Exits1
+        end,
+    TableExitEvent = markdown_event:gfm_table(exit, Point, none),
+    Exits3 = markdown_vec:push(Exits2, TableExitEvent),
+    Tokenizer2 = markdown_tokenizer:map_add(Tokenizer1, Index + 1, 0, Exits3),
+    Tokenizer2.
