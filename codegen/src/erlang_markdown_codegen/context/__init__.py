@@ -112,6 +112,9 @@ class Context:
         else:
             return ""
 
+    def erlang_binary(self, value: str) -> str:
+        return f'<<"{self.escape_string_for_erlang(value)}"/utf8>>'
+
     def erlang_comment(self, original_str: str) -> str:
         comment: str = original_str.strip()
         lines: list[str] = comment.split("\n")
@@ -134,12 +137,18 @@ class Context:
         elif isinstance(value, OrderedDict):
             return self.erlang_map(value)
         elif isinstance(value, Option):
-            if value.is_none():
+            if value.is_none:
                 return "none"
             else:
                 return f"{{some, {self.erlang_map_value(value.unwrap())}}}"
         else:
             raise ValueError(f"unsupported type: {type(value)} -> {repr(value)}")
+
+    def erlang_multiline_binary(self, value: str) -> str:
+        if len(value) > 120 and "\n" in value and '"""' not in value:
+            return f'<<"""\n{value}\n"""/utf8>>'
+        else:
+            return self.erlang_binary(value)
 
     def escape_string_for_erlang(self, original_str: str) -> str:
         result = []

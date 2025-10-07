@@ -101,20 +101,20 @@ end_per_group(_Group, _Config) ->
 ~J{ endif }.
 ~J{ if test_case.kind == "to_html_with_options" }.
     ?assertMatch(
-        {ok, <<"~J< ctx.escape_string_for_erlang(test_case.output) >."/utf8>>},
-        markdown:to_html_with_options(<<"~J< ctx.escape_string_for_erlang(test_case.input) >."/utf8>>, ~J< test_case.options_for_erlang >.),
+        {ok, ~J< ctx.erlang_multiline_binary(test_case.output) >.},
+        markdown:to_html_with_options(~J< ctx.erlang_multiline_binary(test_case.input) >., ~J< test_case.options_for_erlang >.),
         "~J< ctx.escape_string_for_erlang(test_case.message) >."
     ),
 ~J{ elif test_case.kind == "to_mdast" }.
     ?assertEqual(
         {ok, ~J< test_case.output >.},
-        markdown:to_mdast(<<"~J< ctx.escape_string_for_erlang(test_case.input) >."/utf8>>, ~J< test_case.parse_options_for_erlang >.),
+        markdown:to_mdast(~J< ctx.erlang_multiline_binary(test_case.input) >., ~J< test_case.parse_options_for_erlang >.),
         "~J< ctx.escape_string_for_erlang(test_case.message) >."
     ),
 ~J{ else }.
     ?assertMatch(
-        {ok, <<"~J< ctx.escape_string_for_erlang(test_case.output) >."/utf8>>},
-        markdown:to_html(<<"~J< ctx.escape_string_for_erlang(test_case.input) >."/utf8>>),
+        {ok, ~J< ctx.erlang_multiline_binary(test_case.output) >.},
+        markdown:to_html(~J< ctx.erlang_multiline_binary(test_case.input) >.),
         "~J< ctx.escape_string_for_erlang(test_case.message) >."
     ),
 ~J{ endif }.

@@ -22,6 +22,7 @@ Turn events into a syntax tree.
 -include_lib("markdown/include/markdown_const.hrl").
 -include_lib("markdown/include/markdown_mdast.hrl").
 -include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_unist.hrl").
 -include_lib("markdown/include/markdown_util.hrl").
 -include_lib("markdown/include/markdown_vec.hrl").
 
@@ -256,10 +257,12 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
             on_enter_gfm_autolink_literal(CompileContext1);
         gfm_autolink_literal_xmpp ->
             on_enter_gfm_autolink_literal(CompileContext1);
-        % %% on_enter_gfm_footnote_call
-        % gfm_footnote_call -> on_enter_gfm_footnote_call(CompileContext1);
-        % %% on_enter_gfm_footnote_definition
-        % gfm_footnote_definition -> on_enter_gfm_footnote_definition(CompileContext1);
+        %% on_enter_gfm_footnote_call
+        gfm_footnote_call ->
+            on_enter_gfm_footnote_call(CompileContext1);
+        %% on_enter_gfm_footnote_definition
+        gfm_footnote_definition ->
+            on_enter_gfm_footnote_definition(CompileContext1);
         %% on_enter_gfm_strikethrough
         gfm_strikethrough ->
             on_enter_gfm_strikethrough(CompileContext1);
@@ -269,24 +272,31 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         % gfm_table_row -> on_enter_gfm_table_row(CompileContext1);
         % %% on_enter_gfm_table_cell
         % gfm_table_cell -> on_enter_gfm_table_cell(CompileContext1);
-        % %% on_enter_hard_break
-        % hard_break_escape -> on_enter_hard_break(CompileContext1);
-        % hard_break_trailing -> on_enter_hard_break(CompileContext1);
+        %% on_enter_hard_break
+        hard_break_escape ->
+            on_enter_hard_break(CompileContext1);
+        hard_break_trailing ->
+            on_enter_hard_break(CompileContext1);
         % %% on_enter_heading
         % heading_atx -> on_enter_heading(CompileContext1);
         % heading_setext -> on_enter_heading(CompileContext1);
         % %% on_enter_html
         % html_flow -> on_enter_html(CompileContext1);
         % html_text -> on_enter_html(CompileContext1);
-        % %% on_enter_image
-        % image -> on_enter_image(CompileContext1);
-        % %% on_enter_link
-        % link -> on_enter_link(CompileContext1);
-        % %% on_enter_list_item
-        % list_item -> on_enter_list_item(CompileContext1);
-        % %% on_enter_list
-        % list_ordered -> on_enter_list(CompileContext1);
-        % list_unordered -> on_enter_list(CompileContext1);
+        %% on_enter_image
+        image ->
+            on_enter_image(CompileContext1);
+        %% on_enter_link
+        link ->
+            on_enter_link(CompileContext1);
+        %% on_enter_list_item
+        list_item ->
+            on_enter_list_item(CompileContext1);
+        %% on_enter_list
+        list_ordered ->
+            on_enter_list(CompileContext1);
+        list_unordered ->
+            on_enter_list(CompileContext1);
         % %% on_enter_math_flow
         % math_flow -> on_enter_math_flow(CompileContext1);
         % %% on_enter_math_text
@@ -313,12 +323,14 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         %% on_enter_paragraph
         paragraph ->
             on_enter_paragraph(CompileContext1);
-        % %% on_enter_reference
-        % reference -> on_enter_reference(CompileContext1);
+        %% on_enter_reference
+        reference ->
+            on_enter_reference(CompileContext1);
         % %% on_enter_resource
         % resource -> on_enter_resource(CompileContext1);
-        % %% on_enter_strong
-        % strong -> on_enter_strong(CompileContext1);
+        %% on_enter_strong
+        strong ->
+            on_enter_strong(CompileContext1);
         %% on_enter_thematic_break
         thematic_break ->
             on_enter_thematic_break(CompileContext1);
@@ -528,6 +540,46 @@ on_enter_gfm_autolink_literal(CompileContext1 = #markdown_mdast_compile_context{
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:[`GfmFootnoteCall`][Name::GfmFootnoteCall].
+""".
+-spec on_enter_gfm_footnote_call(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_gfm_footnote_call(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:footnote_reference(#markdown_mdast_footnote_reference{
+                identifier = <<>>,
+                label = none,
+                position = none
+            })
+        ),
+    MediaReferenceStack2 = CompileContext2#markdown_mdast_compile_context.media_reference_stack,
+    MediaReferenceStack3 = markdown_vec:push(MediaReferenceStack2, markdown_mdast_reference:default()),
+    CompileContext3 = CompileContext2#markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack3},
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmFootnoteDefinition`][Name::GfmFootnoteDefinition].
+""".
+-spec on_enter_gfm_footnote_definition(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_gfm_footnote_definition(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:footnote_definition(#markdown_mdast_footnote_definition{
+                identifier = <<>>,
+                label = none,
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`GfmStrikethrough`][Name::GfmStrikethrough].
 """.
 -spec on_enter_gfm_strikethrough(CompileContext) -> {ok, CompileContext} when
@@ -545,6 +597,109 @@ on_enter_gfm_strikethrough(CompileContext1 = #markdown_mdast_compile_context{}) 
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:[`HardBreakEscape`][Name::HardBreakEscape].
+""".
+-spec on_enter_hard_break(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_hard_break(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:break(#markdown_mdast_break{
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`Image`][Name::Image].
+""".
+-spec on_enter_image(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_image(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:image(#markdown_mdast_image{
+                url = <<>>,
+                title = none,
+                alt = <<>>,
+                position = none
+            })
+        ),
+    MediaReferenceStack2 = CompileContext2#markdown_mdast_compile_context.media_reference_stack,
+    MediaReferenceStack3 = markdown_vec:push(MediaReferenceStack2, markdown_mdast_reference:default()),
+    CompileContext3 = CompileContext2#markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack3},
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`Link`][Name::Link].
+""".
+-spec on_enter_link(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_link(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:link(#markdown_mdast_link{
+                url = <<>>,
+                title = none,
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    MediaReferenceStack2 = CompileContext2#markdown_mdast_compile_context.media_reference_stack,
+    MediaReferenceStack3 = markdown_vec:push(MediaReferenceStack2, markdown_mdast_reference:default()),
+    CompileContext3 = CompileContext2#markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack3},
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:{[`ListOrdered`][Name::ListOrdered],[`ListUnordered`][Name::ListUnordered]}.
+""".
+-spec on_enter_list(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_list(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = Index}) ->
+    Event = markdown_vec:get(Events, Index),
+    Ordered = Event#markdown_event.name =:= list_ordered,
+    Spread = markdown_util_infer:list_loose(Events, Index, false),
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:list(#markdown_mdast_list{
+                ordered = Ordered,
+                spread = Spread,
+                start = none,
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`ListItem`][Name::ListItem].
+""".
+-spec on_enter_list_item(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_list_item(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = Index}) ->
+    Spread = markdown_util_infer:list_item_loose(Events, Index),
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:list_item(#markdown_mdast_list_item{
+                spread = Spread,
+                checked = none,
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`Paragraph`][Name::Paragraph].
 """.
 -spec on_enter_paragraph(CompileContext) -> {ok, CompileContext} when
@@ -554,6 +709,41 @@ on_enter_paragraph(CompileContext1 = #markdown_mdast_compile_context{}) ->
         markdown_mdast_compile_context:tail_push(
             CompileContext1,
             markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`Reference`][Name::Reference].
+""".
+-spec on_enter_reference(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_reference(CompileContext1 = #markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack1}) ->
+    %% BEGIN: assertions
+    ?assertMatch({some, _}, markdown_vec:last_option(MediaReferenceStack1), "expected reference on media stack"),
+    %% END: assertions
+    Reference1 = markdown_vec:last(MediaReferenceStack1),
+    %% Assume collapsed.
+    %% If there’s a string after it, we set `Full`.
+    Reference2 = Reference1#markdown_mdast_reference{kind = {some, collapsed}},
+    MediaReferenceStack2 = markdown_vec:set_last(MediaReferenceStack1, Reference2),
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack2},
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`Strong`][Name::Strong].
+""".
+-spec on_enter_strong(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_strong(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:strong(#markdown_mdast_strong{
                 children = markdown_vec:new(),
                 position = none
             })
@@ -714,18 +904,23 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
             on_exit_gfm_autolink_literal(CompileContext1);
         gfm_autolink_literal_xmpp ->
             on_exit_gfm_autolink_literal(CompileContext1);
-        % %% on_exit_media
-        % gfm_footnote_call -> on_exit_media(CompileContext1);
-        % image -> on_exit_media(CompileContext1);
-        % link -> on_exit_media(CompileContext1);
+        %% on_exit_media
+        gfm_footnote_call ->
+            on_exit_media(CompileContext1);
+        image ->
+            on_exit_media(CompileContext1);
+        link ->
+            on_exit_media(CompileContext1);
         % %% on_exit_gfm_table
         % gfm_table -> on_exit_gfm_table(CompileContext1);
         % %% on_exit_gfm_task_list_item_value
         % gfm_task_list_item_value_unchecked -> on_exit_gfm_task_list_item_value(CompileContext1);
         % gfm_task_list_item_value_checked -> on_exit_gfm_task_list_item_value(CompileContext1);
-        % %% on_exit_hard_break
-        % hard_break_escape -> on_exit_hard_break(CompileContext1);
-        % hard_break_trailing -> on_exit_hard_break(CompileContext1);
+        %% on_exit_hard_break
+        hard_break_escape ->
+            on_exit_hard_break(CompileContext1);
+        hard_break_trailing ->
+            on_exit_hard_break(CompileContext1);
         % %% on_exit_heading_atx_sequence
         % heading_atx_sequence -> on_exit_heading_atx_sequence(CompileContext1);
         % %% on_exit_heading_setext
@@ -737,15 +932,18 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         % %% on_exit_html
         % html_flow -> on_exit_html(CompileContext1);
         % html_text -> on_exit_html(CompileContext1);
-        % %% on_exit_label_text
-        % label_text -> on_exit_label_text(CompileContext1);
+        %% on_exit_label_text
+        label_text ->
+            on_exit_label_text(CompileContext1);
         %% on_exit_line_ending
         line_ending ->
             on_exit_line_ending(CompileContext1);
-        % %% on_exit_list_item
-        % list_item -> on_exit_list_item(CompileContext1);
-        % %% on_exit_list_item_value
-        % list_item_value -> on_exit_list_item_value(CompileContext1);
+        %% on_exit_list_item
+        list_item ->
+            on_exit_list_item(CompileContext1);
+        %% on_exit_list_item_value
+        list_item_value ->
+            on_exit_list_item_value(CompileContext1);
         % %% on_exit_mdx_esm_or_expression
         % mdx_esm -> on_exit_mdx_esm_or_expression(CompileContext1);
         % mdx_flow_expression -> on_exit_mdx_esm_or_expression(CompileContext1);
@@ -769,8 +967,9 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         % mdx_jsx_tag_attribute_value_literal -> on_exit_mdx_jsx_tag_attribute_value_literal(CompileContext1);
         % %% on_exit_mdx_jsx_tag_self_closing_marker
         % mdx_jsx_tag_self_closing_marker -> on_exit_mdx_jsx_tag_self_closing_marker(CompileContext1);
-        % %% on_exit_reference_string
-        % reference_string -> on_exit_reference_string(CompileContext1);
+        %% on_exit_reference_string
+        reference_string ->
+            on_exit_reference_string(CompileContext1);
         % %% on_exit_resource_destination_string
         % resource_destination_string -> on_exit_resource_destination_string(CompileContext1);
         % %% on_exit_resource_title_string
@@ -1184,6 +1383,95 @@ on_exit_gfm_autolink_literal__node_mut_func(_Node = #markdown_mdast_node{}, {som
 
 %% @private
 -doc """
+Handle [`Exit`][Kind::Exit]:{[`HardBreakEscape`][Name::HardBreakEscape],[`HardBreakTrailing`][Name::HardBreakTrailing]}.
+""".
+-spec on_exit_hard_break(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_hard_break(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    maybe
+        {ok, CompileContext2} ?= on_exit(CompileContext1),
+        CompileContext3 = CompileContext2#markdown_mdast_compile_context{hard_break_after = true},
+        {ok, CompileContext3}
+    end.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`LabelText`][Name::LabelText].
+""".
+-spec on_exit_label_text(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_label_text(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Fragment1} = markdown_mdast_compile_context:resume(CompileContext1),
+    Label = markdown_mdast_node:to_string(Fragment1),
+    %% BEGIN: assertions
+    ?assertMatch({some, _}, markdown_mdast_node:children(Fragment1), "expected parent"),
+    %% END: assertions
+    ChildrenMutFunc = fun on_exit_label_text__children_mut_func/2,
+    {_Fragment2, {some, FragmentChildren}} = markdown_mdast_node:children_mut(Fragment1, none, ChildrenMutFunc),
+    Bytes = CompileContext2#markdown_mdast_compile_context.bytes,
+    Events = CompileContext2#markdown_mdast_compile_context.events,
+    Index = CompileContext2#markdown_mdast_compile_context.index,
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    Identifier = markdown_types:unicode_binary(
+        string:casefold(markdown_util_normalize_identifier:normalize_identifier(SliceBytes))
+    ),
+    MediaReferenceStack2 = CompileContext2#markdown_mdast_compile_context.media_reference_stack,
+    %% BEGIN: assertions
+    ?assertMatch({some, _}, markdown_vec:last_option(MediaReferenceStack2), "expected reference on media stack"),
+    %% END: assertions
+    Reference1 = markdown_vec:last(MediaReferenceStack2),
+    Reference2 = Reference1#markdown_mdast_reference{
+        label = Label,
+        identifier = Identifier
+    },
+    MediaReferenceStack3 = markdown_vec:set_last(MediaReferenceStack2, Reference2),
+    CompileContext3 = CompileContext2#markdown_mdast_compile_context{
+        media_reference_stack = MediaReferenceStack3
+    },
+    NodeMutFunc = fun on_exit_label_text__node_mut_func/2,
+    {CompileContext4, none} = markdown_mdast_compile_context:tail_mut(
+        CompileContext3, {some, {Label, FragmentChildren}}, NodeMutFunc
+    ),
+    {ok, CompileContext4}.
+
+%% @private
+-spec on_exit_label_text__children_mut_func(Children, OptionFragmentChildren) -> {Children, OptionFragmentChildren} when
+    Children :: markdown_mdast_node:children(),
+    OptionFragmentChildren :: markdown_option:t(FragmentChildren),
+    FragmentChildren :: markdown_mdast_node:children().
+on_exit_label_text__children_mut_func(Children1, none) ->
+    {Children2, FragmentChildren} = markdown_vec:split_off(Children1, 0),
+    {Children2, {some, FragmentChildren}}.
+
+%% @private
+-spec on_exit_label_text__node_mut_func(Node, OptionContext) -> {Node, OptionContext} when
+    Node :: markdown_mdast_node:t(),
+    OptionContext :: markdown_option:t(Context),
+    Context :: {Label, FragmentChildren},
+    Label :: unicode:unicode_binary(),
+    FragmentChildren :: markdown_mdast_node:children().
+on_exit_label_text__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Link1 = #markdown_mdast_link{}}, {some, {_Label, FragmentChildren}}
+) ->
+    Link2 = Link1#markdown_mdast_link{children = FragmentChildren},
+    Node2 = Node1#markdown_mdast_node{inner = Link2},
+    {Node2, none};
+on_exit_label_text__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Image1 = #markdown_mdast_image{}}, {some, {Label, _FragmentChildren}}
+) ->
+    Image2 = Image1#markdown_mdast_image{alt = Label},
+    Node2 = Node1#markdown_mdast_node{inner = Image2},
+    {Node2, none};
+on_exit_label_text__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = #markdown_mdast_footnote_reference{}}, {some, {_Label, _FragmentChildren}}
+) ->
+    {Node1, none};
+on_exit_label_text__node_mut_func(_Node = #markdown_mdast_node{}, {some, {_Label, _FragmentChildren}}) ->
+    ?'unreachable!'("expected footnote reference, image, or link on stack", []).
+
+%% @private
+-doc """
 Handle [`Exit`][Kind::Exit]:[`LineEnding`][Name::LineEnding].
 """.
 -spec on_exit_line_ending(CompileContext) -> {ok, CompileContext} | {error, Message} when
@@ -1253,6 +1541,231 @@ on_exit_line_ending__hard_break_after_node_mut_func(Node1, OptionEnd = {some, _E
     %% END: assertions
     ChildrenMutFunc = fun on_exit_line_ending__hard_break_after_children_mut_func/2,
     {Node2, none} = markdown_mdast_node:children_mut(Node1, OptionEnd, ChildrenMutFunc),
+    {Node2, none}.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`ListItem`][Name::ListItem].
+""".
+-spec on_exit_list_item(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_list_item(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    NodeMutFunc = fun on_exit_list_item__node_mut_func/2,
+    {CompileContext2, none} = markdown_mdast_compile_context:tail_mut(CompileContext1, none, NodeMutFunc),
+    on_exit(CompileContext2).
+
+%% @private
+-spec on_exit_list_item__move_past_eol(Bytes, Point, Start) -> {Point, Start} when
+    Bytes :: binary(), Point :: markdown_unist_point:t(), Start :: non_neg_integer().
+on_exit_list_item__move_past_eol(<<Byte1:8, _/bytes>>, Point1 = #markdown_unist_point{}, Start1) when
+    Byte1 =:= $\t orelse Byte1 =:= $\s
+->
+    Point2 = Point1#markdown_unist_point{
+        offset = Point1#markdown_unist_point.offset + 1,
+        column = Point1#markdown_unist_point.column + 1
+    },
+    {Point2, Start1 + 1};
+on_exit_list_item__move_past_eol(Bytes = <<Byte1:8, _/bytes>>, Point1 = #markdown_unist_point{}, Start1) when
+    Byte1 =:= $\r orelse Byte1 =:= $\n
+->
+    Point2 = Point1#markdown_unist_point{
+        offset = Point1#markdown_unist_point.offset + 1,
+        column = Point1#markdown_unist_point.column + 1,
+        line = Point1#markdown_unist_point.line + 1
+    },
+    Start2 = Start1 + 1,
+    %% Move past the LF of CRLF.
+    case Bytes of
+        <<$\r, $\n, _/bytes>> ->
+            Point3 = Point2#markdown_unist_point{
+                offset = Point2#markdown_unist_point.offset + 1
+            },
+            Start3 = Start2 + 1,
+            {Point3, Start3};
+        _ ->
+            {Point2, Start2}
+    end;
+on_exit_list_item__move_past_eol(_Bytes, Point1 = #markdown_unist_point{}, Start1) ->
+    {Point1, Start1}.
+
+%% @private
+-spec on_exit_list_item__node_mut_func(Node, none) -> {Node, none} when
+    Node :: markdown_mdast_node:t().
+on_exit_list_item__node_mut_func(
+    ListItemNode1 = #markdown_mdast_node{inner = ListItem1 = #markdown_mdast_list_item{checked = {some, _}}}, none
+) ->
+    ListItemChildren1 = ListItem1#markdown_mdast_list_item.children,
+    case markdown_vec:first_option(ListItemChildren1) of
+        {some,
+            ParagraphNode1 = #markdown_mdast_node{
+                inner = Paragraph1 = #markdown_mdast_paragraph{position = {some, ParagraphPosition1}}
+            }} ->
+            ParagraphChildren1 = ParagraphNode1#markdown_mdast_paragraph.children,
+            case markdown_vec:first_option(ParagraphChildren1) of
+                {some,
+                    TextNode1 = #markdown_mdast_node{
+                        inner =
+                            Text1 = #markdown_mdast_text{
+                                position = {some, #markdown_unist_position{start = Point1}}, value = Bytes
+                            }
+                    }} ->
+                    Start1 = 0,
+                    %% Move past eol.
+                    {Point2, Start2} = on_exit_list_item__move_past_eol(Bytes, Point1, Start1),
+                    Paragraph2 =
+                        case byte_size(Bytes) of
+                            Start2 ->
+                                %% The whole text is whitespace: update the text.
+                                ParagraphChildren2 = markdown_vec:remove(ParagraphChildren1, 0),
+                                ParagraphPosition2 = ParagraphPosition1#markdown_unist_position{start = Point2},
+                                Paragraph1#markdown_mdast_paragraph{
+                                    children = ParagraphChildren2, position = {some, ParagraphPosition2}
+                                };
+                            _ ->
+                                <<TextValue1:Start2/bytes, _/bytes>> = Bytes,
+                                TextValue2 = markdown_types:unicode_binary(TextValue1),
+                                {some, TextPosition1} = Text1#markdown_mdast_text.position,
+                                TextPosition2 = TextPosition1#markdown_unist_position{start = Point2},
+                                Text2 = Text1#markdown_mdast_text{
+                                    value = TextValue2,
+                                    position = {some, TextPosition2}
+                                },
+                                TextNode2 = TextNode1#markdown_mdast_node{inner = Text2},
+                                ParagraphChildren2 = markdown_vec:set(ParagraphPosition1, 0, TextNode2),
+                                ParagraphPosition2 = ParagraphPosition1#markdown_unist_position{start = Point2},
+                                Paragraph1#markdown_mdast_paragraph{
+                                    children = ParagraphChildren2, position = {some, ParagraphPosition2}
+                                }
+                        end,
+                    ParagraphNode2 = ParagraphNode1#markdown_mdast_node{inner = Paragraph2},
+                    ListItemChildren2 = markdown_vec:set(ListItemChildren1, 0, ParagraphNode2),
+                    ListItem2 = ListItem1#markdown_mdast_list_item{children = ListItemChildren2},
+                    ListItemNode2 = ListItemNode1#markdown_mdast_node{inner = ListItem2},
+                    {ListItemNode2, none};
+                _ ->
+                    {ListItemNode1, none}
+            end;
+        _ ->
+            {ListItemNode1, none}
+    end;
+on_exit_list_item__node_mut_func(Node = #markdown_mdast_node{}, none) ->
+    {Node, none}.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`ListItemValue`][Name::ListItemValue].
+""".
+-spec on_exit_list_item_value(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_list_item_value(
+    CompileContext1 = #markdown_mdast_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    Start = erlang:binary_to_integer(markdown_slice:as_binary(Slice)),
+    NodeMutFunc = fun on_exit_list_item_value__node_mut_func/2,
+    {CompileContext2, none} = markdown_mdast_compile_context:tail_penultimate_mut(
+        CompileContext1, {some, Start}, NodeMutFunc
+    ),
+    {ok, CompileContext2}.
+
+%% @private
+-spec on_exit_list_item_value__node_mut_func(Node, OptionStartValue) -> {Node, OptionStartValue} when
+    Node :: markdown_mdast_node:t(), OptionStartValue :: markdown_option:t(StartValue), StartValue :: pos_integer().
+on_exit_list_item_value__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = List1 = #markdown_mdast_list{start = OptionStart}}, {some, Start}
+) ->
+    %% BEGIN: assertions
+    ?assert(List1#markdown_mdast_list.ordered =:= true, "expected list to be ordered"),
+    %% END: assertions
+    Node2 =
+        case OptionStart of
+            none ->
+                List2 = List1#markdown_mdast_list{start = {some, Start}},
+                Node1#markdown_mdast_node{inner = List2};
+            {some, _} ->
+                Node1
+        end,
+    {Node2, none};
+on_exit_list_item_value__node_mut_func(_Node, {some, _Start}) ->
+    ?'unreachable!'("expected list on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:{[`GfmFootnoteCall`][Name::GfmFootnoteCall],[`Image`][Name::Image],[`Link`][Name::Link]}.
+""".
+-spec on_exit_media(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_media(CompileContext1 = #markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack1}) ->
+    {MediaReferenceStack2, Reference} = markdown_vec:pop(MediaReferenceStack1),
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack2},
+    maybe
+        {ok, CompileContext3} ?= on_exit(CompileContext2),
+        case Reference#markdown_mdast_reference.kind of
+            none ->
+                {ok, CompileContext3};
+            {some, _Kind} ->
+                %% It's a reference.
+                NodeMutFunc = fun on_exit_media__node_mut_func/2,
+                {CompileContext4, none} = markdown_mdast_compile_context:tail_mut(
+                    CompileContext3, {some, Reference}, NodeMutFunc
+                ),
+                {ok, CompileContext4}
+        end
+    end.
+
+%% @private
+-spec on_exit_media__children_mut_func(Children, OptionReference) -> {Children, OptionReference} when
+    Children :: markdown_mdast_node:children(),
+    OptionReference :: markdown_option:t(Reference),
+    Reference :: markdown_mdast_reference:t().
+on_exit_media__children_mut_func(Children1, {some, Reference = #markdown_mdast_reference{kind = {some, Kind}}}) ->
+    %% BEGIN: assertions
+    ?assertMatch({some, _}, markdown_vec:last_option(Children1), "expected tail (break)"),
+    %% END: assertions
+    LastNode1 = markdown_vec:last(Children1),
+    LastNode2 =
+        case LastNode1#markdown_mdast_node.inner of
+            FootnoteReference1 = #markdown_mdast_footnote_reference{} ->
+                FootnoteReference2 = FootnoteReference1#markdown_mdast_footnote_reference{
+                    identifier = Reference#markdown_mdast_reference.identifier,
+                    label = {some, Reference#markdown_mdast_reference.label}
+                },
+                LastNode1#markdown_mdast_node{inner = FootnoteReference2};
+            Image1 = #markdown_mdast_image{} ->
+                %% Need to swap it with a reference version of the node.
+                markdown_mdast_node:image_reference(#markdown_mdast_image_reference{
+                    reference_kind = Kind,
+                    identifier = Reference#markdown_mdast_reference.identifier,
+                    label = {some, Reference#markdown_mdast_reference.label},
+                    alt = Image1#markdown_mdast_image.alt,
+                    position = Image1#markdown_mdast_image.position
+                });
+            Link1 = #markdown_mdast_link{} ->
+                %% Need to swap it with a reference version of the node.
+                markdown_mdast_node:link_reference(#markdown_mdast_link_reference{
+                    reference_kind = Kind,
+                    identifier = Reference#markdown_mdast_reference.identifier,
+                    label = {some, Reference#markdown_mdast_reference.label},
+                    children = Link1#markdown_mdast_link.children,
+                    position = Link1#markdown_mdast_link.position
+                });
+            _ ->
+                ?'unreachable!'("expected footnote reference, image, or link on stack", [])
+        end,
+    Children2 = markdown_vec:set_last(Children1, LastNode2),
+    {Children2, none}.
+
+%% @private
+-spec on_exit_media__node_mut_func(Node, OptionReference) -> {Node, OptionReference} when
+    Node :: markdown_mdast_node:t(),
+    OptionReference :: markdown_option:t(Reference),
+    Reference :: markdown_mdast_reference:t().
+on_exit_media__node_mut_func(Node1, OptionReference = {some, _Reference}) ->
+    %% BEGIN: assertions
+    ?assertMatch({some, _}, markdown_mdast_node:children(Node1), "expected parent"),
+    %% END: assertions
+    ChildrenMutFunc = fun on_exit_media__children_mut_func/2,
+    {Node2, none} = markdown_mdast_node:children_mut(Node1, OptionReference, ChildrenMutFunc),
     {Node2, none}.
 
 %% @private
@@ -1415,3 +1928,34 @@ on_exit_raw_text__maybe_trim_once(Bytes = <<" ", _/bytes>>) when byte_size(Bytes
     end;
 on_exit_raw_text__maybe_trim_once(Bytes) ->
     Bytes.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`ReferenceString`][Name::ReferenceString].
+""".
+-spec on_exit_reference_string(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_reference_string(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Label = markdown_mdast_node:to_string(Node),
+    Bytes = CompileContext2#markdown_mdast_compile_context.bytes,
+    Events = CompileContext2#markdown_mdast_compile_context.events,
+    Index = CompileContext2#markdown_mdast_compile_context.index,
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    Identifier = markdown_types:unicode_binary(
+        string:casefold(markdown_util_normalize_identifier:normalize_identifier(SliceBytes))
+    ),
+    MediaReferenceStack1 = CompileContext2#markdown_mdast_compile_context.media_reference_stack,
+    %% BEGIN: assertions
+    ?assertMatch({some, _}, markdown_vec:last_option(MediaReferenceStack1), "expected reference on media stack"),
+    %% END: assertions
+    Reference1 = markdown_vec:last(MediaReferenceStack1),
+    Reference2 = Reference1#markdown_mdast_reference{
+        kind = {some, full},
+        label = Label,
+        identifier = Identifier
+    },
+    MediaReferenceStack2 = markdown_vec:set_last(MediaReferenceStack1, Reference2),
+    CompileContext3 = CompileContext2#markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack2},
+    {ok, CompileContext3}.

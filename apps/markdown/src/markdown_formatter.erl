@@ -25,8 +25,11 @@ Link to another event.
 %% Formatter API
 -export([
     do/2,
+    erase/2,
+    get/3,
     finalize/1,
     format/3,
+    put/3,
     shift_left/1,
     shift_right/1,
     write/2,
@@ -35,21 +38,31 @@ Link to another event.
 
 %% Records
 -record(markdown_formatter, {
+    env = #{} :: env(),
     depth = 0 :: non_neg_integer(),
     indent = 4 :: non_neg_integer(),
     output = [] :: iolist() | io:device()
 }).
 
 %% Types
+-type env() :: #{
+    key() => value()
+}.
+-type key() :: dynamic().
 -type options() :: #{
+    env => env(),
     depth => non_neg_integer(),
     indent => non_neg_integer()
 }.
 -type t() :: #markdown_formatter{}.
+-type value() :: dynamic().
 
 -export_type([
+    env/0,
+    key/0,
     options/0,
-    t/0
+    t/0,
+    value/0
 ]).
 
 %%%=============================================================================
@@ -59,15 +72,17 @@ Link to another event.
 -spec new_io_device(IoDevice, Options) -> Formatter when
     IoDevice :: io:device(), Options :: options(), Formatter :: t().
 new_io_device(IoDevice, Options) when is_map(Options) ->
+    Env = maps:get(env, Options, #{}),
     Depth = maps:get(depth, Options, 0),
     Indent = maps:get(indent, Options, 4),
-    #markdown_formatter{depth = Depth, indent = Indent, output = IoDevice}.
+    #markdown_formatter{env = Env, depth = Depth, indent = Indent, output = IoDevice}.
 
 -spec new_string(Options) -> Formatter when Options :: options(), Formatter :: t().
 new_string(Options) when is_map(Options) ->
+    Env = maps:get(env, Options, #{}),
     Depth = maps:get(depth, Options, 0),
     Indent = maps:get(indent, Options, 4),
-    #markdown_formatter{depth = Depth, indent = Indent, output = []}.
+    #markdown_formatter{env = Env, depth = Depth, indent = Indent, output = []}.
 
 %%%=============================================================================
 %%% Formatter API functions
@@ -76,12 +91,27 @@ new_string(Options) when is_map(Options) ->
 -spec do(Formatter, ActionList) -> Formatter when
     Formatter :: t(),
     ActionList :: [Action],
-    Action :: {format, Format, Data} | shift_left | shift_right | {write, CharData} | write_indent,
+    Action ::
+        {erase, Key}
+        | {format, Format, Data}
+        | {put, Key, Value}
+        | shift_left
+        | shift_right
+        | {write, CharData}
+        | write_indent,
     Format :: io:format(),
     Data :: [term()],
+    Key :: key(),
+    Value :: value(),
     CharData :: unicode:chardata().
+do(Formatter1, [{erase, Key} | Actions]) ->
+    Formatter2 = erase(Formatter1, Key),
+    do(Formatter2, Actions);
 do(Formatter1, [{format, Format, Data} | Actions]) ->
     Formatter2 = format(Formatter1, Format, Data),
+    do(Formatter2, Actions);
+do(Formatter1, [{put, Key, Value} | Actions]) ->
+    Formatter2 = put(Formatter1, Key, Value),
     do(Formatter2, Actions);
 do(Formatter1, [shift_left | Actions]) ->
     Formatter2 = shift_left(Formatter1),
@@ -97,6 +127,18 @@ do(Formatter1, [write_indent | Actions]) ->
     do(Formatter2, Actions);
 do(Formatter, []) ->
     Formatter.
+
+-spec erase(Formatter1, Key) -> Formatter2 when
+    Formatter1 :: t(), Key :: key(), Formatter2 :: t().
+erase(Formatter1 = #markdown_formatter{env = Env1}, Key) ->
+    Env2 = maps:remove(Key, Env1),
+    Formatter2 = Formatter1#markdown_formatter{env = Env2},
+    Formatter2.
+
+-spec get(Formatter, Key, Default) -> Value | Default when
+    Formatter :: t(), Key :: key(), Default :: value(), Value :: value().
+get(#markdown_formatter{env = Env}, Key, Default) ->
+    maps:get(Key, Env, Default).
 
 -spec finalize(Formatter) -> ok | iolist() when Formatter :: t().
 finalize(#markdown_formatter{output = Output}) when is_list(Output) ->
@@ -114,6 +156,13 @@ format(Formatter1 = #markdown_formatter{output = Output1}, Format, Data) when is
 format(Formatter1 = #markdown_formatter{output = IoDevice}, Format, Data) ->
     ok = io:format(IoDevice, Format, Data),
     Formatter1.
+
+-spec put(Formatter1, Key, Value) -> Formatter2 when
+    Formatter1 :: t(), Key :: key(), Value :: value(), Formatter2 :: t().
+put(Formatter1 = #markdown_formatter{env = Env1}, Key, Value) ->
+    Env2 = maps:put(Key, Value, Env1),
+    Formatter2 = Formatter1#markdown_formatter{env = Env2},
+    Formatter2.
 
 -spec shift_left(Formatter1) -> Formatter2 when Formatter1 :: t(), Formatter2 :: t().
 shift_left(Formatter1 = #markdown_formatter{depth = Depth1}) ->

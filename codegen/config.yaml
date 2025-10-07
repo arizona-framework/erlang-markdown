@@ -3701,6 +3701,10 @@ records:
     rust_name: Blockquote
   - name: markdown_mdast_emphasis
     rust_name: Emphasis
+  - name: markdown_mdast_footnote_definition
+    rust_name: FootnoteDefinition
+  - name: markdown_mdast_footnote_reference
+    rust_name: FootnoteReference
   - name: markdown_mdast_node
     rust_enum: true
     rust_name: Node

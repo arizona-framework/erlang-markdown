@@ -950,6 +950,24 @@ rust_debug_fmt(Event, Formatter1) ->
             Field =:= attribute_list_flow orelse Field =:= attribute_list_text
         ->
             {cont, Formatter1};
+        {record_elem, Tag, _Index, Field = gfm_footnote_definitions, Value} when
+            Tag =:= markdown_parse_state orelse Tag =:= markdown_tokenize_state
+        ->
+            Formatter2 =
+                markdown_formatter:do(Formatter1, [
+                    {write, "\n"},
+                    write_indent,
+                    {format, "~ts: ", [Field]},
+                    {put, binary_as_string, true}
+                ]),
+            maybe
+                {cont, Formatter3} ?= walk(Value, Formatter2, fun rust_debug_fmt/2),
+                Formatter4 = markdown_formatter:do(Formatter3, [
+                    {erase, binary_as_string},
+                    {write, ","}
+                ]),
+                {cont, Formatter4}
+            end;
         {record_elem, Tag, _Index, Field, Value} ->
             Formatter2 =
                 case markdown_debug_types:is_rust_enum(Tag) of
@@ -1042,8 +1060,16 @@ rust_debug_fmt(Event, Formatter1) ->
             ]),
             {cont, Formatter2};
         {term, Bytes} when is_binary(Bytes) ->
-            List = erlang:binary_to_list(Bytes),
-            walk(List, Formatter1, fun rust_debug_fmt/2);
+            case markdown_formatter:get(Formatter1, binary_as_string, false) of
+                false ->
+                    List = erlang:binary_to_list(Bytes),
+                    walk(List, Formatter1, fun rust_debug_fmt/2);
+                true ->
+                    Formatter2 = markdown_formatter:format(Formatter1, "~0tp", [
+                        markdown_types:unicode_string_lossy(Bytes)
+                    ]),
+                    {cont, Formatter2}
+            end;
         {term, Boolean} when is_boolean(Boolean) ->
             Formatter2 = markdown_formatter:do(Formatter1, [
                 {format, "~ts", [Boolean]}

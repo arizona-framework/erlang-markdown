@@ -184,12 +184,20 @@ The issues relating to footnote definitions are:
 
 -include_lib("markdown/include/markdown_const.hrl").
 -include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_util.hrl").
 
 %% API
 -export([
     start/1,
     label_before/1,
-    label_at_marker/1
+    label_at_marker/1,
+    label_inside/1,
+    label_escape/1,
+    label_after/1,
+    whitespace_after/1,
+    cont_start/1,
+    cont_blank/1,
+    cont_filled/1
 ]).
 
 %%%=============================================================================
@@ -284,5 +292,216 @@ label_at_marker(Tokenizer1 = #markdown_tokenizer{current = {some, $^}}) ->
     State = markdown_state:next(gfm_footnote_definition_label_inside),
     {Tokenizer6, State};
 label_at_marker(Tokenizer) ->
+    State = markdown_state:nok(),
+    {Tokenizer, State}.
+
+-doc """
+In label.
+
+> 👉 **Note**: `cmark-gfm` prevents whitespace from occurring in footnote
+> definition labels.
+
+```markdown
+> | [^a]: b
+      ^
+```
+""".
+-spec label_inside(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+label_inside(
+    Tokenizer1 = #markdown_tokenizer{
+        current = Current, tokenize_state = TokenizeState1 = #markdown_tokenize_state{size = Size}
+    }
+) when
+    %% Too long.
+    Size > ?LINK_REFERENCE_SIZE_MAX orelse
+        %% Space or tab is not supported by GFM for some reason (`\n` and
+        %% `[` make sense).
+        (?is_option_none(Current) orelse
+            ?is_option_some(Current, $\t) orelse
+            ?is_option_some(Current, $\n) orelse ?is_option_some(Current, $\s) orelse ?is_option_some(Current, $[)) orelse
+        %% Closing brace with nothing.
+        (?is_option_some(Current, $]) andalso Size =:= 0)
+->
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{size = 0},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    State = markdown_state:nok(),
+    {Tokenizer2, State};
+label_inside(
+    Tokenizer1 = #markdown_tokenizer{current = {some, $]}, tokenize_state = TokenizeState1 = #markdown_tokenize_state{}}
+) ->
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{size = 0},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    Tokenizer3 = markdown_tokenizer:exit(Tokenizer2, data),
+    Tokenizer4 = markdown_tokenizer:exit(Tokenizer3, gfm_footnote_definition_label_string),
+    Tokenizer5 = markdown_tokenizer:enter(Tokenizer4, gfm_footnote_definition_label_marker),
+    Tokenizer6 = markdown_tokenizer:consume(Tokenizer5),
+    Tokenizer7 = markdown_tokenizer:exit(Tokenizer6, gfm_footnote_definition_label_marker),
+    Tokenizer8 = markdown_tokenizer:exit(Tokenizer7, gfm_footnote_definition_label),
+    State = markdown_state:next(gfm_footnote_definition_label_after),
+    {Tokenizer8, State};
+label_inside(
+    Tokenizer1 = #markdown_tokenizer{
+        current = {some, Current}, tokenize_state = TokenizeState1 = #markdown_tokenize_state{size = Size}
+    }
+) ->
+    Next =
+        case Current of
+            $\\ ->
+                gfm_footnote_definition_label_escape;
+            _ ->
+                gfm_footnote_definition_label_inside
+        end,
+    Tokenizer2 = markdown_tokenizer:consume(Tokenizer1),
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{size = Size + 1},
+    Tokenizer3 = Tokenizer2#markdown_tokenizer{tokenize_state = TokenizeState2},
+    State = markdown_state:next(Next),
+    {Tokenizer3, State}.
+
+-doc """
+After `\\`, at a special character.
+
+> 👉 **Note**: `cmark-gfm` currently does not support escaped brackets:
+> <https://github.com/github/cmark-gfm/issues/240>
+
+```markdown
+> | [^a\\*b]: c
+        ^
+```
+""".
+-spec label_escape(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+label_escape(
+    Tokenizer1 = #markdown_tokenizer{
+        current = {some, Current}, tokenize_state = TokenizeState1 = #markdown_tokenize_state{size = Size}
+    }
+) when Current =:= $[ orelse Current =:= $\\ orelse Current =:= $] ->
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{size = Size + 1},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    Tokenizer3 = markdown_tokenizer:consume(Tokenizer2),
+    State = markdown_state:next(gfm_footnote_definition_label_inside),
+    {Tokenizer3, State};
+label_escape(Tokenizer = #markdown_tokenizer{}) ->
+    State = markdown_state:retry(gfm_footnote_definition_label_inside),
+    {Tokenizer, State}.
+
+-doc """
+After definition label.
+
+```markdown
+> | [^a]: b
+        ^
+```
+""".
+-spec label_after(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+label_after(
+    Tokenizer1 = #markdown_tokenizer{
+        current = {some, $:},
+        events = Events,
+        parse_state = #markdown_parse_state{bytes = Bytes},
+        tokenize_state = TokenizeState1 = #markdown_tokenize_state{gfm_footnote_definitions = GfmFootnoteDefinitions1}
+    }
+) ->
+    End = markdown_util_skip:to_back(Events, markdown_vec:size(Events) - 1, [gfm_footnote_definition_label_string]),
+    IdPosition = markdown_position:from_exit_event(Events, End),
+    IdSlice = markdown_slice:from_position(Bytes, IdPosition),
+    IdSliceBytes = markdown_slice:as_binary(IdSlice),
+    Id = markdown_util_normalize_identifier:normalize_identifier(IdSliceBytes),
+    %% Note: we don't care about uniqueness.
+    %% It's likely that that doesn't happen very frequently.
+    %% It is more likely that it wastes precious time.
+    GfmFootnoteDefinitions2 = markdown_vec:push(GfmFootnoteDefinitions1, Id),
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{gfm_footnote_definitions = GfmFootnoteDefinitions2},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    Tokenizer3 = markdown_tokenizer:enter(Tokenizer2, definition_marker),
+    Tokenizer4 = markdown_tokenizer:consume(Tokenizer3),
+    Tokenizer5 = markdown_tokenizer:exit(Tokenizer4, definition_marker),
+    OkState = markdown_state:next(gfm_footnote_definition_whitespace_after),
+    NokState = markdown_state:nok(),
+    Tokenizer6 = markdown_tokenizer:attempt(Tokenizer5, OkState, NokState),
+    %% Any whitespace after the marker is eaten, forming indented code
+    %% is not possible.
+    %% No space is also fine, just like a block quote marker.
+    {Tokenizer7, SpaceOrTabState} = markdown_construct_partial_space_or_tab:space_or_tab_min_max(
+        Tokenizer6, 0, markdown_types:usize_max()
+    ),
+    State = markdown_state:next(SpaceOrTabState),
+    {Tokenizer7, State};
+label_after(Tokenizer = #markdown_tokenizer{}) ->
+    State = markdown_state:nok(),
+    {Tokenizer, State}.
+
+-doc """
+After definition prefix.
+
+```markdown
+> | [^a]: b
+          ^
+```
+""".
+-spec whitespace_after(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+whitespace_after(Tokenizer1 = #markdown_tokenizer{}) ->
+    Tokenizer2 = markdown_tokenizer:exit(Tokenizer1, gfm_footnote_definition_prefix),
+    State = markdown_state:ok(),
+    {Tokenizer2, State}.
+
+-doc """
+Start of footnote definition continuation.
+
+```markdown
+  | [^a]: b
+> |     c
+    ^
+```
+""".
+-spec cont_start(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+cont_start(Tokenizer1 = #markdown_tokenizer{}) ->
+    OkState = markdown_state:next(gfm_footnote_definition_cont_blank),
+    NokState = markdown_state:next(gfm_footnote_definition_cont_filled),
+    Tokenizer2 = markdown_tokenizer:check(Tokenizer1, OkState, NokState),
+    State = markdown_state:retry(blank_line_start),
+    {Tokenizer2, State}.
+
+-doc """
+Start of footnote definition continuation, at a blank line.
+
+```markdown
+  | [^a]: b
+> | ␠␠␊
+    ^
+```
+""".
+-spec cont_blank(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+cont_blank(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when Current =:= $\t orelse Current =:= $\s ->
+    {Tokenizer2, SpaceOrTabState} = markdown_construct_partial_space_or_tab:space_or_tab_min_max(
+        Tokenizer1, 0, ?TAB_SIZE
+    ),
+    State = markdown_state:retry(SpaceOrTabState),
+    {Tokenizer2, State};
+cont_blank(Tokenizer = #markdown_tokenizer{}) ->
+    State = markdown_state:ok(),
+    {Tokenizer, State}.
+
+-doc """
+Start of footnote definition continuation, at a filled line.
+
+```markdown
+  | [^a]: b
+> |     c
+    ^
+```
+""".
+-spec cont_filled(Tokenizer) -> {Tokenizer, State} when
+    Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+cont_filled(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when Current =:= $\t orelse Current =:= $\s ->
+    %% Consume exactly `TAB_SIZE`.
+    {Tokenizer2, SpaceOrTabState} = markdown_construct_partial_space_or_tab:space_or_tab_min_max(
+        Tokenizer1, ?TAB_SIZE, ?TAB_SIZE
+    ),
+    State = markdown_state:retry(SpaceOrTabState),
+    {Tokenizer2, State};
+cont_filled(Tokenizer = #markdown_tokenizer{}) ->
     State = markdown_state:nok(),
     {Tokenizer, State}.

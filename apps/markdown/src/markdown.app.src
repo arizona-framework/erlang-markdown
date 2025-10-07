@@ -37,6 +37,7 @@
         %% Hex.pm package related
         "markdown\\.app\\.src\\.script$",
         %% local development
+        "clipboard\\.erl$",
         "markdown_play\\.erl$"
     ]},
     {files, [

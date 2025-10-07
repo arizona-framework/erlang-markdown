@@ -91,7 +91,7 @@ counter_reset() ->
 
 -spec doc() -> binary().
 doc() ->
-    <<"user@example.com"/utf8>>.
+    <<"A call.[^a]\n\n[^a]: whatevs"/utf8>>.
     % <<"[foo [bar](/uri)](/uri)\n"/utf8>>.
     % <<"*foo __bar *baz bim__ bam*"/utf8>>.
     % <<"[bar](/foo)">>.
@@ -356,6 +356,7 @@ assert_eq!(result, "<div>\n<h1>Hello, world!</h1>\n</div>");
 to_html_with_options(MarkdownInput, Options = #markdown_options{}) when is_binary(MarkdownInput) ->
     case parse(MarkdownInput, Options) of
         {ok, {Events, ParseState}} ->
+            % io:format("~ts\n", [markdown_debug:rust_debug_string(Events)]),
             Bytes = markdown_parse_state:bytes(ParseState),
             {ok, markdown_html:compile(Events, Bytes, Options#markdown_options.compile)};
         Error = {error, _Message} ->

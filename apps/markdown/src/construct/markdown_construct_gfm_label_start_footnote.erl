@@ -107,18 +107,19 @@ open(Tokenizer1 = #markdown_tokenizer{current = {some, $^}}) ->
     Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, gfm_footnote_call_marker),
     Tokenizer3 = markdown_tokenizer:consume(Tokenizer2),
     Tokenizer4 = markdown_tokenizer:exit(Tokenizer3, gfm_footnote_call_marker),
-    Events4Length = markdown_vec:size(Tokenizer4#markdown_tokenizer.events),
+    Tokenizer5 = markdown_tokenizer:exit(Tokenizer4, gfm_footnote_call_label),
+    Events5Length = markdown_vec:size(Tokenizer5#markdown_tokenizer.events),
     LabelStart = markdown_label_start:new(
-        gfm_footnote_call, markdown_indices:new(Events4Length - 6, Events4Length - 1), false
+        gfm_footnote, markdown_indices:new(Events5Length - 6, Events5Length - 1), false
     ),
-    TokenizeState4 =
-        #markdown_tokenize_state{label_starts = LabelStarts4} = Tokenizer4#markdown_tokenizer.tokenize_state,
-    LabelStarts5 = markdown_vec:push(LabelStarts4, LabelStart),
-    TokenizeState5 = TokenizeState4#markdown_tokenize_state{label_starts = LabelStarts5},
-    Tokenizer5 = Tokenizer4#markdown_tokenizer{tokenize_state = TokenizeState5},
-    Tokenizer6 = markdown_tokenizer:register_resolver_before(Tokenizer5, label),
+    TokenizeState5 = Tokenizer4#markdown_tokenizer.tokenize_state,
+    LabelStarts5 = TokenizeState5#markdown_tokenize_state.label_starts,
+    LabelStarts6 = markdown_vec:push(LabelStarts5, LabelStart),
+    TokenizeState6 = TokenizeState5#markdown_tokenize_state{label_starts = LabelStarts6},
+    Tokenizer6 = Tokenizer5#markdown_tokenizer{tokenize_state = TokenizeState6},
+    Tokenizer7 = markdown_tokenizer:register_resolver_before(Tokenizer6, label),
     State = markdown_state:ok(),
-    {Tokenizer6, State};
+    {Tokenizer7, State};
 open(Tokenizer) ->
     State = markdown_state:nok(),
     {Tokenizer, State}.

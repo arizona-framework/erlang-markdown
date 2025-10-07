@@ -164,7 +164,7 @@ generate_autolink(
         case (not ImageAltInside) andalso ((not IsInLink) orelse (not IsGfmLiteral)) of
             true ->
                 CompileContext1_1 = CompileContext1,
-                CompileContext1_2 = markdown_html_compile_context:push(CompileContext1_1, <<"<a href=\"">>),
+                CompileContext1_2 = markdown_html_compile_context:push(CompileContext1_1, <<"<a href=\""/utf8>>),
                 Url1 =
                     case OptionProtocol of
                         {some, Protocol} ->
@@ -180,7 +180,7 @@ generate_autolink(
                             markdown_util_sanitize_uri:sanitize_with_protocols(Url1, ?SAFE_PROTOCOL_HREF)
                     end,
                 CompileContext1_3 = markdown_html_compile_context:push(CompileContext1_2, Url2),
-                CompileContext1_4 = markdown_html_compile_context:push(CompileContext1_3, <<"\">">>),
+                CompileContext1_4 = markdown_html_compile_context:push(CompileContext1_3, <<"\">"/utf8>>),
                 CompileContext1_4;
             false ->
                 CompileContext1
@@ -190,17 +190,277 @@ generate_autolink(
     CompileContext4 =
         case (not ImageAltInside) andalso ((not IsInLink) orelse (not IsGfmLiteral)) of
             true ->
-                markdown_html_compile_context:push(CompileContext3, <<"</a>">>);
+                markdown_html_compile_context:push(CompileContext3, <<"</a>"/utf8>>);
             false ->
                 CompileContext3
         end,
     CompileContext4.
 
 %% @private
+-doc """
+Generate a footnote section.
+""".
 -spec generate_footnote_section(CompileContext) -> CompileContext when
     CompileContext :: markdown_html_compile_context:t().
-generate_footnote_section(CompileContext1 = #markdown_html_compile_context{}) ->
-    CompileContext1.
+generate_footnote_section(
+    CompileContext1 = #markdown_html_compile_context{
+        gfm_footnote_definition_calls = GfmFootnoteDefinitionCalls,
+        options = #markdown_compile_options{
+            gfm_footnote_label_tag_name = OptionGfmFootnoteLabelTagName,
+            gfm_footnote_label_attributes = OptionGfmFootnoteLabelAttributes,
+            gfm_footnote_label = OptionGfmFootnoteLabel
+        }
+    }
+) ->
+    CompileContext2 = markdown_html_compile_context:line_ending_if_needed(CompileContext1),
+    CompileContext3 = markdown_html_compile_context:push(
+        CompileContext2, <<"<section data-footnotes=\"\" class=\"footnotes\"><"/utf8>>
+    ),
+    CompileContext4 =
+        case OptionGfmFootnoteLabelTagName of
+            {some, Value} ->
+                EncodedValue = markdown_util_encode:encode(
+                    Value, CompileContext3#markdown_html_compile_context.encode_html
+                ),
+                markdown_html_compile_context:push(CompileContext3, EncodedValue);
+            none ->
+                markdown_html_compile_context:push(CompileContext3, <<"h2"/utf8>>)
+        end,
+    CompileContext5 = markdown_html_compile_context:push(CompileContext4, <<" id=\"footnote-label\" "/utf8>>),
+    CompileContext6 =
+        case OptionGfmFootnoteLabelAttributes of
+            {some, GfmFootnoteLabelAttributes} ->
+                markdown_html_compile_context:push(CompileContext5, GfmFootnoteLabelAttributes);
+            none ->
+                markdown_html_compile_context:push(CompileContext5, <<"class=\"sr-only\""/utf8>>)
+        end,
+    CompileContext7 = markdown_html_compile_context:push(CompileContext6, <<">"/utf8>>),
+    CompileContext8 =
+        case OptionGfmFootnoteLabel of
+            {some, GfmFootnoteLabel} ->
+                EncodedGfmFootnoteLabel = markdown_util_encode:encode(
+                    GfmFootnoteLabel, CompileContext7#markdown_html_compile_context.encode_html
+                ),
+                markdown_html_compile_context:push(CompileContext7, EncodedGfmFootnoteLabel);
+            none ->
+                markdown_html_compile_context:push(CompileContext7, <<"Footnotes"/utf8>>)
+        end,
+    CompileContext9 = markdown_html_compile_context:push(CompileContext8, <<"</"/utf8>>),
+    CompileContext10 =
+        case OptionGfmFootnoteLabelTagName of
+            {some, GfmFootnoteLabelTagName} ->
+                EncodedGfmFootnoteLabelTagName = markdown_util_encode:encode(
+                    GfmFootnoteLabelTagName, CompileContext9#markdown_html_compile_context.encode_html
+                ),
+                markdown_html_compile_context:push(CompileContext9, EncodedGfmFootnoteLabelTagName);
+            none ->
+                markdown_html_compile_context:push(CompileContext9, <<"h2"/utf8>>)
+        end,
+    CompileContext11 = markdown_html_compile_context:push(CompileContext10, <<">"/utf8>>),
+    CompileContext12 = markdown_html_compile_context:line_ending(CompileContext11),
+    CompileContext13 = markdown_html_compile_context:push(CompileContext12, <<"<ol>"/utf8>>),
+    CompileContext14 = generate_footnote_section_loop(
+        CompileContext13, 0, markdown_vec:size(GfmFootnoteDefinitionCalls)
+    ),
+    CompileContext15 = markdown_html_compile_context:line_ending(CompileContext14),
+    CompileContext16 = markdown_html_compile_context:push(CompileContext15, <<"</ol>"/utf8>>),
+    CompileContext17 = markdown_html_compile_context:line_ending(CompileContext16),
+    CompileContext18 = markdown_html_compile_context:push(CompileContext17, <<"</section>"/utf8>>),
+    CompileContext19 = markdown_html_compile_context:line_ending(CompileContext18),
+    CompileContext19.
+
+%% @private
+-spec generate_footnote_section_loop(CompileContext, Index, Size) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t(),
+    Index :: non_neg_integer(),
+    Size :: non_neg_integer().
+generate_footnote_section_loop(CompileContext, Index, Size) when Index < Size ->
+    CompileContext2 = generate_footnote_item(CompileContext, Index),
+    generate_footnote_section_loop(CompileContext2, Index + 1, Size);
+generate_footnote_section_loop(CompileContext, _Index, _Size) ->
+    CompileContext.
+
+%% @private
+-doc """
+Generate a footnote item from a call.
+""".
+-spec generate_footnote_item(CompileContext, Index) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t(),
+    Index :: non_neg_integer().
+generate_footnote_item(
+    CompileContext1 = #markdown_html_compile_context{
+        gfm_footnote_definition_calls = GfmFootnoteDefinitionCalls,
+        gfm_footnote_definitions = GfmFootnoteDefinitions,
+        options = #markdown_compile_options{
+            gfm_footnote_clobber_prefix = OptionGfmFootnoteClobberPrefix,
+            gfm_footnote_back_label = OptionGfmFootnoteBackLabel
+        }
+    },
+    Index
+) ->
+    {Id, CallCount} = markdown_vec:get(GfmFootnoteDefinitionCalls, Index),
+    SafeId = markdown_util_sanitize_uri:sanitize(string:lowercase(Id)),
+
+    %% Find definition: we'll always find it.
+    DefinitionIndex = generate_footnote_item__find_definition_index(GfmFootnoteDefinitions, Id, 0),
+
+    CompileContext2 = markdown_html_compile_context:line_ending(CompileContext1),
+    CompileContext3 = markdown_html_compile_context:push(CompileContext2, <<"<li id=\""/utf8>>),
+    CompileContext4 =
+        case OptionGfmFootnoteClobberPrefix of
+            {some, GfmFootnoteClobberPrefix} ->
+                EncodedGfmFootnoteClobberPrefix = markdown_util_encode:encode(
+                    GfmFootnoteClobberPrefix, CompileContext3#markdown_html_compile_context.encode_html
+                ),
+                markdown_html_compile_context:push(CompileContext3, EncodedGfmFootnoteClobberPrefix);
+            none ->
+                markdown_html_compile_context:push(CompileContext3, <<"user-content-"/utf8>>)
+        end,
+    CompileContext5 = markdown_html_compile_context:push(CompileContext4, <<"fn-"/utf8>>),
+    CompileContext6 = markdown_html_compile_context:push(CompileContext5, SafeId),
+    CompileContext7 = markdown_html_compile_context:push(CompileContext6, <<"\">"/utf8>>),
+    CompileContext8 = markdown_html_compile_context:line_ending(CompileContext7),
+
+    %% Create one or more backreferences.
+    Backreferences = generate_footnote_item__build_backreferences(
+        SafeId,
+        CallCount,
+        OptionGfmFootnoteClobberPrefix,
+        OptionGfmFootnoteBackLabel,
+        CompileContext8#markdown_html_compile_context.encode_html,
+        0,
+        <<>>
+    ),
+
+    {_DefinitionId, Value} = markdown_vec:get(GfmFootnoteDefinitions, DefinitionIndex),
+    ValueBytes = Value,
+    ByteSize = byte_size(ValueBytes),
+
+    %% Move back past EOL.
+    ByteIndex = generate_footnote_item__skip_trailing_line_endings(ValueBytes, ByteSize),
+
+    %% Check if it ends in `</p>`.
+    CompileContext9 =
+        case
+            ByteIndex > 3 andalso
+                binary:at(ValueBytes, ByteIndex - 4) =:= $< andalso
+                binary:at(ValueBytes, ByteIndex - 3) =:= $/ andalso
+                binary:at(ValueBytes, ByteIndex - 2) =:= $p andalso
+                binary:at(ValueBytes, ByteIndex - 1) =:= $>
+        of
+            true ->
+                Before = binary:part(ValueBytes, 0, ByteIndex - 4),
+                After = binary:part(ValueBytes, ByteIndex - 4, ByteSize - (ByteIndex - 4)),
+                Result = <<Before/binary, " ", Backreferences/binary, After/binary>>,
+                markdown_html_compile_context:push(CompileContext8, Result);
+            false ->
+                CompileContext8_1 = markdown_html_compile_context:push(CompileContext8, Value),
+                CompileContext8_2 = markdown_html_compile_context:line_ending_if_needed(CompileContext8_1),
+                markdown_html_compile_context:push(CompileContext8_2, Backreferences)
+        end,
+    CompileContext10 = markdown_html_compile_context:line_ending_if_needed(CompileContext9),
+    CompileContext11 = markdown_html_compile_context:push(CompileContext10, <<"</li>"/utf8>>),
+    CompileContext11.
+
+%% @private
+-spec generate_footnote_item__find_definition_index(GfmFootnoteDefinitions, Id, Index) -> Index when
+    GfmFootnoteDefinitions :: markdown_vec:t({Id, Value}),
+    Id :: binary(),
+    Value :: binary(),
+    Index :: non_neg_integer().
+generate_footnote_item__find_definition_index(GfmFootnoteDefinitions, Id, Index) when
+    Index < ?markdown_vec_size(GfmFootnoteDefinitions)
+->
+    case markdown_vec:get(GfmFootnoteDefinitions, Index) of
+        {Id, _Value} ->
+            Index;
+        {_DefId, _Value} ->
+            generate_footnote_item__find_definition_index(GfmFootnoteDefinitions, Id, Index + 1)
+    end;
+generate_footnote_item__find_definition_index(_GfmFootnoteDefinitions, _Id, _Index) ->
+    ?'unreachable!'("expected definition", []).
+
+%% @private
+-spec generate_footnote_item__build_backreferences(
+    SafeId, CallCount, OptionGfmFootnoteClobberPrefix, OptionGfmFootnoteBackLabel, EncodeHtml, ReferenceIndex, Acc
+) -> Backreferences when
+    SafeId :: binary(),
+    CallCount :: non_neg_integer(),
+    OptionGfmFootnoteClobberPrefix :: markdown_option:t(binary()),
+    OptionGfmFootnoteBackLabel :: markdown_option:t(binary()),
+    EncodeHtml :: boolean(),
+    ReferenceIndex :: non_neg_integer(),
+    Acc :: binary(),
+    Backreferences :: binary().
+generate_footnote_item__build_backreferences(
+    SafeId, CallCount, OptionGfmFootnoteClobberPrefix, OptionGfmFootnoteBackLabel, EncodeHtml, ReferenceIndex, Acc
+) when ReferenceIndex < CallCount ->
+    Separator =
+        case ReferenceIndex of
+            0 -> <<>>;
+            _ -> <<" ">>
+        end,
+
+    ClobberPrefix =
+        case OptionGfmFootnoteClobberPrefix of
+            {some, GfmFootnoteClobberPrefix} ->
+                markdown_util_encode:encode(GfmFootnoteClobberPrefix, EncodeHtml);
+            none ->
+                <<"user-content-"/utf8>>
+        end,
+
+    RefSuffix =
+        case ReferenceIndex of
+            0 -> <<>>;
+            _ -> <<"-"/utf8, (erlang:integer_to_binary(ReferenceIndex + 1))/bytes>>
+        end,
+
+    BackLabel =
+        case OptionGfmFootnoteBackLabel of
+            {some, GfmFootnoteBackLabel} ->
+                markdown_util_encode:encode(GfmFootnoteBackLabel, EncodeHtml);
+            none ->
+                <<"Back to content"/utf8>>
+        end,
+
+    SuperScript =
+        case ReferenceIndex of
+            0 -> <<>>;
+            _ -> <<"<sup>"/utf8, (erlang:integer_to_binary(ReferenceIndex + 1))/bytes, "</sup>"/utf8>>
+        end,
+
+    BackRef =
+        <<Separator/bytes, "<a href=\"#"/utf8, ClobberPrefix/bytes, "fnref-"/utf8, SafeId/bytes, RefSuffix/bytes,
+            "\" data-footnote-backref=\"\" aria-label=\""/utf8, BackLabel/bytes,
+            "\" class=\"data-footnote-backref\">↩"/utf8, SuperScript/bytes, "</a>"/utf8>>,
+
+    NewAcc = <<Acc/bytes, BackRef/bytes>>,
+    generate_footnote_item__build_backreferences(
+        SafeId,
+        CallCount,
+        OptionGfmFootnoteClobberPrefix,
+        OptionGfmFootnoteBackLabel,
+        EncodeHtml,
+        ReferenceIndex + 1,
+        NewAcc
+    );
+generate_footnote_item__build_backreferences(
+    _SafeId, _CallCount, _OptionGfmFootnoteClobberPrefix, _OptionGfmFootnoteBackLabel, _EncodeHtml, _ReferenceIndex, Acc
+) ->
+    Acc.
+
+%% @private
+-spec generate_footnote_item__skip_trailing_line_endings(Bytes, ByteIndex) -> ByteIndex when
+    Bytes :: binary(),
+    ByteIndex :: non_neg_integer().
+generate_footnote_item__skip_trailing_line_endings(Bytes, ByteIndex) when ByteIndex > 0 ->
+    case binary:at(Bytes, ByteIndex - 1) of
+        $\n -> generate_footnote_item__skip_trailing_line_endings(Bytes, ByteIndex - 1);
+        $\r -> generate_footnote_item__skip_trailing_line_endings(Bytes, ByteIndex - 1);
+        _ -> ByteIndex
+    end;
+generate_footnote_item__skip_trailing_line_endings(_Bytes, ByteIndex) ->
+    ByteIndex.
 
 %% @private
 -doc """
@@ -333,8 +593,8 @@ enter(CompileContext1 = #markdown_html_compile_context{events = Events, index = 
             definition_destination_string -> on_enter_definition_destination_string(CompileContext1);
             emphasis -> on_enter_emphasis(CompileContext1);
             frontmatter -> on_enter_frontmatter(CompileContext1);
-            % gfm_footnote_definition -> on_enter_gfm_footnote_definition(CompileContext1);
-            % gfm_footnote_call -> on_enter_gfm_footnote_call(CompileContext1);
+            gfm_footnote_definition -> on_enter_gfm_footnote_definition(CompileContext1);
+            gfm_footnote_call -> on_enter_gfm_footnote_call(CompileContext1);
             gfm_strikethrough -> on_enter_gfm_strikethrough(CompileContext1);
             % gfm_table -> on_enter_gfm_table(CompileContext1);
             % gfm_table_body -> on_enter_gfm_table_body(CompileContext1);
@@ -432,6 +692,28 @@ Handle [`Enter`][Kind::Enter]:[`Frontmatter`][Name::Frontmatter].
 -spec on_enter_frontmatter(CompileContext) -> CompileContext when CompileContext :: markdown_html_compile_context:t().
 on_enter_frontmatter(CompileContext1 = #markdown_html_compile_context{}) ->
     CompileContext2 = markdown_html_compile_context:buffer(CompileContext1),
+    CompileContext2.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmFootnoteDefinition`][Name::GfmFootnoteDefinition].
+""".
+-spec on_enter_gfm_footnote_definition(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_enter_gfm_footnote_definition(CompileContext1 = #markdown_html_compile_context{tight_stack = TightStack1}) ->
+    TightStack2 = markdown_vec:push(TightStack1, false),
+    CompileContext2 = CompileContext1#markdown_html_compile_context{tight_stack = TightStack2},
+    CompileContext2.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmFootnoteCall`][Name::GfmFootnoteCall].
+""".
+-spec on_enter_gfm_footnote_call(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_enter_gfm_footnote_call(CompileContext1 = #markdown_html_compile_context{media_stack = MediaStack1}) ->
+    MediaStack2 = markdown_vec:push(MediaStack1, markdown_html_media:new(false, none, none, none, none, none)),
+    CompileContext2 = CompileContext1#markdown_html_compile_context{media_stack = MediaStack2},
     CompileContext2.
 
 %% @private
@@ -710,10 +992,10 @@ exit(CompileContext1 = #markdown_html_compile_context{events = Events, index = I
             gfm_autolink_literal_protocol -> on_exit_gfm_autolink_literal_protocol(CompileContext1);
             gfm_autolink_literal_www -> on_exit_gfm_autolink_literal_www(CompileContext1);
             gfm_autolink_literal_xmpp -> on_exit_gfm_autolink_literal_xmpp(CompileContext1);
-            % gfm_footnote_call -> on_exit_gfm_footnote_call(CompileContext1);
-            % gfm_footnote_definition_label_string -> on_exit_gfm_footnote_definition_label_string(CompileContext1);
-            % gfm_footnote_definition_prefix -> on_exit_gfm_footnote_definition_prefix(CompileContext1);
-            % gfm_footnote_definition -> on_exit_gfm_footnote_definition(CompileContext1);
+            gfm_footnote_call -> on_exit_gfm_footnote_call(CompileContext1);
+            gfm_footnote_definition_label_string -> on_exit_gfm_footnote_definition_label_string(CompileContext1);
+            gfm_footnote_definition_prefix -> on_exit_gfm_footnote_definition_prefix(CompileContext1);
+            gfm_footnote_definition -> on_exit_gfm_footnote_definition(CompileContext1);
             gfm_strikethrough -> on_exit_gfm_strikethrough(CompileContext1);
             % gfm_table -> on_exit_gfm_table(CompileContext1);
             % gfm_table_body -> on_exit_gfm_table_body(CompileContext1);
@@ -1088,6 +1370,181 @@ on_exit_gfm_autolink_literal_xmpp(
     SliceBytes = markdown_slice:as_binary(Slice),
     CompileContext2 = generate_autolink(CompileContext1, none, SliceBytes, true),
     CompileContext2.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmFootnoteCall`][Name::GfmFootnoteCall].
+""".
+-spec on_exit_gfm_footnote_call(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_footnote_call(
+    CompileContext1 = #markdown_html_compile_context{
+        bytes = Bytes,
+        gfm_footnote_definition_calls = GfmFootnoteDefinitionCalls1,
+        image_alt_inside = ImageAltInside,
+        media_stack = MediaStack1,
+        options = #markdown_compile_options{gfm_footnote_clobber_prefix = OptionGfmFootnoteClobberPrefix}
+    }
+) ->
+    {MediaStack2, Media} = markdown_vec:pop(MediaStack1),
+    {some, LabelId} = Media#markdown_html_media.label_id,
+    Slice = markdown_slice:from_indices(Bytes, LabelId),
+    Id = markdown_util_normalize_identifier:normalize_identifier(markdown_slice:as_binary(Slice)),
+    SafeId = markdown_util_sanitize_uri:sanitize(string:lowercase(Id)),
+
+    %% See if this has been called before.
+    CallIndex = on_exit_gfm_footnote_call__find_call_index(GfmFootnoteDefinitionCalls1, Id, 0),
+
+    %% Update or add the footnote call.
+    GfmFootnoteDefinitionCalls2 =
+        case CallIndex < markdown_vec:size(GfmFootnoteDefinitionCalls1) of
+            true ->
+                %% Increment existing call count.
+                markdown_vec:update(GfmFootnoteDefinitionCalls1, CallIndex, fun({CallId, Count}) ->
+                    {CallId, Count + 1}
+                end);
+            false ->
+                %% New footnote call.
+                markdown_vec:push(GfmFootnoteDefinitionCalls1, {Id, 1})
+        end,
+
+    CompileContext2 = CompileContext1#markdown_html_compile_context{
+        gfm_footnote_definition_calls = GfmFootnoteDefinitionCalls2,
+        media_stack = MediaStack2
+    },
+
+    %% No call is output in an image alt, though the definition and
+    %% backreferences are generated as if it was the case.
+    case ImageAltInside of
+        true ->
+            CompileContext2;
+        false ->
+            {_CallId, CallCount} = markdown_vec:get(GfmFootnoteDefinitionCalls2, CallIndex),
+            CompileContext3 = markdown_html_compile_context:push(CompileContext2, <<"<sup><a href=\"#">>),
+            CompileContext4 =
+                case OptionGfmFootnoteClobberPrefix of
+                    {some, GfmFootnoteClobberPrefix1} ->
+                        EncodedGfmFootnoteClobberPrefix1 = markdown_util_encode:encode(
+                            GfmFootnoteClobberPrefix1, CompileContext3#markdown_html_compile_context.encode_html
+                        ),
+                        markdown_html_compile_context:push(CompileContext3, EncodedGfmFootnoteClobberPrefix1);
+                    none ->
+                        markdown_html_compile_context:push(CompileContext3, <<"user-content-">>)
+                end,
+            CompileContext5 = markdown_html_compile_context:push(CompileContext4, <<"fn-">>),
+            CompileContext6 = markdown_html_compile_context:push(CompileContext5, SafeId),
+            CompileContext7 = markdown_html_compile_context:push(CompileContext6, <<"\" id=\"">>),
+            CompileContext8 =
+                case OptionGfmFootnoteClobberPrefix of
+                    {some, GfmFootnoteClobberPrefix2} ->
+                        EncodedGfmFootnoteClobberPrefix2 = markdown_util_encode:encode(
+                            GfmFootnoteClobberPrefix2, CompileContext7#markdown_html_compile_context.encode_html
+                        ),
+                        markdown_html_compile_context:push(CompileContext7, EncodedGfmFootnoteClobberPrefix2);
+                    none ->
+                        markdown_html_compile_context:push(CompileContext7, <<"user-content-">>)
+                end,
+            CompileContext9 = markdown_html_compile_context:push(CompileContext8, <<"fnref-">>),
+            CompileContext10 = markdown_html_compile_context:push(CompileContext9, SafeId),
+            CompileContext11 =
+                case CallCount > 1 of
+                    true ->
+                        CompileContext10_1 = markdown_html_compile_context:push(CompileContext10, <<"-">>),
+                        CompileContext10_2 = markdown_html_compile_context:push(
+                            CompileContext10_1, erlang:integer_to_binary(CallCount)
+                        ),
+                        CompileContext10_2;
+                    false ->
+                        CompileContext10
+                end,
+            CompileContext12 = markdown_html_compile_context:push(
+                CompileContext11, <<"\" data-footnote-ref=\"\" aria-describedby=\"footnote-label\">">>
+            ),
+            CompileContext13 = markdown_html_compile_context:push(
+                CompileContext12, erlang:integer_to_binary(CallIndex + 1)
+            ),
+            CompileContext14 = markdown_html_compile_context:push(CompileContext13, <<"</a></sup>">>),
+            CompileContext14
+    end.
+
+%% @private
+-spec on_exit_gfm_footnote_call__find_call_index(GfmFootnoteDefinitionCalls, Id, Index) -> Index when
+    GfmFootnoteDefinitionCalls :: markdown_vec:t({Id, Count}),
+    Id :: binary(),
+    Index :: markdown_vec:index(),
+    Count :: non_neg_integer().
+on_exit_gfm_footnote_call__find_call_index(GfmFootnoteDefinitionCalls, Id, Index) when
+    Index < ?markdown_vec_size(GfmFootnoteDefinitionCalls)
+->
+    case markdown_vec:get(GfmFootnoteDefinitionCalls, Index) of
+        {Id, _Count} ->
+            Index;
+        {_CallId, _Count} ->
+            on_exit_gfm_footnote_call__find_call_index(GfmFootnoteDefinitionCalls, Id, Index + 1)
+    end;
+on_exit_gfm_footnote_call__find_call_index(_GfmFootnoteDefinitionCalls, _Id, Index) ->
+    Index.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmFootnoteDefinitionLabelString`][Name::GfmFootnoteDefinitionLabelString].
+""".
+-spec on_exit_gfm_footnote_definition_label_string(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_footnote_definition_label_string(
+    CompileContext1 = #markdown_html_compile_context{
+        events = Events,
+        gfm_footnote_definition_stack = GfmFootnoteDefinitionStack1,
+        index = Index
+    }
+) ->
+    Position = markdown_position:from_exit_event(Events, Index),
+    Indices = markdown_position:to_indices(Position),
+    GfmFootnoteDefinitionStack2 = markdown_vec:push(GfmFootnoteDefinitionStack1, Indices),
+    CompileContext2 = CompileContext1#markdown_html_compile_context{
+        gfm_footnote_definition_stack = GfmFootnoteDefinitionStack2
+    },
+    CompileContext2.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmFootnoteDefinitionPrefix`][Name::GfmFootnoteDefinitionPrefix].
+""".
+-spec on_exit_gfm_footnote_definition_prefix(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_footnote_definition_prefix(CompileContext1 = #markdown_html_compile_context{}) ->
+    %% Drop the prefix.
+    {CompileContext2, _Buffer} = markdown_html_compile_context:resume(CompileContext1),
+    %% Capture everything until end of definition.
+    CompileContext3 = markdown_html_compile_context:buffer(CompileContext2),
+    CompileContext3.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmFootnoteDefinition`][Name::GfmFootnoteDefinition].
+""".
+-spec on_exit_gfm_footnote_definition(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_footnote_definition(
+    CompileContext1 = #markdown_html_compile_context{
+        bytes = Bytes,
+        gfm_footnote_definition_stack = GfmFootnoteDefinitionStack1,
+        gfm_footnote_definitions = GfmFootnoteDefinitions1,
+        tight_stack = TightStack1
+    }
+) ->
+    {CompileContext2, Value} = markdown_html_compile_context:resume(CompileContext1),
+    {GfmFootnoteDefinitionStack2, Indices} = markdown_vec:pop(GfmFootnoteDefinitionStack1),
+    {TightStack2, _} = markdown_vec:pop(TightStack1),
+    Slice = markdown_slice:from_indices(Bytes, Indices),
+    Id = markdown_util_normalize_identifier:normalize_identifier(markdown_slice:as_binary(Slice)),
+    GfmFootnoteDefinitions2 = markdown_vec:push(GfmFootnoteDefinitions1, {Id, Value}),
+    CompileContext3 = CompileContext2#markdown_html_compile_context{
+        gfm_footnote_definition_stack = GfmFootnoteDefinitionStack2,
+        gfm_footnote_definitions = GfmFootnoteDefinitions2,
+        tight_stack = TightStack2
+    },
+    CompileContext3.
 
 %% @private
 -doc """
