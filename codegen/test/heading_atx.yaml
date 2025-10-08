@@ -1,0 +1,216 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: heading_atx
+  created: 2025-10-08
+  modified: 2025-10-08
+to_html:
+- name: test_heading_atx_case_1
+  input: '# foo'
+  output: <h1>foo</h1>
+  message: should support a heading w/ rank 1
+- name: test_heading_atx_case_2
+  input: '## foo'
+  output: <h2>foo</h2>
+  message: should support a heading w/ rank 2
+- name: test_heading_atx_case_3
+  input: '### foo'
+  output: <h3>foo</h3>
+  message: should support a heading w/ rank 3
+- name: test_heading_atx_case_4
+  input: '#### foo'
+  output: <h4>foo</h4>
+  message: should support a heading w/ rank 4
+- name: test_heading_atx_case_5
+  input: '##### foo'
+  output: <h5>foo</h5>
+  message: should support a heading w/ rank 5
+- name: test_heading_atx_case_6
+  input: '###### foo'
+  output: <h6>foo</h6>
+  message: should support a heading w/ rank 6
+- name: test_heading_atx_case_7
+  input: '####### foo'
+  output: <p>####### foo</p>
+  message: should not support a heading w/ rank 7
+- name: test_heading_atx_case_8
+  input: '#5 bolt'
+  output: <p>#5 bolt</p>
+  message: should not support a heading for a number sign not followed by whitespace (1)
+- name: test_heading_atx_case_9
+  input: '#hashtag'
+  output: <p>#hashtag</p>
+  message: should not support a heading for a number sign not followed by whitespace (2)
+- name: test_heading_atx_case_10
+  input: "\\## foo"
+  output: <p>## foo</p>
+  message: should not support a heading for an escaped number sign
+- name: test_heading_atx_case_11
+  input: "# foo *bar* \\*baz\\*"
+  output: <h1>foo <em>bar</em> *baz*</h1>
+  message: should support text content in headings
+- name: test_heading_atx_case_12
+  input: '#                  foo                     '
+  output: <h1>foo</h1>
+  message: should support arbitrary initial and final whitespace
+- name: test_heading_atx_case_13
+  input: ' ### foo'
+  output: <h3>foo</h3>
+  message: should support an initial space
+- name: test_heading_atx_case_14
+  input: '  ## foo'
+  output: <h2>foo</h2>
+  message: should support two initial spaces
+- name: test_heading_atx_case_15
+  input: '   # foo'
+  output: <h1>foo</h1>
+  message: should support three initial spaces
+- name: test_heading_atx_case_16
+  input: '    # foo'
+  output: |-
+    <pre><code># foo
+    </code></pre>
+  message: should not support four initial spaces
+- name: test_heading_atx_case_17
+  input: |-
+    foo
+        # bar
+  output: |-
+    <p>foo
+    # bar</p>
+  message: should not support four initial spaces when interrupting
+- name: test_heading_atx_case_18
+  input: '## foo ##'
+  output: <h2>foo</h2>
+  message: should support a closing sequence (1)
+- name: test_heading_atx_case_19
+  input: '  ###   bar    ###'
+  output: <h3>bar</h3>
+  message: should support a closing sequence (2)
+- name: test_heading_atx_case_20
+  input: '# foo ##################################'
+  output: <h1>foo</h1>
+  message: should support a closing sequence w/ an arbitrary number of number signs (1)
+- name: test_heading_atx_case_21
+  input: '##### foo ##'
+  output: <h5>foo</h5>
+  message: should support a closing sequence w/ an arbitrary number of number signs (2)
+- name: test_heading_atx_case_22
+  input: '### foo ###     '
+  output: <h3>foo</h3>
+  message: should support trailing whitespace after a closing sequence
+- name: test_heading_atx_case_23
+  input: '### foo ### b'
+  output: '<h3>foo ### b</h3>'
+  message: should not support other content after a closing sequence
+- name: test_heading_atx_case_24
+  input: '# foo#'
+  output: <h1>foo#</h1>
+  message: should not support a closing sequence w/o whitespace before it
+- name: test_heading_atx_case_25
+  input: "### foo \\###"
+  output: '<h3>foo ###</h3>'
+  message: should not support an “escaped” closing sequence (1)
+- name: test_heading_atx_case_26
+  input: "## foo #\\##"
+  output: '<h2>foo ###</h2>'
+  message: should not support an “escaped” closing sequence (2)
+- name: test_heading_atx_case_27
+  input: "# foo \\#"
+  output: '<h1>foo #</h1>'
+  message: should not support an “escaped” closing sequence (3)
+- name: test_heading_atx_case_28
+  input: |-
+    ****
+    ## foo
+    ****
+  output: |-
+    <hr />
+    <h2>foo</h2>
+    <hr />
+  message: should support atx headings when not surrounded by blank lines
+- name: test_heading_atx_case_29
+  input: |-
+    Foo bar
+    # baz
+    Bar foo
+  output: |-
+    <p>Foo bar</p>
+    <h1>baz</h1>
+    <p>Bar foo</p>
+  message: should support atx headings interrupting paragraphs
+- name: test_heading_atx_case_30
+  input: "## \n#\n### ###"
+  output: |-
+    <h2></h2>
+    <h1></h1>
+    <h3></h3>
+  message: should support empty atx headings (1)
+- name: test_heading_atx_case_31
+  input: |-
+    #
+    a
+    # b
+  output: |-
+    <h1></h1>
+    <p>a</p>
+    <h1>b</h1>
+  message: should support empty atx headings (2)
+- name: test_heading_atx_case_32
+  input: |-
+    > #
+    a
+  output: |-
+    <blockquote>
+    <h1></h1>
+    </blockquote>
+    <p>a</p>
+  message: should not support lazyness (1)
+- name: test_heading_atx_case_33
+  input: |-
+    > a
+    #
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <h1></h1>
+  message: should not support lazyness (2)
+to_html_with_options:
+- name: test_heading_atx_case_34
+  input: '# a'
+  output: <p># a</p>
+  message: should support turning off heading (atx)
+  options:
+    extend: default
+    parse:
+      constructs:
+        heading_atx: false
+to_mdast:
+- name: test_heading_atx_case_35
+  input: '## alpha #'
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:heading(#markdown_mdast_heading{
+          depth = 2,
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"alpha">>,
+              position = {some, markdown_unist_position:new(1, 4, 3, 1, 9, 8)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 1, 11, 10)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 1, 11, 10)}
+    })
+  message: "should support heading (atx) as `Heading`s in mdast"
+  parse_options: ParseOptions::default()

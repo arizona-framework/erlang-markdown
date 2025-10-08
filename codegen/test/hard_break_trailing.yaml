@@ -9,8 +9,8 @@
 ---
 suite:
   name: hard_break_trailing
-  created: 2025-10-07
-  modified: 2025-10-07
+  created: 2025-10-08
+  modified: 2025-10-08
 to_html:
 - name: test_hard_break_trailing_case_1
   input: "foo  \nbaz"

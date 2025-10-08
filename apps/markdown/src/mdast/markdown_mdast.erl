@@ -280,8 +280,9 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
             on_enter_hard_break(CompileContext1);
         hard_break_trailing ->
             on_enter_hard_break(CompileContext1);
-        % %% on_enter_heading
-        % heading_atx -> on_enter_heading(CompileContext1);
+        %% on_enter_heading
+        heading_atx ->
+            on_enter_heading(CompileContext1);
         % heading_setext -> on_enter_heading(CompileContext1);
         % %% on_enter_html
         % html_flow -> on_enter_html(CompileContext1);
@@ -670,6 +671,25 @@ on_enter_hard_break(CompileContext1 = #markdown_mdast_compile_context{}) ->
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:[`HeadingAtx`][Name::HeadingAtx].
+""".
+-spec on_enter_heading(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_heading(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:heading(#markdown_mdast_heading{
+                % Will be set later.
+                depth = 0,
+                children = markdown_vec:new(),
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`Image`][Name::Image].
 """.
 -spec on_enter_image(CompileContext) -> {ok, CompileContext} when
@@ -979,8 +999,9 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
             on_exit_hard_break(CompileContext1);
         hard_break_trailing ->
             on_exit_hard_break(CompileContext1);
-        % %% on_exit_heading_atx_sequence
-        % heading_atx_sequence -> on_exit_heading_atx_sequence(CompileContext1);
+        %% on_exit_heading_atx_sequence
+        heading_atx_sequence ->
+            on_exit_heading_atx_sequence(CompileContext1);
         % %% on_exit_heading_setext
         % heading_setext -> on_exit_heading_setext(CompileContext1);
         % %% on_exit_heading_setext_underline_sequence
@@ -1464,6 +1485,39 @@ on_exit_hard_break(CompileContext1 = #markdown_mdast_compile_context{}) ->
         CompileContext3 = CompileContext2#markdown_mdast_compile_context{hard_break_after = true},
         {ok, CompileContext3}
     end.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`HeadingAtxSequence`][Name::HeadingAtxSequence].
+""".
+-spec on_exit_heading_atx_sequence(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_heading_atx_sequence(
+    CompileContext1 = #markdown_mdast_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    NodeMutFunc = fun on_exit_heading_atx_sequence__node_mut_func/2,
+    Depth = byte_size(SliceBytes),
+    {CompileContext2, none} = markdown_mdast_compile_context:tail_mut(CompileContext1, {some, Depth}, NodeMutFunc),
+    {ok, CompileContext2}.
+
+%% @private
+-spec on_exit_heading_atx_sequence__node_mut_func(Node, OptionDepth) -> {Node, OptionDepth} when
+    Node :: markdown_mdast_node:t(), OptionDepth :: markdown_option:t(Depth), Depth :: pos_integer().
+on_exit_heading_atx_sequence__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Heading1 = #markdown_mdast_heading{depth = 0}}, {some, Depth}
+) ->
+    Heading2 = Heading1#markdown_mdast_heading{depth = Depth},
+    Node2 = Node1#markdown_mdast_node{inner = Heading2},
+    {Node2, none};
+on_exit_heading_atx_sequence__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = #markdown_mdast_heading{}}, {some, _Depth}
+) ->
+    %% Depth already set, don't override
+    {Node1, none};
+on_exit_heading_atx_sequence__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Depth}) ->
+    ?'unreachable!'("expected heading on stack", []).
 
 %% @private
 -doc """
