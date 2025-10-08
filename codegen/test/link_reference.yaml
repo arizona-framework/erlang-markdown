@@ -1,0 +1,563 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: link_reference
+  created: 2025-10-08
+  modified: 2025-10-08
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_link_reference_case_1
+  input: |-
+    [bar]: /url "title"
+
+    [foo][bar]
+  output: "<p><a href=\"/url\" title=\"title\">foo</a></p>"
+  message: should support link references
+- name: test_link_reference_case_2
+  input: |-
+    [ref]: /uri
+
+    [link [foo [bar]]][ref]
+  output: "<p><a href=\"/uri\">link [foo [bar]]</a></p>"
+  message: should support balanced brackets in link references
+- name: test_link_reference_case_3
+  input: |-
+    [ref]: /uri
+
+    [link \[bar][ref]
+  output: "<p><a href=\"/uri\">link [bar</a></p>"
+  message: should support escaped brackets in link references
+- name: test_link_reference_case_4
+  input: |-
+    [ref]: /uri
+
+    [link *foo **bar** `#`*][ref]
+  output: "<p><a href=\"/uri\">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>"
+  message: should support content in link references
+- name: test_link_reference_case_5
+  input: |-
+    [ref]: /uri
+
+    [![moon](moon.jpg)][ref]
+  output: "<p><a href=\"/uri\"><img src=\"moon.jpg\" alt=\"moon\" /></a></p>"
+  message: should support images in link references
+- name: test_link_reference_case_6
+  input: |-
+    [ref]: /uri
+
+    [foo [bar](/uri)][ref]
+  output: "<p>[foo <a href=\"/uri\">bar</a>]<a href=\"/uri\">ref</a></p>"
+  message: should not support links in link references
+- name: test_link_reference_case_7
+  input: |-
+    [ref]: /uri
+
+    [foo *bar [baz][ref]*][ref]
+  output: "<p>[foo <em>bar <a href=\"/uri\">baz</a></em>]<a href=\"/uri\">ref</a></p>"
+  message: should not support deep links in link references
+- name: test_link_reference_case_8
+  input: |-
+    [ref]: /uri
+
+    *[foo*][ref]
+  output: "<p>*<a href=\"/uri\">foo*</a></p>"
+  message: should prefer link references over emphasis (1)
+- name: test_link_reference_case_9
+  input: |-
+    [ref]: /uri
+
+    [foo *bar][ref]
+  output: "<p><a href=\"/uri\">foo *bar</a></p>"
+  message: should prefer link references over emphasis (2)
+- name: test_link_reference_case_11
+  input: |-
+    [ref]: /uri
+
+    [foo`][ref]`
+  output: <p>[foo<code>][ref]</code></p>
+  message: should prefer code over link references
+- name: test_link_reference_case_12
+  input: |-
+    [ref]: /uri
+
+    [foo<http://example.com/?search=][ref]>
+  output: "<p>[foo<a href=\"http://example.com/?search=%5D%5Bref%5D\">http://example.com/?search=][ref]</a></p>"
+  message: should prefer autolinks over link references
+- name: test_link_reference_case_13
+  input: |-
+    [bar]: /url "title"
+
+    [foo][BaR]
+  output: "<p><a href=\"/url\" title=\"title\">foo</a></p>"
+  message: should match references to definitions case-insensitively
+- name: test_link_reference_case_14
+  input: |-
+    [ТОЛПОЙ]: /url
+
+    [Толпой][Толпой] is a Russian word.
+  output: "<p><a href=\"/url\">Толпой</a> is a Russian word.</p>"
+  message: should match references to definitions w/ unicode case-folding
+- name: test_link_reference_case_15
+  input: |-
+    [Foo
+      bar]: /url
+
+    [Baz][Foo bar]
+  output: "<p><a href=\"/url\">Baz</a></p>"
+  message: should match references to definitions w/ collapsing
+- name: test_link_reference_case_16
+  input: |-
+    [bar]: /url "title"
+
+    [foo] [bar]
+  output: "<p>[foo] <a href=\"/url\" title=\"title\">bar</a></p>"
+  message: should not support whitespace between label and reference (1)
+- name: test_link_reference_case_17
+  input: |-
+    [bar]: /url "title"
+
+    [foo]
+    [bar]
+  output: |-
+    <p>[foo]
+    <a href="/url" title="title">bar</a></p>
+  message: should not support whitespace between label and reference (2)
+- name: test_link_reference_case_18
+  input: |-
+    [foo]: /url1
+
+    [foo]: /url2
+
+    [bar][foo]
+  output: "<p><a href=\"/url1\">bar</a></p>"
+  message: should prefer earlier definitions
+- name: test_link_reference_case_19
+  input: |-
+    [foo!]: /url
+
+    [bar][foo\!]
+  output: <p>[bar][foo!]</p>
+  message: should not match references to definitions w/ escapes
+- name: test_link_reference_case_20
+  input: |-
+    [ref[]: /uri
+
+    [foo][ref[]
+  output: |-
+    <p>[ref[]: /uri</p>
+    <p>[foo][ref[]</p>
+  message: should not support references w/ brackets (1)
+- name: test_link_reference_case_21
+  input: |-
+    [ref[bar]]: /uri
+
+    [foo][ref[bar]]
+  output: |-
+    <p>[ref[bar]]: /uri</p>
+    <p>[foo][ref[bar]]</p>
+  message: should not support references w/ brackets (2)
+- name: test_link_reference_case_22
+  input: |-
+    [[[foo]]]: /url
+
+    [[[foo]]]
+  output: |-
+    <p>[[[foo]]]: /url</p>
+    <p>[[[foo]]]</p>
+  message: should not support references w/ brackets (3)
+- name: test_link_reference_case_23
+  input: |-
+    [ref\[]: /uri
+
+    [foo][ref\[]
+  output: "<p><a href=\"/uri\">foo</a></p>"
+  message: should match references to definitions w/ matching escapes
+- name: test_link_reference_case_24
+  input: |-
+    [bar\\]: /uri
+
+    [bar\\]
+  output: "<p><a href=\"/uri\">bar\\</a></p>"
+  message: should support escapes
+- name: test_link_reference_case_25
+  input: |-
+    []: /uri
+
+    []
+  output: |-
+    <p>[]: /uri</p>
+    <p>[]</p>
+  message: should not support empty references
+- name: test_link_reference_case_26
+  input: |-
+    [
+     ]: /uri
+
+    [
+     ]
+  output: |-
+    <p>[
+    ]: /uri</p>
+    <p>[
+    ]</p>
+  message: should not support blank references
+- name: test_link_reference_case_27
+  input: |-
+    [foo]: /url "title"
+
+    [foo][]
+  output: "<p><a href=\"/url\" title=\"title\">foo</a></p>"
+  message: should support collaped references
+- name: test_link_reference_case_28
+  input: |-
+    [*foo* bar]: /url "title"
+
+    [*foo* bar][]
+  output: "<p><a href=\"/url\" title=\"title\"><em>foo</em> bar</a></p>"
+  message: should support content in collaped references
+- name: test_link_reference_case_29
+  input: |-
+    [foo]: /url "title"
+
+    [Foo][]
+  output: "<p><a href=\"/url\" title=\"title\">Foo</a></p>"
+  message: should match references to definitions case-insensitively
+- name: test_link_reference_case_30
+  input: "[foo]: /url \"title\"\n\n[foo] \n[]"
+  output: |-
+    <p><a href="/url" title="title">foo</a>
+    []</p>
+  message: should not support whitespace between label and collaped reference
+- name: test_link_reference_case_31
+  input: |-
+    [foo]: /url "title"
+
+    [foo]
+  output: "<p><a href=\"/url\" title=\"title\">foo</a></p>"
+  message: should support shortcut references
+- name: test_link_reference_case_32
+  input: |-
+    [*foo* bar]: /url "title"
+
+    [*foo* bar]
+  output: "<p><a href=\"/url\" title=\"title\"><em>foo</em> bar</a></p>"
+  message: should support content in shortcut references (1)
+- name: test_link_reference_case_33
+  input: |-
+    [*foo* bar]: /url "title"
+
+    [[*foo* bar]]
+  output: "<p>[<a href=\"/url\" title=\"title\"><em>foo</em> bar</a>]</p>"
+  message: should support content in shortcut references (2)
+- name: test_link_reference_case_34
+  input: |-
+    [foo]: /url
+
+    [[bar [foo]
+  output: "<p>[[bar <a href=\"/url\">foo</a></p>"
+  message: should support content in shortcut references (3)
+- name: test_link_reference_case_35
+  input: |-
+    [foo]: /url "title"
+
+    [Foo]
+  output: "<p><a href=\"/url\" title=\"title\">Foo</a></p>"
+  message: should match shortcut references to definitions case-insensitively
+- name: test_link_reference_case_36
+  input: |-
+    [foo]: /url
+
+    [foo] bar
+  output: "<p><a href=\"/url\">foo</a> bar</p>"
+  message: should support whitespace after a shortcut reference
+- name: test_link_reference_case_37
+  input: |-
+    [foo]: /url "title"
+
+    \[foo]
+  output: <p>[foo]</p>
+  message: should “support” an escaped shortcut reference
+- name: test_link_reference_case_38
+  input: |-
+    [foo*]: /url
+
+    *[foo*]
+  output: "<p>*<a href=\"/url\">foo*</a></p>"
+  message: should prefer shortcut references over emphasis
+- name: test_link_reference_case_39
+  input: |-
+    [foo]: /url1
+    [bar]: /url2
+
+    [foo][bar]
+  output: "<p><a href=\"/url2\">foo</a></p>"
+  message: should prefer full references over shortcut references
+- name: test_link_reference_case_40
+  input: |-
+    [foo]: /url1
+
+    [foo][]
+  output: "<p><a href=\"/url1\">foo</a></p>"
+  message: should prefer collapsed references over shortcut references
+- name: test_link_reference_case_41
+  input: |-
+    [foo]: /url
+
+    [foo]()
+  output: "<p><a href=\"\">foo</a></p>"
+  message: should prefer resources over shortcut references (1)
+- name: test_link_reference_case_42
+  input: |-
+    [foo]: /url "title"
+
+    [foo]()
+  output: "<p><a href=\"\">foo</a></p>"
+  message: should prefer resources over shortcut references (2)
+- name: test_link_reference_case_43
+  input: |-
+    [foo]: /url1
+
+    [foo](not a link)
+  output: "<p><a href=\"/url1\">foo</a>(not a link)</p>"
+  message: should support shortcut references when followed by nonconforming resources
+- name: test_link_reference_case_44
+  input: |-
+    [baz]: /url
+
+    [foo][bar][baz]
+  output: "<p>[foo]<a href=\"/url\">bar</a></p>"
+  message: stable/unstable (1)
+- name: test_link_reference_case_45
+  input: |-
+    [baz]: /url1
+    [bar]: /url2
+
+    [foo][bar][baz]
+  output: "<p><a href=\"/url2\">foo</a><a href=\"/url1\">baz</a></p>"
+  message: stable/unstable (2)
+- name: test_link_reference_case_46
+  input: |-
+    [baz]: /url1
+    [foo]: /url2
+
+    [foo][bar][baz]
+  output: "<p>[foo]<a href=\"/url1\">bar</a></p>"
+  message: stable/unstable (3)
+- name: test_link_reference_case_47
+  input: "[x]: /url\n\n[x][ ], [x][\t], [x][\n], [x][]"
+  output: "<p>[x][ ], [x][\t], [x][\n], <a href=\"/url\">x</a></p>"
+  message: should not support whitespace-only full references
+  comment: "Extra This matches most implimentations, but is not strictly according to spec. See: <https://github.com/commonmark/commonmark-spec/issues/653>"
+- name: test_link_reference_case_48
+  input: |-
+    [+]: example.com
+    [\;]: example.com
+
+    Will it link? [\+], [;]
+  output: <p>Will it link? [+], [;]</p>
+  message: should not support mismatched character escapes in shortcuts
+  comment: 'See also: <https://github.com/commonmark/commonmark-spec/issues/616>'
+- name: test_link_reference_case_49
+  input: |-
+    [©]: example.com
+    [&amp;]: example.com
+
+    Will it link? [&copy;], [&]
+  output: <p>Will it link? [©], [&amp;]</p>
+  message: should not support mismatched character references in shortcuts
+- name: test_link_reference_case_50
+  input: |-
+    [+]: example.com
+    [\;]: example.com
+
+    Will it link? [\+][], [;][]
+  output: <p>Will it link? [+][], [;][]</p>
+  message: should not support mismatched character escapes in collapsed
+- name: test_link_reference_case_51
+  input: |-
+    [©]: example.com
+    [&amp;]: example.com
+
+    Will it link? [&copy;][], [&][]
+  output: <p>Will it link? [©][], [&amp;][]</p>
+  message: should not support mismatched character references in collapsed
+- name: test_link_reference_case_52
+  input: |-
+    [+]: example.com
+    [\;]: example.com
+
+    Will it link? [a][ \+ ], [b][ ; ]
+  output: <p>Will it link? [a][ + ], [b][ ; ]</p>
+  message: should not support mismatched character escapes in fulls
+- name: test_link_reference_case_53
+  input: |-
+    [©]: example.com
+    [&amp;]: example.com
+
+    Will it link? [a][ &copy; ], [b][ & ]
+  output: <p>Will it link? [a][ © ], [b][ &amp; ]</p>
+  message: should not support mismatched character references in fulls
+- name: test_link_reference_case_54
+  input: |-
+    [*f*][]
+    [&semi;][]
+    [\;][]
+    [;][]
+    [*f*&semi;][]
+    [*f*\;][]
+    [*f*;][]
+
+    [*f*]: alpha
+    [&semi;]: bravo
+    [\;]: charlie
+    [;]: delta
+    [*f*&semi;]: echo
+    [*f*\;]: foxtrot
+    [*f*;]: golf
+  output: |
+    <p><a href="alpha"><em>f</em></a>
+    <a href="bravo">;</a>
+    <a href="charlie">;</a>
+    <a href="delta">;</a>
+    <a href="echo"><em>f</em>;</a>
+    <a href="foxtrot"><em>f</em>;</a>
+    <a href="golf"><em>f</em>;</a></p>
+  message: should properly handle labels w/ character references and -escapes, and phrasing
+- name: test_link_reference_case_55
+  input: |-
+    [xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]: a
+    [y][xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
+  output: "<p><a href=\"a\">y</a></p>"
+  message: "should support 999 characters in a reference"
+- name: test_link_reference_case_56
+  input: |-
+    [xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]: a
+    [y][xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
+  output: "<p>[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]: a\n[y][xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]</p>"
+  message: "should not support 1000 characters in a reference"
+- name: test_link_reference_case_57
+  input: |-
+    [x] missing-colon
+
+    Will it link? [x]
+  output: |-
+    <p>[x] missing-colon</p>
+    <p>Will it link? [x]</p>
+  message: should not fail on a missing colon in a definition
+to_html_with_options:
+- name: test_link_reference_case_10
+  input: |-
+    [ref]: /uri
+
+    [foo <bar attr="][ref]">
+  output: "<p>[foo <bar attr=\"][ref]\"></p>"
+  message: should prefer HTML over link references
+  options: danger
+- name: test_link_reference_case_58
+  input: '[x]()'
+  output: <p>[x]()</p>
+  message: should support turning off label start (link)
+  options:
+    extend: default
+    parse:
+      constructs:
+        label_start_link: false
+- name: test_link_reference_case_59
+  input: '[x]()'
+  output: <p>[x]()</p>
+  message: should support turning off label end
+  options:
+    extend: default
+    parse:
+      constructs:
+        label_end: false
+to_mdast:
+- name: test_link_reference_case_60
+  input: |-
+    [x]: y
+
+    a [x] b [x][] c [d][x] e.
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:definition(#markdown_mdast_definition{
+          identifier = <<"x">>,
+          label = {some, <<"x">>},
+          url = <<"y">>,
+          title = none,
+          position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+        }),
+        markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"a ">>,
+              position = {some, markdown_unist_position:new(3, 1, 8, 3, 3, 10)}
+            }),
+            markdown_mdast_node:link_reference(#markdown_mdast_link_reference{
+              reference_kind = shortcut,
+              identifier = <<"x">>,
+              label = {some, <<"x">>},
+              children = ?'vec!'([
+                markdown_mdast_node:text(#markdown_mdast_text{
+                  value = <<"x">>,
+                  position = {some, markdown_unist_position:new(3, 4, 11, 3, 5, 12)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(3, 3, 10, 3, 6, 13)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" b ">>,
+              position = {some, markdown_unist_position:new(3, 6, 13, 3, 9, 16)}
+            }),
+            markdown_mdast_node:link_reference(#markdown_mdast_link_reference{
+              reference_kind = collapsed,
+              identifier = <<"x">>,
+              label = {some, <<"x">>},
+              children = ?'vec!'([
+                markdown_mdast_node:text(#markdown_mdast_text{
+                  value = <<"x">>,
+                  position = {some, markdown_unist_position:new(3, 10, 17, 3, 11, 18)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(3, 9, 16, 3, 14, 21)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" c ">>,
+              position = {some, markdown_unist_position:new(3, 14, 21, 3, 17, 24)}
+            }),
+            markdown_mdast_node:link_reference(#markdown_mdast_link_reference{
+              reference_kind = full,
+              identifier = <<"x">>,
+              label = {some, <<"x">>},
+              children = ?'vec!'([
+                markdown_mdast_node:text(#markdown_mdast_text{
+                  value = <<"d">>,
+                  position = {some, markdown_unist_position:new(3, 18, 25, 3, 19, 26)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(3, 17, 24, 3, 23, 30)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" e.">>,
+              position = {some, markdown_unist_position:new(3, 23, 30, 3, 26, 33)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(3, 1, 8, 3, 26, 33)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 3, 26, 33)}
+    })
+  message: "should support link (reference) as `LinkReference`s in mdast"
+  parse_options: ParseOptions::default()
