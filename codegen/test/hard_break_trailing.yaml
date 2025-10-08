@@ -1,0 +1,149 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: hard_break_trailing
+  created: 2025-10-07
+  modified: 2025-10-07
+to_html:
+- name: test_hard_break_trailing_case_1
+  input: "foo  \nbaz"
+  output: |-
+    <p>foo<br />
+    baz</p>
+  message: should support two trailing spaces to form a hard break
+- name: test_hard_break_trailing_case_2
+  input: "foo       \nbaz"
+  output: |-
+    <p>foo<br />
+    baz</p>
+  message: should support multiple trailing spaces
+- name: test_hard_break_trailing_case_3
+  input: "foo  \n     bar"
+  output: |-
+    <p>foo<br />
+    bar</p>
+  message: should support leading spaces after a trailing hard break
+- name: test_hard_break_trailing_case_4
+  input: "*foo  \nbar*"
+  output: |-
+    <p><em>foo<br />
+    bar</em></p>
+  message: should support trailing hard breaks in emphasis
+- name: test_hard_break_trailing_case_5
+  input: "`code  \ntext`"
+  output: <p><code>code   text</code></p>
+  message: should not support trailing hard breaks in code
+- name: test_hard_break_trailing_case_6
+  input: 'foo  '
+  output: <p>foo</p>
+  message: should not support trailing hard breaks at the end of a paragraph
+- name: test_hard_break_trailing_case_7
+  input: '### foo  '
+  output: <h3>foo</h3>
+  message: should not support trailing hard breaks at the end of a heading
+- name: test_hard_break_trailing_case_8
+  input: "aaa  \t\nbb"
+  output: |-
+    <p>aaa
+    bb</p>
+  message: should support a mixed line suffix (1)
+- name: test_hard_break_trailing_case_9
+  input: "aaa\t  \nbb"
+  output: |-
+    <p>aaa
+    bb</p>
+  message: should support a mixed line suffix (2)
+- name: test_hard_break_trailing_case_10
+  input: "aaa  \t  \nbb"
+  output: |-
+    <p>aaa
+    bb</p>
+  message: should support a mixed line suffix (3)
+- name: test_hard_break_trailing_case_11
+  input: "aaa\0  \nbb"
+  output: |-
+    <p>aaa�<br />
+    bb</p>
+  message: should support a hard break after a replacement character
+- name: test_hard_break_trailing_case_12
+  input: "aaa\0\t\nbb"
+  output: |-
+    <p>aaa�
+    bb</p>
+  message: should support a line suffix after a replacement character
+- name: test_hard_break_trailing_case_13
+  input: "*a*  \nbb"
+  output: |-
+    <p><em>a</em><br />
+    bb</p>
+  message: should support a hard break after a span
+- name: test_hard_break_trailing_case_14
+  input: "*a*\t\nbb"
+  output: |-
+    <p><em>a</em>
+    bb</p>
+  message: should support a line suffix after a span
+- name: test_hard_break_trailing_case_15
+  input: "*a*  \t\nbb"
+  output: |-
+    <p><em>a</em>
+    bb</p>
+  message: should support a mixed line suffix after a span (1)
+- name: test_hard_break_trailing_case_16
+  input: "*a*\t  \nbb"
+  output: |-
+    <p><em>a</em>
+    bb</p>
+  message: should support a mixed line suffix after a span (2)
+- name: test_hard_break_trailing_case_17
+  input: "*a*  \t  \nbb"
+  output: |-
+    <p><em>a</em>
+    bb</p>
+  message: should support a mixed line suffix after a span (3)
+to_html_with_options:
+- name: test_hard_break_trailing_case_18
+  input: "a  \nb"
+  output: |-
+    <p>a
+    b</p>
+  message: should support turning off hard break (trailing)
+  options:
+    extend: default
+    parse:
+      constructs:
+        hard_break_trailing: false
+to_mdast:
+- name: test_hard_break_trailing_case_19
+  input: "a  \nb."
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"a">>,
+              position = {some, markdown_unist_position:new(1, 1, 0, 1, 2, 1)}
+            }),
+            markdown_mdast_node:break(#markdown_mdast_break{
+              position = {some, markdown_unist_position:new(1, 2, 1, 2, 1, 4)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"b.">>,
+              position = {some, markdown_unist_position:new(2, 1, 4, 2, 3, 6)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 2, 3, 6)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 2, 3, 6)}
+    })
+  message: "should support hard break (trailing) as `Break`s in mdast"
+  parse_options: ParseOptions::default()
