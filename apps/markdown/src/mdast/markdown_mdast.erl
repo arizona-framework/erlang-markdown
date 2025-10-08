@@ -283,7 +283,8 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         %% on_enter_heading
         heading_atx ->
             on_enter_heading(CompileContext1);
-        % heading_setext -> on_enter_heading(CompileContext1);
+        heading_setext ->
+            on_enter_heading(CompileContext1);
         % %% on_enter_html
         % html_flow -> on_enter_html(CompileContext1);
         % html_text -> on_enter_html(CompileContext1);
@@ -1002,12 +1003,15 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         %% on_exit_heading_atx_sequence
         heading_atx_sequence ->
             on_exit_heading_atx_sequence(CompileContext1);
-        % %% on_exit_heading_setext
-        % heading_setext -> on_exit_heading_setext(CompileContext1);
-        % %% on_exit_heading_setext_underline_sequence
-        % heading_setext_underline_sequence -> on_exit_heading_setext_underline_sequence(CompileContext1);
-        % %% on_exit_heading_setext_text
-        % heading_setext_text -> on_exit_heading_setext_text(CompileContext1);
+        %% on_exit_heading_setext
+        heading_setext ->
+            on_exit_heading_setext(CompileContext1);
+        %% on_exit_heading_setext_underline_sequence
+        heading_setext_underline_sequence ->
+            on_exit_heading_setext_underline_sequence(CompileContext1);
+        %% on_exit_heading_setext_text
+        heading_setext_text ->
+            on_exit_heading_setext_text(CompileContext1);
         % %% on_exit_html
         % html_flow -> on_exit_html(CompileContext1);
         % html_text -> on_exit_html(CompileContext1);
@@ -1517,6 +1521,62 @@ on_exit_heading_atx_sequence__node_mut_func(
     %% Depth already set, don't override
     {Node1, none};
 on_exit_heading_atx_sequence__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Depth}) ->
+    ?'unreachable!'("expected heading on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`HeadingSetext`][Name::HeadingSetext].
+""".
+-spec on_exit_heading_setext(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_heading_setext(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    maybe
+        CompileContext2 = CompileContext1#markdown_mdast_compile_context{heading_setext_text_after = false},
+        {ok, CompileContext3} ?= on_exit(CompileContext2),
+        {ok, CompileContext3}
+    end.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`HeadingSetextText`][Name::HeadingSetextText].
+""".
+-spec on_exit_heading_setext_text(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_heading_setext_text(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{heading_setext_text_after = true},
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`HeadingSetextUnderlineSequence`][Name::HeadingSetextUnderlineSequence].
+""".
+-spec on_exit_heading_setext_underline_sequence(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_heading_setext_underline_sequence(
+    CompileContext1 = #markdown_mdast_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    SliceBytes = markdown_slice:as_binary(Slice),
+    Head = binary:first(SliceBytes),
+    Depth =
+        case Head of
+            $- -> 2;
+            _ -> 1
+        end,
+    NodeMutFunc = fun on_exit_heading_setext_underline_sequence__node_mut_func/2,
+    {CompileContext2, none} = markdown_mdast_compile_context:tail_mut(CompileContext1, {some, Depth}, NodeMutFunc),
+    {ok, CompileContext2}.
+
+%% @private
+-spec on_exit_heading_setext_underline_sequence__node_mut_func(Node, OptionDepth) -> {Node, OptionDepth} when
+    Node :: markdown_mdast_node:t(), OptionDepth :: markdown_option:t(Depth), Depth :: pos_integer().
+on_exit_heading_setext_underline_sequence__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Heading1 = #markdown_mdast_heading{}}, {some, Depth}
+) ->
+    Heading2 = Heading1#markdown_mdast_heading{depth = Depth},
+    Node2 = Node1#markdown_mdast_node{inner = Heading2},
+    {Node2, none};
+on_exit_heading_setext_underline_sequence__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Depth}) ->
     ?'unreachable!'("expected heading on stack", []).
 
 %% @private

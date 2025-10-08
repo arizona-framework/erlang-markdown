@@ -1,0 +1,434 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: heading_setext
+  created: 2025-10-08
+  modified: 2025-10-08
+to_html:
+- name: test_heading_setext_case_1
+  input: |-
+    Foo *bar*
+    =========
+  output: <h1>Foo <em>bar</em></h1>
+  message: should support a heading w/ an equals to (rank of 1)
+- name: test_heading_setext_case_2
+  input: |-
+    Foo *bar*
+    ---------
+  output: <h2>Foo <em>bar</em></h2>
+  message: should support a heading w/ a dash (rank of 2)
+- name: test_heading_setext_case_3
+  input: |-
+    Foo *bar
+    baz*
+    ====
+  output: |-
+    <h1>Foo <em>bar
+    baz</em></h1>
+  message: should support line endings in setext headings
+- name: test_heading_setext_case_4
+  input: "  Foo *bar\nbaz*\t\n===="
+  output: |-
+    <h1>Foo <em>bar
+    baz</em></h1>
+  message: should not include initial and final whitespace around content
+- name: test_heading_setext_case_5
+  input: |-
+    Foo
+    -------------------------
+  output: <h2>Foo</h2>
+  message: should support long underlines
+- name: test_heading_setext_case_6
+  input: |-
+    Foo
+    =
+  output: <h1>Foo</h1>
+  message: should support short underlines
+- name: test_heading_setext_case_7
+  input: |2-
+     Foo
+      ===
+  output: <h1>Foo</h1>
+  message: should support indented content w/ 1 space
+- name: test_heading_setext_case_8
+  input: |2-
+      Foo
+    ---
+  output: <h2>Foo</h2>
+  message: should support indented content w/ 2 spaces
+- name: test_heading_setext_case_9
+  input: |2-
+       Foo
+    ---
+  output: <h2>Foo</h2>
+  message: should support indented content w/ 3 spaces
+- name: test_heading_setext_case_10
+  input: |2-
+        Foo
+        ---
+  output: |-
+    <pre><code>Foo
+    ---
+    </code></pre>
+  message: should not support too much indented content (1)
+- name: test_heading_setext_case_11
+  input: |2-
+        Foo
+    ---
+  output: |-
+    <pre><code>Foo
+    </code></pre>
+    <hr />
+  message: should not support too much indented content (2)
+- name: test_heading_setext_case_12
+  input: "Foo\n   ----      "
+  output: <h2>Foo</h2>
+  message: should support initial and final whitespace around the underline
+- name: test_heading_setext_case_13
+  input: |-
+    Foo
+       =
+  output: <h1>Foo</h1>
+  message: should support whitespace before underline
+- name: test_heading_setext_case_14
+  input: |-
+    Foo
+        =
+  output: |-
+    <p>Foo
+    =</p>
+  message: should not support too much whitespace before underline (1)
+- name: test_heading_setext_case_15
+  input: "Foo\n\t="
+  output: |-
+    <p>Foo
+    =</p>
+  message: should not support too much whitespace before underline (2)
+- name: test_heading_setext_case_16
+  input: |-
+    Foo
+    = =
+  output: |-
+    <p>Foo
+    = =</p>
+  message: should not support whitespace in the underline (1)
+- name: test_heading_setext_case_17
+  input: |-
+    Foo
+    --- -
+  output: |-
+    <p>Foo</p>
+    <hr />
+  message: should not support whitespace in the underline (2)
+- name: test_heading_setext_case_18
+  input: "Foo  \n-----"
+  output: <h2>Foo</h2>
+  message: should not support a hard break w/ spaces at the end
+- name: test_heading_setext_case_19
+  input: |-
+    Foo\
+    -----
+  output: "<h2>Foo\\</h2>"
+  message: should not support a hard break w/ backslash at the end
+- name: test_heading_setext_case_20
+  input: |-
+    `Foo
+    ----
+    `
+  output: |-
+    <h2>`Foo</h2>
+    <p>`</p>
+  message: should precede over inline constructs (1)
+- name: test_heading_setext_case_21
+  input: |-
+    <a title="a lot
+    ---
+    of dashes"/>
+  output: |-
+    <h2>&lt;a title=&quot;a lot</h2>
+    <p>of dashes&quot;/&gt;</p>
+  message: should precede over inline constructs (2)
+- name: test_heading_setext_case_22
+  input: |-
+    > Foo
+    ---
+  output: |-
+    <blockquote>
+    <p>Foo</p>
+    </blockquote>
+    <hr />
+  message: should not allow underline to be lazy (1)
+- name: test_heading_setext_case_23
+  input: |-
+    > foo
+    bar
+    ===
+  output: |-
+    <blockquote>
+    <p>foo
+    bar
+    ===</p>
+    </blockquote>
+  message: should not allow underline to be lazy (2)
+- name: test_heading_setext_case_24
+  input: |-
+    - Foo
+    ---
+  output: |-
+    <ul>
+    <li>Foo</li>
+    </ul>
+    <hr />
+  message: should not allow underline to be lazy (3)
+- name: test_heading_setext_case_25
+  input: |-
+    Foo
+    Bar
+    ---
+  output: |-
+    <h2>Foo
+    Bar</h2>
+  message: should support line endings in setext headings
+- name: test_heading_setext_case_26
+  input: |-
+    ---
+    Foo
+    ---
+    Bar
+    ---
+    Baz
+  output: |-
+    <hr />
+    <h2>Foo</h2>
+    <h2>Bar</h2>
+    <p>Baz</p>
+  message: should support adjacent setext headings
+- name: test_heading_setext_case_27
+  input: |2-
+
+    ====
+  output: <p>====</p>
+  message: should not support empty setext headings
+- name: test_heading_setext_case_28
+  input: |-
+    ---
+    ---
+  output: |-
+    <hr />
+    <hr />
+  message: should prefer other constructs over setext headings (1)
+- name: test_heading_setext_case_29
+  input: |-
+    - foo
+    -----
+  output: |-
+    <ul>
+    <li>foo</li>
+    </ul>
+    <hr />
+  message: should prefer other constructs over setext headings (2)
+- name: test_heading_setext_case_30
+  input: |2-
+        foo
+    ---
+  output: |-
+    <pre><code>foo
+    </code></pre>
+    <hr />
+  message: should prefer other constructs over setext headings (3)
+- name: test_heading_setext_case_31
+  input: |-
+    > foo
+    -----
+  output: |-
+    <blockquote>
+    <p>foo</p>
+    </blockquote>
+    <hr />
+  message: should prefer other constructs over setext headings (4)
+- name: test_heading_setext_case_32
+  input: |-
+    \> foo
+    ------
+  output: <h2>&gt; foo</h2>
+  message: should support starting w/ character escapes
+- name: test_heading_setext_case_33
+  input: |-
+    Foo
+    bar
+    ---
+    baz
+  output: |-
+    <h2>Foo
+    bar</h2>
+    <p>baz</p>
+  message: paragraph and heading interplay (1)
+- name: test_heading_setext_case_34
+  input: |-
+    Foo
+
+    bar
+    ---
+    baz
+  output: |-
+    <p>Foo</p>
+    <h2>bar</h2>
+    <p>baz</p>
+  message: paragraph and heading interplay (2)
+- name: test_heading_setext_case_35
+  input: |-
+    Foo
+    bar
+
+    ---
+
+    baz
+  output: |-
+    <p>Foo
+    bar</p>
+    <hr />
+    <p>baz</p>
+  message: paragraph and heading interplay (3)
+- name: test_heading_setext_case_36
+  input: |-
+    Foo
+    bar
+    * * *
+    baz
+  output: |-
+    <p>Foo
+    bar</p>
+    <hr />
+    <p>baz</p>
+  message: paragraph and heading interplay (4)
+- name: test_heading_setext_case_37
+  input: |-
+    Foo
+    bar
+    \---
+    baz
+  output: |-
+    <p>Foo
+    bar
+    ---
+    baz</p>
+  message: paragraph and heading interplay (5)
+- name: test_heading_setext_case_38
+  input: "Foo  \nbar\n-----"
+  output: |-
+    <h2>Foo<br />
+    bar</h2>
+  message: should support a hard break w/ spaces in between
+  comment: 'Extra:'
+- name: test_heading_setext_case_39
+  input: |-
+    Foo\
+    bar
+    -----
+  output: |-
+    <h2>Foo<br />
+    bar</h2>
+  message: should support a hard break w/ backslash in between
+- name: test_heading_setext_case_40
+  input: |-
+    a
+    -
+    b
+  output: |-
+    <h2>a</h2>
+    <p>b</p>
+  message: should prefer a setext heading over an interrupting list
+- name: test_heading_setext_case_41
+  input: |-
+    [a]: b
+    =
+    =
+  output: <h1>=</h1>
+  message: "should support a two setext heading underlines after a definition, as a setext heading"
+- name: test_heading_setext_case_42
+  input: |-
+    > ===
+    a
+  output: |-
+    <blockquote>
+    <p>===
+    a</p>
+    </blockquote>
+  message: should not support lazyness (1)
+- name: test_heading_setext_case_43
+  input: |-
+    > a
+    ===
+  output: |-
+    <blockquote>
+    <p>a
+    ===</p>
+    </blockquote>
+  message: should not support lazyness (2)
+- name: test_heading_setext_case_44
+  input: |-
+    a
+    - ===
+  output: |-
+    <p>a</p>
+    <ul>
+    <li>===</li>
+    </ul>
+  message: should not support piercing (1)
+- name: test_heading_setext_case_45
+  input: |-
+    a
+    * ---
+  output: |-
+    <p>a</p>
+    <ul>
+    <li>
+    <hr />
+    </li>
+    </ul>
+  message: should not support piercing (2)
+to_html_with_options:
+- name: test_heading_setext_case_46
+  input: |-
+    a
+    -
+  output: |-
+    <p>a
+    -</p>
+  message: should support turning off setext underlines
+  options:
+    extend: default
+    parse:
+      constructs:
+        heading_setext: false
+to_mdast:
+- name: test_heading_setext_case_47
+  input: |-
+    alpha
+    bravo
+    ==
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:heading(#markdown_mdast_heading{
+          depth = 1,
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"alpha\nbravo">>,
+              position = {some, markdown_unist_position:new(1, 1, 0, 2, 6, 11)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 3, 3, 14)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 3, 3, 14)}
+    })
+  message: "should support heading (atx) as `Heading`s in mdast"
+  parse_options: ParseOptions::default()
