@@ -91,7 +91,7 @@ counter_reset() ->
 
 -spec doc() -> binary().
 doc() ->
-    <<"| a |\n| - |\n| b |"/utf8>>.
+    <<"a\\\nb."/utf8>>.
     % <<"[foo [bar](/uri)](/uri)\n"/utf8>>.
     % <<"*foo __bar *baz bim__ bam*"/utf8>>.
     % <<"[bar](/foo)">>.
@@ -400,6 +400,7 @@ println!("{:?}", tree);
 to_mdast(MarkdownInput, ParseOptions = #markdown_parse_options{}) when is_binary(MarkdownInput) ->
     case markdown_parser:parse(MarkdownInput, ParseOptions) of
         {ok, {Events, ParseState}} ->
+            io:format("~ts\n", [markdown_debug:rust_debug_string(Events)]),
             Bytes = markdown_parse_state:bytes(ParseState),
             markdown_mdast:compile(Events, Bytes);
         Error = {error, _Message} ->

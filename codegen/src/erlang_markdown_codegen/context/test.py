@@ -212,6 +212,8 @@ class TestCaseToMdast(TestCaseMixin):
                         f"For TestCaseToMdast, parse_options must be a TestSharedParseOptions or TestSuiteParseOptions"
                     )
                 self.parse_options = shared_parse_options
+            elif self.schema.parse_options == "ParseOptions::default()":
+                self.parse_options = "markdown_parse_options:default()"
             elif self.schema.parse_options == "ParseOptions::gfm()":
                 self.parse_options = "markdown_parse_options:gfm()"
             else:

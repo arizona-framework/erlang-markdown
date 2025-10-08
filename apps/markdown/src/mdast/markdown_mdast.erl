@@ -1552,7 +1552,7 @@ on_exit_line_ending(CompileContext1 = #markdown_mdast_compile_context{events = E
         #markdown_mdast_compile_context{heading_setext_text_after = true} ->
             %% Ignore.
             {ok, CompileContext1};
-        #markdown_mdast_compile_context{heading_setext_text_after = hard_break_after} ->
+        #markdown_mdast_compile_context{hard_break_after = true} ->
             %% Line ending position after hard break is part of it.
             End = markdown_point:to_unist((markdown_vec:get(Events, Index))#markdown_event.point),
             NodeMutFunc = fun on_exit_line_ending__hard_break_after_node_mut_func/2,
@@ -1598,8 +1598,10 @@ on_exit_line_ending__hard_break_after_children_mut_func(Children1, {some, End}) 
     %% BEGIN: assertions
     ?assertMatch({some, _}, markdown_vec:last_option(Children1), "expected tail (break)"),
     %% END: assertions
-    {some, Tail1} = markdown_vec:last_option(Children1),
-    Tail2 = markdown_mdast_node:position_set(Tail1, {some, End}),
+    Tail1 = markdown_vec:last(Children1),
+    {some, Position1} = markdown_mdast_node:position(Tail1),
+    Position2 = Position1#markdown_unist_position{'end' = End},
+    Tail2 = markdown_mdast_node:position_set(Tail1, {some, Position2}),
     Children2 = markdown_vec:set_last(Children1, Tail2),
     {Children2, none}.
 

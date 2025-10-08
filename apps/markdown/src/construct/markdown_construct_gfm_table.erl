@@ -1151,9 +1151,9 @@ resolve_loop(Tokenizer1 = #markdown_tokenizer{events = Events}, State1 = #resolv
 resolve_loop(Tokenizer1 = #markdown_tokenizer{}, State1 = #resolve{}) ->
     {Tokenizer1, State1}.
 
--spec cell_to_string(cell()) -> dynamic().
-cell_to_string(#cell{exit = Exit, enter = Enter, data_enter = DataEnter, data_exit = DataExit}) ->
-    markdown_debug:rust_debug_string({Exit, Enter, DataEnter, DataExit}).
+% -spec cell_to_string(cell()) -> dynamic().
+% cell_to_string(#cell{exit = Exit, enter = Enter, data_enter = DataEnter, data_exit = DataExit}) ->
+%     markdown_debug:rust_debug_string({Exit, Enter, DataEnter, DataExit}).
 
 %% @private
 -spec resolve__enter_data(Tokenizer, State, Event) -> {Tokenizer, State} when

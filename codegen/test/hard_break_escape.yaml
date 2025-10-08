@@ -1,0 +1,93 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: hard_break_escape
+  created: 2025-10-07
+  modified: 2025-10-07
+to_html:
+- name: test_hard_break_escape_case_1
+  input: |-
+    foo\
+    baz
+  output: |-
+    <p>foo<br />
+    baz</p>
+  message: should support a backslash to form a hard break
+- name: test_hard_break_escape_case_2
+  input: |-
+    foo\
+         bar
+  output: |-
+    <p>foo<br />
+    bar</p>
+  message: should support leading spaces after an escape hard break
+- name: test_hard_break_escape_case_3
+  input: |-
+    *foo\
+    bar*
+  output: |-
+    <p><em>foo<br />
+    bar</em></p>
+  message: should support escape hard breaks in emphasis
+- name: test_hard_break_escape_case_4
+  input: |-
+    ``code\
+    text``
+  output: "<p><code>code\\ text</code></p>"
+  message: should not support escape hard breaks in code
+- name: test_hard_break_escape_case_5
+  input: "foo\\"
+  output: "<p>foo\\</p>"
+  message: should not support escape hard breaks at the end of a paragraph
+- name: test_hard_break_escape_case_6
+  input: "### foo\\"
+  output: "<h3>foo\\</h3>"
+  message: should not support escape hard breaks at the end of a heading
+to_html_with_options:
+- name: test_hard_break_escape_case_7
+  input: |-
+    a\
+    b
+  output: |-
+    <p>a\
+    b</p>
+  message: should support turning off hard break (escape)
+  options:
+    extend: default
+    parse:
+      constructs:
+        hard_break_escape: false
+to_mdast:
+- name: test_hard_break_escape_case_8
+  input: "a\\\nb."
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"a">>,
+              position = {some, markdown_unist_position:new(1, 1, 0, 1, 2, 1)}
+            }),
+            markdown_mdast_node:break(#markdown_mdast_break{
+              position = {some, markdown_unist_position:new(1, 2, 1, 2, 1, 3)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"b.">>,
+              position = {some, markdown_unist_position:new(2, 1, 3, 2, 3, 5)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 2, 3, 5)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 2, 3, 5)}
+    })
+  message: "should support hard break (escape) as `Break`s in mdast"
+  parse_options: ParseOptions::default()
