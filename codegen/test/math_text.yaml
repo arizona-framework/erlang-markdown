@@ -1,0 +1,203 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: math_text
+  created: 2025-10-09
+  modified: 2025-10-09
+shared_options:
+  - name: math
+    options:
+      parse:
+        constructs:
+          math_text: true
+          math_flow: true
+shared_parse_options:
+  - name: math_parse
+    parse_options:
+      constructs:
+        math_text: true
+        math_flow: true
+to_html:
+- name: test_math_text_case_1
+  input: $a$
+  output: <p>$a$</p>
+  message: should not support math (text) by default
+to_html_with_options:
+- name: test_math_text_case_2
+  input: $foo$ $$bar$$
+  output: "<p><code class=\"language-math math-inline\">foo</code> <code class=\"language-math math-inline\">bar</code></p>"
+  message: should support math (text) if enabled
+  options: math
+- name: test_math_text_case_3
+  input: $foo$ $$bar$$
+  output: "<p>$foo$ <code class=\"language-math math-inline\">bar</code></p>"
+  message: "should not support math (text) w/ a single dollar, w/ `math_text_single_dollar: false`"
+  options:
+    extend: default
+    parse:
+      constructs:
+        math_text: true
+        math_flow: true
+      math_text_single_dollar: false
+- name: test_math_text_case_4
+  input: $$ foo $ bar $$
+  output: "<p><code class=\"language-math math-inline\">foo $ bar</code></p>"
+  message: should support math (text) w/ more dollars
+  options: math
+- name: test_math_text_case_5
+  input: $ $$ $
+  output: "<p><code class=\"language-math math-inline\">$$</code></p>"
+  message: should support math (text) w/ fences inside, and padding
+  options: math
+- name: test_math_text_case_6
+  input: $  $$  $
+  output: "<p><code class=\"language-math math-inline\"> $$ </code></p>"
+  message: should support math (text) w/ extra padding
+  options: math
+- name: test_math_text_case_7
+  input: $ a$
+  output: "<p><code class=\"language-math math-inline\"> a</code></p>"
+  message: should support math (text) w/ unbalanced padding
+  options: math
+- name: test_math_text_case_8
+  input: "$\\u{a0}b\\u{a0}$"
+  output: "<p><code class=\"language-math math-inline\">\\u{a0}b\\u{a0}</code></p>"
+  message: should support math (text) w/ non-padding whitespace
+  options: math
+- name: test_math_text_case_9
+  input: |-
+    $ $
+    $  $
+  output: |-
+    <p><code class="language-math math-inline"> </code>
+    <code class="language-math math-inline">  </code></p>
+  message: should support math (text) w/o data
+  options: math
+- name: test_math_text_case_10
+  input: "$\nfoo\nbar  \nbaz\n$"
+  output: "<p><code class=\"language-math math-inline\">foo bar   baz</code></p>"
+  message: should support math (text) w/o line endings (1)
+  options: math
+- name: test_math_text_case_11
+  input: "$\nfoo \n$"
+  output: "<p><code class=\"language-math math-inline\">foo </code></p>"
+  message: should support math (text) w/o line endings (2)
+  options: math
+- name: test_math_text_case_12
+  input: "$foo   bar \nbaz$"
+  output: "<p><code class=\"language-math math-inline\">foo   bar  baz</code></p>"
+  message: should not support whitespace collapsing
+  options: math
+- name: test_math_text_case_13
+  input: "$foo\\$bar$"
+  output: "<p><code class=\"language-math math-inline\">foo\\</code>bar$</p>"
+  message: should not support character escapes
+  options: math
+- name: test_math_text_case_14
+  input: $$foo$bar$$
+  output: "<p><code class=\"language-math math-inline\">foo$bar</code></p>"
+  message: should support more dollars
+  options: math
+- name: test_math_text_case_15
+  input: $ foo $$ bar $
+  output: "<p><code class=\"language-math math-inline\">foo $$ bar</code></p>"
+  message: should support less dollars
+  options: math
+- name: test_math_text_case_16
+  input: '*foo$*$'
+  output: "<p>*foo<code class=\"language-math math-inline\">*</code></p>"
+  message: should precede over emphasis
+  options: math
+- name: test_math_text_case_17
+  input: '[not a $link](/foo$)'
+  output: "<p>[not a <code class=\"language-math math-inline\">link](/foo</code>)</p>"
+  message: should precede over links
+  options: math
+- name: test_math_text_case_18
+  input: "$<a href=\"$\">$"
+  output: "<p><code class=\"language-math math-inline\">&lt;a href=&quot;</code>&quot;&gt;$</p>"
+  message: should have same precedence as HTML (1)
+  options: math
+- name: test_math_text_case_19
+  input: "<a href=\"$\">$"
+  output: "<p><a href=\"$\">$</p>"
+  message: should have same precedence as HTML (2)
+  options:
+    extend: default
+    parse:
+      constructs:
+        math_text: true
+        math_flow: true
+    compile:
+      allow_dangerous_html: true
+      allow_dangerous_protocol: true
+- name: test_math_text_case_20
+  input: $<http://foo.bar.$baz>$
+  output: "<p><code class=\"language-math math-inline\">&lt;http://foo.bar.</code>baz&gt;$</p>"
+  message: should have same precedence as autolinks (1)
+  options: math
+- name: test_math_text_case_21
+  input: <http://foo.bar.$baz>$
+  output: "<p><a href=\"http://foo.bar.$baz\">http://foo.bar.$baz</a>$</p>"
+  message: should have same precedence as autolinks (2)
+  options: math
+- name: test_math_text_case_22
+  input: $$$foo$$
+  output: <p>$$$foo$$</p>
+  message: should not support more dollars before a fence
+  options: math
+- name: test_math_text_case_23
+  input: $foo
+  output: <p>$foo</p>
+  message: should not support no closing fence (1)
+  options: math
+- name: test_math_text_case_24
+  input: $foo$$bar$$
+  output: "<p>$foo<code class=\"language-math math-inline\">bar</code></p>"
+  message: should not support no closing fence (2)
+  options: math
+- name: test_math_text_case_25
+  input: "$foo\t\tbar$"
+  output: "<p><code class=\"language-math math-inline\">foo\t\tbar</code></p>"
+  message: should support tabs in code
+  options: math
+- name: test_math_text_case_26
+  input: "\\$$x$"
+  output: "<p>$<code class=\"language-math math-inline\">x</code></p>"
+  message: should support an escaped initial dollar
+  options: math
+to_mdast:
+- name: test_math_text_case_27
+  input: a $alpha$ b.
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"a ">>,
+              position = {some, markdown_unist_position:new(1, 1, 0, 1, 3, 2)}
+            }),
+            markdown_mdast_node:inline_math(#markdown_mdast_inline_math{
+              value = <<"alpha">>,
+              position = {some, markdown_unist_position:new(1, 3, 2, 1, 10, 9)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" b.">>,
+              position = {some, markdown_unist_position:new(1, 10, 9, 1, 13, 12)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 1, 13, 12)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 1, 13, 12)}
+    })
+  message: "should support math (text) as `InlineMath`s in mdast"
+  parse_options: math_parse

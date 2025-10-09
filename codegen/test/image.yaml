@@ -1,0 +1,321 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: image
+  created: 2025-10-09
+  modified: 2025-10-09
+to_html:
+- name: test_image_case_1
+  input: "[link](/uri \"title\")"
+  output: "<p><a href=\"/uri\" title=\"title\">link</a></p>"
+  message: should support links
+- name: test_image_case_2
+  input: "![foo](/url \"title\")"
+  output: "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>"
+  message: should support image w/ resource
+- name: test_image_case_3
+  input: |-
+    [foo *bar*]: train.jpg "train & tracks"
+
+    ![foo *bar*]
+  output: "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>"
+  message: should support image as shortcut reference
+- name: test_image_case_4
+  input: '![foo ![bar](/url)](/url2)'
+  output: "<p><img src=\"/url2\" alt=\"foo bar\" /></p>"
+  message: should “support” images in images
+- name: test_image_case_5
+  input: '![foo [bar](/url)](/url2)'
+  output: "<p><img src=\"/url2\" alt=\"foo bar\" /></p>"
+  message: should “support” links in images
+- name: test_image_case_6
+  input: |-
+    [foo *bar*]: train.jpg "train & tracks"
+
+    ![foo *bar*][]
+  output: "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>"
+  message: should support “content” in images
+- name: test_image_case_7
+  input: |-
+    [FOOBAR]: train.jpg "train & tracks"
+
+    ![foo *bar*][foobar]
+  output: "<p><img src=\"train.jpg\" alt=\"foo bar\" title=\"train &amp; tracks\" /></p>"
+  message: should support “content” in images
+- name: test_image_case_8
+  input: '![foo](train.jpg)'
+  output: "<p><img src=\"train.jpg\" alt=\"foo\" /></p>"
+  message: should support images w/o title
+- name: test_image_case_9
+  input: "My ![foo bar](/path/to/train.jpg  \"title\"   )"
+  output: "<p>My <img src=\"/path/to/train.jpg\" alt=\"foo bar\" title=\"title\" /></p>"
+  message: should support images w/ lots of whitespace
+- name: test_image_case_10
+  input: '![foo](<url>)'
+  output: "<p><img src=\"url\" alt=\"foo\" /></p>"
+  message: should support images w/ enclosed destinations
+- name: test_image_case_11
+  input: '![](/url)'
+  output: "<p><img src=\"/url\" alt=\"\" /></p>"
+  message: should support images w/ empty labels
+- name: test_image_case_12
+  input: |-
+    [bar]: /url
+
+    ![foo][bar]
+  output: "<p><img src=\"/url\" alt=\"foo\" /></p>"
+  message: should support full references (1)
+- name: test_image_case_13
+  input: |-
+    [BAR]: /url
+
+    ![foo][bar]
+  output: "<p><img src=\"/url\" alt=\"foo\" /></p>"
+  message: should support full references (2)
+- name: test_image_case_14
+  input: |-
+    [foo]: /url "title"
+
+    ![foo][]
+  output: "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>"
+  message: should support collapsed references (1)
+- name: test_image_case_15
+  input: |-
+    [*foo* bar]: /url "title"
+
+    ![*foo* bar][]
+  output: "<p><img src=\"/url\" alt=\"foo bar\" title=\"title\" /></p>"
+  message: should support collapsed references (2)
+- name: test_image_case_16
+  input: |-
+    [foo]: /url "title"
+
+    ![Foo][]
+  output: "<p><img src=\"/url\" alt=\"Foo\" title=\"title\" /></p>"
+  message: should support case-insensitive labels
+- name: test_image_case_17
+  input: "[foo]: /url \"title\"\n\n![foo] \n[]"
+  output: |-
+    <p><img src="/url" alt="foo" title="title" />
+    []</p>
+  message: should not support whitespace between sets of brackets
+- name: test_image_case_18
+  input: |-
+    [foo]: /url "title"
+
+    ![foo]
+  output: "<p><img src=\"/url\" alt=\"foo\" title=\"title\" /></p>"
+  message: should support shortcut references (1)
+- name: test_image_case_19
+  input: |-
+    [*foo* bar]: /url "title"
+
+    ![*foo* bar]
+  output: "<p><img src=\"/url\" alt=\"foo bar\" title=\"title\" /></p>"
+  message: should support shortcut references (2)
+- name: test_image_case_20
+  input: |-
+    [[foo]]: /url "title"
+
+    ![[foo]]
+  output: |-
+    <p>[[foo]]: /url &quot;title&quot;</p>
+    <p>![[foo]]</p>
+  message: should not support link labels w/ unescaped brackets
+- name: test_image_case_21
+  input: |-
+    [foo]: /url "title"
+
+    ![Foo]
+  output: "<p><img src=\"/url\" alt=\"Foo\" title=\"title\" /></p>"
+  message: should support case-insensitive label matching
+- name: test_image_case_22
+  input: |-
+    [foo]: /url "title"
+
+    !\[foo]
+  output: <p>![foo]</p>
+  message: should “support” an escaped bracket instead of an image
+- name: test_image_case_23
+  input: |-
+    [foo]: /url "title"
+
+    \![foo]
+  output: "<p>!<a href=\"/url\" title=\"title\">foo</a></p>"
+  message: should support an escaped bang instead of an image, but still have a link
+- name: test_image_case_24
+  input: '![foo]()'
+  output: "<p><img src=\"\" alt=\"foo\" /></p>"
+  message: should support images w/o destination
+  comment: Extra
+- name: test_image_case_25
+  input: '![foo](<>)'
+  output: "<p><img src=\"\" alt=\"foo\" /></p>"
+  message: should support images w/ explicit empty destination
+- name: test_image_case_26
+  input: '![](example.png)'
+  output: "<p><img src=\"example.png\" alt=\"\" /></p>"
+  message: should support images w/o alt
+- name: test_image_case_27
+  input: "![alpha](bravo.png \"\")"
+  output: "<p><img src=\"bravo.png\" alt=\"alpha\" /></p>"
+  message: should support images w/ empty title (1)
+- name: test_image_case_28
+  input: '![alpha](bravo.png '''')'
+  output: "<p><img src=\"bravo.png\" alt=\"alpha\" /></p>"
+  message: should support images w/ empty title (2)
+- name: test_image_case_29
+  input: '![alpha](bravo.png ())'
+  output: "<p><img src=\"bravo.png\" alt=\"alpha\" /></p>"
+  message: should support images w/ empty title (3)
+- name: test_image_case_30
+  input: "![&amp;&copy;&](example.com/&amp;&copy;& \"&amp;&copy;&\")"
+  output: "<p><img src=\"example.com/&amp;%C2%A9&amp;\" alt=\"&amp;©&amp;\" title=\"&amp;©&amp;\" /></p>"
+  message: should support character references in images
+- name: test_image_case_31
+  input: "![](<> \"\")"
+  output: "<p><img src=\"\" alt=\"\" /></p>"
+  message: should ignore an empty title
+  comment: |-
+    Extra
+    See: <https://github.com/commonmark/commonmark.js/issues/192>
+- name: test_image_case_33
+  input: '![](javascript:alert(1))'
+  output: "<p><img src=\"\" alt=\"\" /></p>"
+  message: should ignore non-http protocols by default
+to_html_with_options:
+- name: test_image_case_32
+  input: '![x]()'
+  output: "<p>!<a href=\"\">x</a></p>"
+  message: should support turning off label start (image)
+  options:
+    extend: default
+    parse:
+      constructs:
+        label_start_image: false
+- name: test_image_case_34
+  input: '![](javascript:alert(1))'
+  output: "<p><img src=\"javascript:alert(1)\" alt=\"\" /></p>"
+  message: should allow non-http protocols w/ `allowDangerousProtocol`
+  options:
+    extend: default
+    compile:
+      allow_dangerous_protocol: true
+- name: test_image_case_35
+  input: '![](javascript:alert(1))'
+  output: "<p><img src=\"javascript:alert(1)\" alt=\"\" /></p>"
+  message: should allow non-http protocols with the `allow_any_img_src` option
+  options:
+    extend: default
+    compile:
+      allow_any_img_src: true
+      allow_dangerous_protocol: true
+to_mdast:
+- name: test_image_case_36
+  input: a ![alpha]() b ![bravo](charlie 'delta') c.
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"a ">>,
+              position = {some, markdown_unist_position:new(1, 1, 0, 1, 3, 2)}
+            }),
+            markdown_mdast_node:image(#markdown_mdast_image{
+              alt = <<"alpha">>,
+              url = <<"">>,
+              title = none,
+              position = {some, markdown_unist_position:new(1, 3, 2, 1, 13, 12)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" b ">>,
+              position = {some, markdown_unist_position:new(1, 13, 12, 1, 16, 15)}
+            }),
+            markdown_mdast_node:image(#markdown_mdast_image{
+              alt = <<"bravo">>,
+              url = <<"charlie">>,
+              title = {some, <<"delta">>},
+              position = {some, markdown_unist_position:new(1, 16, 15, 1, 41, 40)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" c.">>,
+              position = {some, markdown_unist_position:new(1, 41, 40, 1, 44, 43)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 1, 44, 43)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 1, 44, 43)}
+    })
+  message: "should support image (resource) as `Image`s in mdast"
+  parse_options: ParseOptions::default()
+- name: test_image_case_37
+  input: |-
+    [x]: y
+
+    a ![x] b ![x][] c ![d][x] e.
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:definition(#markdown_mdast_definition{
+          identifier = <<"x">>,
+          label = {some, <<"x">>},
+          url = <<"y">>,
+          title = none,
+          position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+        }),
+        markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"a ">>,
+              position = {some, markdown_unist_position:new(3, 1, 8, 3, 3, 10)}
+            }),
+            markdown_mdast_node:image_reference(#markdown_mdast_image_reference{
+              reference_kind = shortcut,
+              identifier = <<"x">>,
+              label = {some, <<"x">>},
+              alt = <<"x">>,
+              position = {some, markdown_unist_position:new(3, 3, 10, 3, 7, 14)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" b ">>,
+              position = {some, markdown_unist_position:new(3, 7, 14, 3, 10, 17)}
+            }),
+            markdown_mdast_node:image_reference(#markdown_mdast_image_reference{
+              reference_kind = collapsed,
+              identifier = <<"x">>,
+              label = {some, <<"x">>},
+              alt = <<"x">>,
+              position = {some, markdown_unist_position:new(3, 10, 17, 3, 16, 23)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" c ">>,
+              position = {some, markdown_unist_position:new(3, 16, 23, 3, 19, 26)}
+            }),
+            markdown_mdast_node:image_reference(#markdown_mdast_image_reference{
+              reference_kind = full,
+              identifier = <<"x">>,
+              label = {some, <<"x">>},
+              alt = <<"d">>,
+              position = {some, markdown_unist_position:new(3, 19, 26, 3, 26, 33)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" e.">>,
+              position = {some, markdown_unist_position:new(3, 26, 33, 3, 29, 36)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(3, 1, 8, 3, 29, 36)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 3, 29, 36)}
+    })
+  message: "should support image (reference) as `ImageReference`s in mdast"
+  parse_options: ParseOptions::default()
