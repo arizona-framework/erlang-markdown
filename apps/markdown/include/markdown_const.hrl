@@ -2500,6 +2500,31 @@
 %% [frontmatter]: crate::construct::frontmatter
 -define(FRONTMATTER_SEQUENCE_SIZE, 3).
 
+%% List of HTML tag names that are escaped by GFMs tag filter.
+%%
+%% Tag name matching must be performed insensitive to case, and thus this list
+%% includes lowercase tag names.
+%%
+%% ## References
+%%
+%% *   [*§ 6.1 Disallowed Raw HTML (extension)* in GFM](https://github.github.com/gfm/#disallowed-raw-html-extension-)
+-define(GFM_HTML_TAGFILTER_NAMES, #{
+    <<"iframe">> => [],
+    <<"noembed">> => [],
+    <<"noframes">> => [],
+    <<"plaintext">> => [],
+    <<"script">> => [],
+    <<"style">> => [],
+    <<"textarea">> => [],
+    <<"title">> => [],
+    <<"xmp">> => []
+}).
+
+%% The number of the longest tag name in [`GFM_HTML_TAGFILTER_NAMES`][].
+%%
+%% This is currently the size of `plaintext`.
+-define(GFM_HTML_TAGFILTER_SIZE_MAX, 9).
+
 %% The number of preceding spaces needed for a [hard break
 %% (trailing)][whitespace] to form.
 %%

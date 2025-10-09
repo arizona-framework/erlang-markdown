@@ -1,0 +1,145 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: gfm_tagfilter
+  created: 2025-10-09
+  modified: 2025-10-09
+to_html: []
+to_html_with_options:
+- name: test_gfm_tagfilter_case_1
+  input: <iframe>
+  output: <iframe>
+  message: should not filter by default
+  options:
+    extend: default
+    compile:
+      allow_dangerous_html: true
+- name: test_gfm_tagfilter_case_2
+  input: |-
+    a <i>
+    <script>
+  output: |-
+    <p>a &lt;i&gt;</p>
+    &lt;script&gt;
+  message: should not turn `allow_dangerous_html` on
+  options:
+    extend: default
+    compile:
+      gfm_tagfilter: true
+- name: test_gfm_tagfilter_case_3
+  input: <iframe>
+  output: '&lt;iframe>'
+  message: should filter
+  options:
+    extend: default
+    compile:
+      allow_dangerous_html: true
+      gfm_tagfilter: true
+- name: test_gfm_tagfilter_case_4
+  input: |-
+    <iframe
+    >
+  output: |-
+    &lt;iframe
+    >
+  message: should filter when followed by a line ending (1)
+  options:
+    extend: default
+    compile:
+      allow_dangerous_html: true
+      gfm_tagfilter: true
+- name: test_gfm_tagfilter_case_5
+  input: |-
+    <div
+    >
+  output: |-
+    <div
+    >
+  message: should filter when followed by a line ending (2)
+  options:
+    extend: default
+    compile:
+      allow_dangerous_html: true
+      gfm_tagfilter: true
+- name: test_gfm_tagfilter_case_6
+  input: |2
+
+    <title>
+
+    <div title="<title>"></div>
+
+    <span title="<title>"></span>
+
+    <div><title></title></div>
+
+    <span><title></title></span>
+
+    <b><textarea></textarea></b>
+
+    <script/src="#">
+
+    <SCRIPT SRC=http://xss.rocks/xss.js></SCRIPT>
+
+    <IMG SRC="javascript:alert('XSS');">
+
+    <IMG SRC=javascript:alert('XSS')>
+
+    <IMG SRC=`javascript:alert("RSnake says, 'XSS'")`>
+
+    <IMG """><SCRIPT>alert("XSS")</SCRIPT>"\>
+
+    <SCRIPT/XSS SRC="http://xss.rocks/xss.js"></SCRIPT>
+
+    <BODY onload!#$%&()*~+-_.,:;?@[/|\]^`=alert("XSS")>
+
+    <<SCRIPT>alert("XSS");//\<</SCRIPT>
+
+    <SCRIPT SRC=http://xss.rocks/xss.js?< B >
+
+    <SCRIPT SRC=//xss.rocks/.j>
+
+    </TITLE><SCRIPT>alert("XSS");</SCRIPT>
+
+    <STYLE>li {list-style-image: url("javascript:alert('XSS')");}</STYLE><UL><LI>XSS</br>
+
+    javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/"/+/onmouseover=1/+/[*/[]/+alert(1)//'>
+
+    <STYLE>@import'http://xss.rocks/xss.css';</STYLE>
+  output: |
+    &lt;title>
+    <div title="&lt;title>"></div>
+    <p><span title="&lt;title>"></span></p>
+    <div>&lt;title>&lt;/title></div>
+    <p><span>&lt;title>&lt;/title></span></p>
+    <p><b>&lt;textarea>&lt;/textarea></b></p>
+    <p>&lt;script/src=&quot;#&quot;&gt;</p>
+    &lt;SCRIPT SRC=http://xss.rocks/xss.js>&lt;/SCRIPT>
+    <IMG SRC="javascript:alert('XSS');">
+    <p>&lt;IMG SRC=javascript:alert('XSS')&gt;</p>
+    <p>&lt;IMG SRC=<code>javascript:alert(&quot;RSnake says, 'XSS'&quot;)</code>&gt;</p>
+    <p>&lt;IMG &quot;&quot;&quot;&gt;&lt;SCRIPT>alert(&quot;XSS&quot;)&lt;/SCRIPT>&quot;&gt;</p>
+    <p>&lt;SCRIPT/XSS SRC=&quot;http://xss.rocks/xss.js&quot;&gt;&lt;/SCRIPT></p>
+    <BODY onload!#$%&()*~+-_.,:;?@[/|\]^`=alert("XSS")>
+    <p>&lt;&lt;SCRIPT>alert(&quot;XSS&quot;);//&lt;&lt;/SCRIPT></p>
+    &lt;SCRIPT SRC=http://xss.rocks/xss.js?< B >
+
+    &lt;SCRIPT SRC=//xss.rocks/.j>
+
+    &lt;/TITLE>&lt;SCRIPT>alert("XSS");&lt;/SCRIPT>
+    &lt;STYLE>li {list-style-image: url("javascript:alert('XSS')");}&lt;/STYLE><UL><LI>XSS</br>
+    <p>javascript:/<em>--&gt;&lt;/title>&lt;/style>&lt;/textarea>&lt;/script>&lt;/xmp>&lt;svg/onload='+/&quot;/+/onmouseover=1/+/[</em>/[]/+alert(1)//'&gt;</p>
+    &lt;STYLE>@import'http://xss.rocks/xss.css';&lt;/STYLE>
+  message: should handle things like GitHub
+  options:
+    extend: default
+    compile:
+      allow_dangerous_html: true
+      gfm_tagfilter: true
+to_mdast: []
