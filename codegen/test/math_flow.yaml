@@ -1,0 +1,446 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: math_flow
+  created: 2025-10-09
+  modified: 2025-10-09
+shared_options:
+  - name: math
+    options:
+      parse:
+        constructs:
+          math_text: true
+          math_flow: true
+shared_parse_options:
+  - name: math_parse
+    parse_options:
+      constructs:
+        math_text: true
+        math_flow: true
+to_html:
+- name: test_math_flow_case_1
+  input: |-
+    $$
+    a
+    $$
+  output: |-
+    <p>$$
+    a
+    $$</p>
+  message: should not support math (flow) by default
+to_html_with_options:
+- name: test_math_flow_case_2
+  input: |-
+    $$
+    a
+    $$
+  output: |-
+    <pre><code class="language-math math-display">a
+    </code></pre>
+  message: should support math (flow) if enabled
+  options: math
+- name: test_math_flow_case_3
+  input: |-
+    $$
+    <
+     >
+    $$
+  output: |-
+    <pre><code class="language-math math-display">&lt;
+     &gt;
+    </code></pre>
+  message: should support math (flow)
+  options: math
+- name: test_math_flow_case_4
+  input: |-
+    $
+    foo
+    $
+  output: "<p><code class=\"language-math math-inline\">foo</code></p>"
+  message: should not support math (flow) w/ less than two markers
+  options: math
+- name: test_math_flow_case_5
+  input: |-
+    $$$
+    aaa
+    $$
+    $$$$
+  output: |-
+    <pre><code class="language-math math-display">aaa
+    $$
+    </code></pre>
+  message: should support a closing sequence longer, but not shorter than, the opening
+  options: math
+- name: test_math_flow_case_6
+  input: $$
+  output: |
+    <pre><code class="language-math math-display"></code></pre>
+  message: should support an eof right after an opening sequence
+  options: math
+- name: test_math_flow_case_7
+  input: |
+    $$$
+
+    $$
+    aaa
+  output: |
+    <pre><code class="language-math math-display">
+    $$
+    aaa
+    </code></pre>
+  message: should support an eof somewhere in content
+  options: math
+- name: test_math_flow_case_8
+  input: |-
+    > $$
+    > aaa
+
+    bbb
+  output: |-
+    <blockquote>
+    <pre><code class="language-math math-display">aaa
+    </code></pre>
+    </blockquote>
+    <p>bbb</p>
+  message: should support no closing sequence in a block quote
+  options: math
+- name: test_math_flow_case_9
+  input: "$$\n\n  \n$$"
+  output: "<pre><code class=\"language-math math-display\">\n  \n</code></pre>"
+  message: should support blank lines in math (flow)
+  options: math
+- name: test_math_flow_case_10
+  input: |-
+    $$
+    $$
+  output: "<pre><code class=\"language-math math-display\"></code></pre>"
+  message: should support empty math (flow)
+  options: math
+- name: test_math_flow_case_11
+  input: |2-
+     $$
+     aaa
+    aaa
+    $$
+  output: |-
+    <pre><code class="language-math math-display">aaa
+    aaa
+    </code></pre>
+  message: "should remove up to one space from the content if the opening sequence is indented w/ 1 space"
+  options: math
+- name: test_math_flow_case_12
+  input: |2-
+      $$
+    aaa
+      aaa
+    aaa
+      $$
+  output: |-
+    <pre><code class="language-math math-display">aaa
+    aaa
+    aaa
+    </code></pre>
+  message: "should remove up to two space from the content if the opening sequence is indented w/ 2 spaces"
+  options: math
+- name: test_math_flow_case_13
+  input: |2-
+       $$
+       aaa
+        aaa
+      aaa
+       $$
+  output: |-
+    <pre><code class="language-math math-display">aaa
+     aaa
+    aaa
+    </code></pre>
+  message: "should remove up to three space from the content if the opening sequence is indented w/ 3 spaces"
+  options: math
+- name: test_math_flow_case_14
+  input: |2-
+        $$
+        aaa
+        $$
+  output: |-
+    <pre><code>$$
+    aaa
+    $$
+    </code></pre>
+  message: should not support indenteding the opening sequence w/ 4 spaces
+  options: math
+- name: test_math_flow_case_15
+  input: |-
+    $$
+    aaa
+      $$
+  output: |-
+    <pre><code class="language-math math-display">aaa
+    </code></pre>
+  message: should support an indented closing sequence
+  options: math
+- name: test_math_flow_case_16
+  input: |2-
+       $$
+    aaa
+      $$
+  output: |-
+    <pre><code class="language-math math-display">aaa
+    </code></pre>
+  message: should support a differently indented closing sequence than the opening sequence
+  options: math
+- name: test_math_flow_case_17
+  input: |
+    $$
+    aaa
+        $$
+  output: |
+    <pre><code class="language-math math-display">aaa
+        $$
+    </code></pre>
+  message: should not support an indented closing sequence w/ 4 spaces
+  options: math
+- name: test_math_flow_case_18
+  input: |-
+    $$ $$
+    aaa
+  output: |-
+    <p><code class="language-math math-inline"> </code>
+    aaa</p>
+  message: should not support dollars in the opening fence after the opening sequence
+  options: math
+- name: test_math_flow_case_19
+  input: |
+    $$$
+    aaa
+    $$$ $$
+  output: |
+    <pre><code class="language-math math-display">aaa
+    $$$ $$
+    </code></pre>
+  message: should not support spaces in the closing sequence
+  options: math
+- name: test_math_flow_case_20
+  input: |-
+    foo
+    $$
+    bar
+    $$
+    baz
+  output: |-
+    <p>foo</p>
+    <pre><code class="language-math math-display">bar
+    </code></pre>
+    <p>baz</p>
+  message: should support interrupting paragraphs
+  options: math
+- name: test_math_flow_case_21
+  input: |-
+    foo
+    ---
+    $$
+    bar
+    $$
+    # baz
+  output: |-
+    <h2>foo</h2>
+    <pre><code class="language-math math-display">bar
+    </code></pre>
+    <h1>baz</h1>
+  message: should support interrupting other content
+  options: math
+- name: test_math_flow_case_22
+  input: |-
+    $$ruby
+    def foo(x)
+      return 3
+    end
+    $$
+  output: |-
+    <pre><code class="language-math math-display">def foo(x)
+      return 3
+    end
+    </code></pre>
+  message: should not support an “info” string (1)
+  options: math
+- name: test_math_flow_case_23
+  input: |-
+    $$$;
+    $$$
+  output: "<pre><code class=\"language-math math-display\"></code></pre>"
+  message: should not support an “info” string (2)
+  options: math
+- name: test_math_flow_case_24
+  input: |-
+    $$    ruby startline=3 `%@#`
+    def foo(x)
+      return 3
+    end
+    $$$$
+  output: |-
+    <pre><code class="language-math math-display">def foo(x)
+      return 3
+    end
+    </code></pre>
+  message: should not support an “info” string (3)
+  options: math
+- name: test_math_flow_case_25
+  input: |-
+    $$ aa $$
+    foo
+  output: |-
+    <p><code class="language-math math-inline">aa</code>
+    foo</p>
+  message: should not support dollars in the meta string
+  options: math
+- name: test_math_flow_case_26
+  input: |-
+    $$
+    $$ aaa
+    $$
+  output: |-
+    <pre><code class="language-math math-display">$$ aaa
+    </code></pre>
+  message: should not support meta string on closing sequences
+  options: math
+- name: test_math_flow_case_27
+  input: '$$  '
+  output: |
+    <pre><code class="language-math math-display"></code></pre>
+  message: should support an eof after whitespace, after the start fence sequence
+  comment: 'Our own:'
+  options: math
+- name: test_math_flow_case_28
+  input: |-
+    $$  js
+    alert(1)
+    $$
+  output: |-
+    <pre><code class="language-math math-display">alert(1)
+    </code></pre>
+  message: should support whitespace between the sequence and the meta string
+  options: math
+- name: test_math_flow_case_29
+  input: $$js
+  output: |
+    <pre><code class="language-math math-display"></code></pre>
+  message: should support an eof after the meta string
+  options: math
+- name: test_math_flow_case_30
+  input: "$$  js \nalert(1)\n$$"
+  output: |-
+    <pre><code class="language-math math-display">alert(1)
+    </code></pre>
+  message: should support whitespace after the meta string
+  options: math
+- name: test_math_flow_case_31
+  input: "$$\n  "
+  output: "<pre><code class=\"language-math math-display\">  \n</code></pre>\n"
+  message: should support an eof after whitespace in content
+  options: math
+- name: test_math_flow_case_32
+  input: "  $$\n "
+  output: |
+    <pre><code class="language-math math-display"></code></pre>
+  message: should support an eof in the prefix, in content
+  options: math
+- name: test_math_flow_case_33
+  input: "$$j\\+s&copy;"
+  output: |
+    <pre><code class="language-math math-display"></code></pre>
+  message: should support character escapes and character references in meta strings
+  options: math
+- name: test_math_flow_case_34
+  input: "$$a\\&b\\0c"
+  output: |
+    <pre><code class="language-math math-display"></code></pre>
+  message: should support dangerous characters in meta strings
+  options: math
+- name: test_math_flow_case_35
+  input: |2-
+       $$
+    aaa
+        $$
+  output: |
+    <pre><code class="language-math math-display">aaa
+     $$
+    </code></pre>
+  message: "should not support a closing sequence w/ too much indent, regardless of opening sequence (1)"
+  options: math
+- name: test_math_flow_case_36
+  input: |-
+    > $$
+    >
+    >
+    >
+
+    a
+  output: |-
+    <blockquote>
+    <pre><code class="language-math math-display">
+
+
+    </code></pre>
+    </blockquote>
+    <p>a</p>
+  message: "should not support a closing sequence w/ too much indent, regardless of opening sequence (2)"
+  options: math
+- name: test_math_flow_case_37
+  input: |-
+    > $$a
+    b
+  output: |-
+    <blockquote>
+    <pre><code class="language-math math-display"></code></pre>
+    </blockquote>
+    <p>b</p>
+  message: should not support lazyness (1)
+  options: math
+- name: test_math_flow_case_38
+  input: |-
+    > a
+    $$b
+  output: |
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <pre><code class="language-math math-display"></code></pre>
+  message: should not support lazyness (2)
+  options: math
+- name: test_math_flow_case_39
+  input: |-
+    > $$a
+    $$
+  output: |
+    <blockquote>
+    <pre><code class="language-math math-display"></code></pre>
+    </blockquote>
+    <pre><code class="language-math math-display"></code></pre>
+  message: should not support lazyness (3)
+  options: math
+to_mdast:
+- name: test_math_flow_case_40
+  input: |-
+    $$extra
+    abc
+    def
+    $$
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:math(#markdown_mdast_math{
+          meta = {some, <<"extra">>},
+          value = <<"abc\ndef">>,
+          position = {some, markdown_unist_position:new(1, 1, 0, 4, 3, 18)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 4, 3, 18)}
+    })
+  message: "should support math (flow) as `Math`s in mdast"
+  parse_options: math_parse

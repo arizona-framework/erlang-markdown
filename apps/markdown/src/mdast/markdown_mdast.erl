@@ -302,10 +302,12 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
             on_enter_list(CompileContext1);
         list_unordered ->
             on_enter_list(CompileContext1);
-        % %% on_enter_math_flow
-        % math_flow -> on_enter_math_flow(CompileContext1);
-        % %% on_enter_math_text
-        % math_text -> on_enter_math_text(CompileContext1);
+        %% on_enter_math_flow
+        math_flow ->
+            on_enter_math_flow(CompileContext1);
+        %% on_enter_math_text
+        math_text ->
+            on_enter_math_text(CompileContext1);
         % %% on_enter_mdx_esm
         % mdx_esm -> on_enter_mdx_esm(CompileContext1);
         % %% on_enter_mdx_flow_expression
@@ -776,6 +778,42 @@ on_enter_list_item(CompileContext1 = #markdown_mdast_compile_context{events = Ev
             })
         ),
     {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MathFlow`][Name::MathFlow].
+""".
+-spec on_enter_math_flow(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_math_flow(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:math(#markdown_mdast_math{
+                meta = none,
+                value = <<>>,
+                position = none
+            })
+        ),
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MathText`][Name::MathText].
+""".
+-spec on_enter_math_text(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_math_text(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:inline_math(#markdown_mdast_inline_math{
+                value = <<>>,
+                position = none
+            })
+        ),
+    CompileContext3 = markdown_mdast_compile_context:buffer(CompileContext2),
+    {ok, CompileContext3}.
 
 %% @private
 -doc """
