@@ -84,14 +84,14 @@ find_tag_name_end(_Bytes, _NameStart, NameEnd, _Len) ->
     Start :: non_neg_integer(),
     Len :: non_neg_integer().
 gfm_tagfilter_loop(Bytes, Result1, Index1, Start1, Len) when Index1 < Len ->
-    case Bytes of
-        <<$<, _/bytes>> ->
+    case binary:at(Bytes, Index1) of
+        $< ->
             %% Optional `/`.
             NameStart =
-                case Bytes of
-                    <<$<, $/, _/bytes>> ->
+                case (Index1 + 1) < Len andalso binary:at(Bytes, Index1 + 1) =:= $/ of
+                    true ->
                         Index1 + 2;
-                    _ ->
+                    false ->
                         Index1 + 1
                 end,
             %% Tag name.
