@@ -331,8 +331,9 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         %% on_enter_reference
         reference ->
             on_enter_reference(CompileContext1);
-        % %% on_enter_resource
-        % resource -> on_enter_resource(CompileContext1);
+        %% on_enter_resource
+        resource ->
+            on_enter_resource(CompileContext1);
         %% on_enter_strong
         strong ->
             on_enter_strong(CompileContext1);
@@ -813,6 +814,23 @@ on_enter_reference(CompileContext1 = #markdown_mdast_compile_context{media_refer
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:[`Resource`][Name::Resource].
+""".
+-spec on_enter_resource(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_resource(CompileContext1 = #markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack1}) ->
+    %% BEGIN: assertions
+    ?assertMatch({some, _}, markdown_vec:last_option(MediaReferenceStack1), "expected reference on media stack"),
+    %% END: assertions
+    Reference1 = markdown_vec:last(MediaReferenceStack1),
+    %% It's not a reference.
+    Reference2 = Reference1#markdown_mdast_reference{kind = none},
+    MediaReferenceStack2 = markdown_vec:set_last(MediaReferenceStack1, Reference2),
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack2},
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`Strong`][Name::Strong].
 """.
 -spec on_enter_strong(CompileContext) -> {ok, CompileContext} when
@@ -1053,11 +1071,13 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         %% on_exit_reference_string
         reference_string ->
             on_exit_reference_string(CompileContext1);
-        % %% on_exit_resource_destination_string
-        % resource_destination_string -> on_exit_resource_destination_string(CompileContext1);
-        % %% on_exit_resource_title_string
-        % resource_title_string -> on_exit_resource_title_string(CompileContext1);
-        % %% otherwise
+        %% on_exit_resource_destination_string
+        resource_destination_string ->
+            on_exit_resource_destination_string(CompileContext1);
+        %% on_exit_resource_title_string
+        resource_title_string ->
+            on_exit_resource_title_string(CompileContext1);
+        %% otherwise
         _ ->
             io:format("~ts\n", [markdown_debug:rust_debug_string(Event)]),
             {ok, CompileContext1}
@@ -2146,3 +2166,64 @@ on_exit_reference_string(CompileContext1 = #markdown_mdast_compile_context{}) ->
     MediaReferenceStack2 = markdown_vec:set_last(MediaReferenceStack1, Reference2),
     CompileContext3 = CompileContext2#markdown_mdast_compile_context{media_reference_stack = MediaReferenceStack2},
     {ok, CompileContext3}.
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`ResourceDestinationString`][Name::ResourceDestinationString].
+""".
+-spec on_exit_resource_destination_string(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_resource_destination_string(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Value = markdown_mdast_node:to_string(Node),
+    NodeMutFunc = fun on_exit_resource_destination_string__node_mut_func/2,
+    {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+    {ok, CompileContext3}.
+
+%% @private
+-spec on_exit_resource_destination_string__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(), OptionValue :: markdown_option:t(Value), Value :: unicode:unicode_binary().
+on_exit_resource_destination_string__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Link1 = #markdown_mdast_link{}}, {some, Value}
+) ->
+    Link2 = Link1#markdown_mdast_link{url = Value},
+    Node2 = Node1#markdown_mdast_node{inner = Link2},
+    {Node2, none};
+on_exit_resource_destination_string__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Image1 = #markdown_mdast_image{}}, {some, Value}
+) ->
+    Image2 = Image1#markdown_mdast_image{url = Value},
+    Node2 = Node1#markdown_mdast_node{inner = Image2},
+    {Node2, none};
+on_exit_resource_destination_string__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected link, image on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`ResourceTitleString`][Name::ResourceTitleString].
+""".
+-spec on_exit_resource_title_string(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_resource_title_string(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Value = markdown_mdast_node:to_string(Node),
+    NodeMutFunc = fun on_exit_resource_title_string__node_mut_func/2,
+    {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+    {ok, CompileContext3}.
+
+%% @private
+-spec on_exit_resource_title_string__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(), OptionValue :: markdown_option:t(Value), Value :: unicode:unicode_binary().
+on_exit_resource_title_string__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Link1 = #markdown_mdast_link{}}, {some, Value}
+) ->
+    Link2 = Link1#markdown_mdast_link{title = {some, Value}},
+    Node2 = Node1#markdown_mdast_node{inner = Link2},
+    {Node2, none};
+on_exit_resource_title_string__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = Image1 = #markdown_mdast_image{}}, {some, Value}
+) ->
+    Image2 = Image1#markdown_mdast_image{title = {some, Value}},
+    Node2 = Node1#markdown_mdast_node{inner = Image2},
+    {Node2, none};
+on_exit_resource_title_string__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected link, image on stack", []).
