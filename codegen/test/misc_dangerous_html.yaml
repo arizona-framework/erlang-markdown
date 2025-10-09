@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: misc_dangerous_html
+  created: 2025-10-09
+  modified: 2025-10-09
+shared_options:
+- name: danger
+  options:
+    compile:
+      allow_dangerous_html: true
+      allow_dangerous_protocol: true
+to_html:
+- name: test_misc_dangerous_html_case_1
+  input: <x>
+  output: '&lt;x&gt;'
+  message: should be safe by default for flow
+- name: test_misc_dangerous_html_case_2
+  input: a<b>
+  output: <p>a&lt;b&gt;</p>
+  message: should be safe by default for text
+to_html_with_options:
+- name: test_misc_dangerous_html_case_3
+  input: <x>
+  output: <x>
+  message: should be unsafe w/ `allowDangerousHtml`
+  options: danger
+to_mdast: []

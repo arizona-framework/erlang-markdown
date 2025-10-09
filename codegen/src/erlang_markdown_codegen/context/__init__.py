@@ -20,6 +20,12 @@ from ..schema import Root as RootSchema
 from ..test_schema import TestRoot as TestRootSchema
 
 
+@dataclass
+class Atom:
+    ctx: "Context" = field(repr=False)
+    name: str
+
+
 class NamesMixin:
     """A mixin that provides various name format variations."""
 
@@ -112,6 +118,9 @@ class Context:
         else:
             return ""
 
+    def erlang_atom(self, value: str) -> str:
+        return f"'{value}'"
+
     def erlang_binary(self, value: str) -> str:
         return f'<<"{self.escape_string_for_erlang(value)}"/utf8>>'
 
@@ -136,6 +145,8 @@ class Context:
             return f"[{','.join([self.erlang_map_value(v) for v in value])}]"
         elif isinstance(value, OrderedDict):
             return self.erlang_map(value)
+        elif isinstance(value, Atom):
+            return self.erlang_atom(value.name)
         elif isinstance(value, Option):
             if value.is_none:
                 return "none"

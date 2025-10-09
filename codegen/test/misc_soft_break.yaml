@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: misc_soft_break
+  created: 2025-10-09
+  modified: 2025-10-09
+to_html:
+- name: test_misc_soft_break_case_1
+  input: |-
+    foo
+    baz
+  output: |-
+    <p>foo
+    baz</p>
+  message: should support line endings
+- name: test_misc_soft_break_case_2
+  input: "foo \n baz"
+  output: |-
+    <p>foo
+    baz</p>
+  message: should trim spaces around line endings
+to_html_with_options: []
+to_mdast: []

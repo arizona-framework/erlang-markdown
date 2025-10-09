@@ -27,7 +27,7 @@ from ..test_schema import (
     TestCaseToMdast as TestCaseToMdastSchema,
     TestRoot as TestRootSchema,
 )
-from . import Context
+from . import Atom, Context
 
 
 TestCase = Union["TestCaseToHtml", "TestCaseToHtmlWithOptions", "TestCaseToMdast"]
@@ -318,7 +318,7 @@ class TestSuiteCompileOptions:
         if self.allow_any_img_src is not None:
             out["allow_any_img_src"] = self.allow_any_img_src
         if self.default_line_ending is not None:
-            out["default_line_ending"] = self.default_line_ending
+            out["default_line_ending"] = Atom(ctx=self.ctx, name=self.default_line_ending)
         if self.gfm_footnote_label is not None:
             out["gfm_footnote_label"] = self.gfm_footnote_label
         if self.gfm_footnote_label_tag_name is not None:

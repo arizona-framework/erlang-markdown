@@ -1,0 +1,201 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: misc_line_ending
+  created: 2025-10-09
+  modified: 2025-10-09
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_misc_line_ending_case_1
+  input: |2+
+
+  output: ''
+  message: should support just a line feed
+- name: test_misc_line_ending_case_2
+  input: "\r"
+  output: ''
+  message: should support just a carriage return
+- name: test_misc_line_ending_case_3
+  input: "\r\n"
+  output: ''
+  message: should support just a carriage return + line feed
+- name: test_misc_line_ending_case_4
+  input: |2+
+
+
+  output: ''
+  message: should support just two line feeds
+- name: test_misc_line_ending_case_5
+  input: "\r\r"
+  output: ''
+  message: should support just two carriage return
+- name: test_misc_line_ending_case_6
+  input: "\r\n\r\n"
+  output: ''
+  message: should support just two carriage return + line feeds
+- name: test_misc_line_ending_case_7
+  input: |-
+    a
+    b
+  output: |-
+    <p>a
+    b</p>
+  message: should support a line feed for a line ending inside a paragraph
+- name: test_misc_line_ending_case_8
+  input: "a\rb"
+  output: "<p>a\rb</p>"
+  message: should support a carriage return for a line ending inside a paragraph
+- name: test_misc_line_ending_case_9
+  input: "a\r\nb"
+  output: "<p>a\r\nb</p>"
+  message: "should support a carriage return + line feed for a line ending inside a paragraph"
+- name: test_misc_line_ending_case_10
+  input: "\ta\n\tb"
+  output: |-
+    <pre><code>a
+    b
+    </code></pre>
+  message: should support a line feed in indented code (and prefer it)
+- name: test_misc_line_ending_case_11
+  input: "\ta\r\tb"
+  output: "<pre><code>a\rb\r</code></pre>"
+  message: should support a carriage return in indented code (and prefer it)
+- name: test_misc_line_ending_case_12
+  input: "\ta\r\n\tb"
+  output: "<pre><code>a\r\nb\r\n</code></pre>"
+  message: should support a carriage return + line feed in indented code (and prefer it)
+- name: test_misc_line_ending_case_13
+  input: |-
+    ***
+    ### Heading
+  output: |-
+    <hr />
+    <h3>Heading</h3>
+  message: should support a line feed between flow
+- name: test_misc_line_ending_case_14
+  input: "***\r### Heading"
+  output: "<hr />\r<h3>Heading</h3>"
+  message: should support a carriage return between flow
+- name: test_misc_line_ending_case_15
+  input: "***\r\n### Heading"
+  output: "<hr />\r\n<h3>Heading</h3>"
+  message: should support a carriage return + line feed between flow
+- name: test_misc_line_ending_case_16
+  input: |
+    ***
+
+
+    ### Heading
+  output: |
+    <hr />
+    <h3>Heading</h3>
+  message: should support several line feeds between flow
+- name: test_misc_line_ending_case_17
+  input: "***\r\r\r### Heading\r"
+  output: "<hr />\r<h3>Heading</h3>\r"
+  message: should support several carriage returns between flow
+- name: test_misc_line_ending_case_18
+  input: "***\r\n\r\n\r\n### Heading\r\n"
+  output: "<hr />\r\n<h3>Heading</h3>\r\n"
+  message: should support several carriage return + line feeds between flow
+- name: test_misc_line_ending_case_19
+  input: |+
+    ```x
+
+
+    y
+
+
+    ```
+
+
+  output: |
+    <pre><code class="language-x">
+
+    y
+
+
+    </code></pre>
+  message: should support several line feeds in fenced code
+- name: test_misc_line_ending_case_20
+  input: "```x\r\r\ry\r\r\r```\r\r\r"
+  output: "<pre><code class=\"language-x\">\r\ry\r\r\r</code></pre>\r"
+  message: should support several carriage returns in fenced code
+- name: test_misc_line_ending_case_21
+  input: "```x\r\n\r\n\r\ny\r\n\r\n\r\n```\r\n\r\n\r\n"
+  output: "<pre><code class=\"language-x\">\r\n\r\ny\r\n\r\n\r\n</code></pre>\r\n"
+  message: should support several carriage return + line feeds in fenced code
+- name: test_misc_line_ending_case_22
+  input: "A\r\nB\r\n-\r\nC"
+  output: "<h2>A\r\nB</h2>\r\n<p>C</p>"
+  message: should support a carriage return + line feed in content
+to_html_with_options:
+- name: test_misc_line_ending_case_23
+  input: |
+    <div
+  output: |
+    <div
+  message: should support a line feed after html
+  options: danger
+- name: test_misc_line_ending_case_24
+  input: "<div\r"
+  output: "<div\r"
+  message: should support a carriage return after html
+  options: danger
+- name: test_misc_line_ending_case_25
+  input: "<div\r\n"
+  output: "<div\r\n"
+  message: should support a carriage return + line feed after html
+  options: danger
+- name: test_misc_line_ending_case_26
+  input: |-
+    <div>
+
+    x
+  output: |-
+    <div>
+    <p>x</p>
+  message: should support a blank line w/ line feeds after html
+  options: danger
+- name: test_misc_line_ending_case_27
+  input: "<div>\r\rx"
+  output: "<div>\r<p>x</p>"
+  message: should support a blank line w/ carriage returns after html
+  options: danger
+- name: test_misc_line_ending_case_28
+  input: "<div>\r\n\r\nx"
+  output: "<div>\r\n<p>x</p>"
+  message: should support a blank line w/ carriage return + line feeds after html
+  options: danger
+- name: test_misc_line_ending_case_29
+  input: |-
+    <div>
+    x
+  output: |-
+    <div>
+    x
+  message: should support a non-blank line w/ line feed in html
+  options: danger
+- name: test_misc_line_ending_case_30
+  input: "<div>\rx"
+  output: "<div>\rx"
+  message: should support a non-blank line w/ carriage return in html
+  options: danger
+- name: test_misc_line_ending_case_31
+  input: "<div>\r\nx"
+  output: "<div>\r\nx"
+  message: should support a non-blank line w/ carriage return + line feed in html
+  options: danger
+to_mdast: []

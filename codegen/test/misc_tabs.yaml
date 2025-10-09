@@ -1,0 +1,237 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: misc_tabs
+  created: 2025-10-09
+  modified: 2025-10-09
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_misc_tabs_case_1
+  input: '    x'
+  output: |-
+    <pre><code>x
+    </code></pre>
+  message: should support a 4*SP to start code
+- name: test_misc_tabs_case_2
+  input: "\tx"
+  output: |-
+    <pre><code>x
+    </code></pre>
+  message: should support a HT to start code
+- name: test_misc_tabs_case_3
+  input: " \tx"
+  output: |-
+    <pre><code>x
+    </code></pre>
+  message: should support a SP + HT to start code
+- name: test_misc_tabs_case_4
+  input: "  \tx"
+  output: |-
+    <pre><code>x
+    </code></pre>
+  message: should support a 2*SP + HT to start code
+- name: test_misc_tabs_case_5
+  input: "   \tx"
+  output: |-
+    <pre><code>x
+    </code></pre>
+  message: should support a 3*SP + HT to start code
+- name: test_misc_tabs_case_6
+  input: "    \tx"
+  output: "<pre><code>\tx\n</code></pre>"
+  message: should support a 4*SP to start code, and leave the next HT as code data
+- name: test_misc_tabs_case_7
+  input: "   \t# x"
+  output: |-
+    <pre><code># x
+    </code></pre>
+  message: should not support a 3*SP + HT to start an ATX heading
+- name: test_misc_tabs_case_8
+  input: "   \t> x"
+  output: |-
+    <pre><code>&gt; x
+    </code></pre>
+  message: should not support a 3*SP + HT to start a block quote
+- name: test_misc_tabs_case_9
+  input: "   \t- x"
+  output: |-
+    <pre><code>- x
+    </code></pre>
+  message: should not support a 3*SP + HT to start a list item
+- name: test_misc_tabs_case_10
+  input: "   \t---"
+  output: |-
+    <pre><code>---
+    </code></pre>
+  message: should not support a 3*SP + HT to start a thematic break
+- name: test_misc_tabs_case_11
+  input: "   \t```"
+  output: |-
+    <pre><code>```
+    </code></pre>
+  message: should not support a 3*SP + HT to start a fenced code
+- name: test_misc_tabs_case_12
+  input: "   \t<div>"
+  output: |-
+    <pre><code>&lt;div&gt;
+    </code></pre>
+  message: should not support a 3*SP + HT to start HTML
+- name: test_misc_tabs_case_13
+  input: "#\tx\t#\t"
+  output: <h1>x</h1>
+  message: should support tabs around ATX heading sequences
+- name: test_misc_tabs_case_14
+  input: "#\t\tx\t\t#\t\t"
+  output: <h1>x</h1>
+  message: should support arbitrary tabs around ATX heading sequences
+- name: test_misc_tabs_case_15
+  input: "```\tx\ty\t\n```\t"
+  output: "<pre><code class=\"language-x\"></code></pre>"
+  message: should support tabs around fenced code fences, info, and meta
+- name: test_misc_tabs_case_16
+  input: "```\t\tx\t\ty\t\t\n```\t\t"
+  output: "<pre><code class=\"language-x\"></code></pre>"
+  message: should support arbitrary tabs around fenced code fences, info, and meta
+- name: test_misc_tabs_case_17
+  input: "```x\n\t```"
+  output: "<pre><code class=\"language-x\">\t```\n</code></pre>\n"
+  message: should not support tabs before fenced code closing fences
+- name: test_misc_tabs_case_19
+  input: "*\t*\t*\t"
+  output: <hr />
+  message: should support tabs in thematic breaks
+- name: test_misc_tabs_case_20
+  input: "*\t\t*\t\t*\t\t"
+  output: <hr />
+  message: should support arbitrary tabs in thematic breaks
+- name: test_misc_tabs_case_21
+  input: "<http:\t>"
+  output: "<p>&lt;http:\t&gt;</p>"
+  message: should not support a tab to start an autolink w/ protocol’s rest
+- name: test_misc_tabs_case_22
+  input: "<http:x\t>"
+  output: "<p>&lt;http:x\t&gt;</p>"
+  message: should not support a tab in an autolink w/ protocol’s rest
+- name: test_misc_tabs_case_23
+  input: "<example\t@x.com>"
+  output: "<p>&lt;example\t@x.com&gt;</p>"
+  message: should not support a tab in an email autolink’s local part
+- name: test_misc_tabs_case_24
+  input: "<example@x\ty.com>"
+  output: "<p>&lt;example@x\ty.com&gt;</p>"
+  message: should not support a tab in an email autolink’s label
+- name: test_misc_tabs_case_25
+  input: "\\\tx"
+  output: "<p>\\\tx</p>"
+  message: should not support character escaped tab
+- name: test_misc_tabs_case_26
+  input: '&#9;'
+  output: "<p>\t</p>"
+  message: should support character reference resolving to a tab
+- name: test_misc_tabs_case_27
+  input: "`\tx`"
+  output: "<p><code>\tx</code></p>"
+  message: should support a tab starting code
+- name: test_misc_tabs_case_28
+  input: "`x\t`"
+  output: "<p><code>x\t</code></p>"
+  message: should support a tab ending code
+- name: test_misc_tabs_case_29
+  input: "`\tx\t`"
+  output: "<p><code>\tx\t</code></p>"
+  message: should support tabs around code
+- name: test_misc_tabs_case_30
+  input: "`\tx `"
+  output: "<p><code>\tx </code></p>"
+  message: should support a tab starting, and a space ending, code
+- name: test_misc_tabs_case_31
+  input: "` x\t`"
+  output: "<p><code> x\t</code></p>"
+  message: should support a space starting, and a tab ending, code
+- name: test_misc_tabs_case_32
+  input: "x\t\ny"
+  output: |-
+    <p>x
+    y</p>
+  message: should support a trailing tab at a line ending in a paragraph
+  comment: "Note: CM does not strip it in this case. However, that should be a bug there: makes more sense to remove it like\
+    \ trailing spaces."
+- name: test_misc_tabs_case_33
+  input: "x\n\ty"
+  output: |-
+    <p>x
+    y</p>
+  message: should support an initial tab after a line ending in a paragraph
+- name: test_misc_tabs_case_34
+  input: "x[\ty](z)"
+  output: "<p>x<a href=\"z\">\ty</a></p>"
+  message: should support an initial tab in a link label
+- name: test_misc_tabs_case_35
+  input: "x[y\t](z)"
+  output: "<p>x<a href=\"z\">y\t</a></p>"
+  message: should support a final tab in a link label
+- name: test_misc_tabs_case_36
+  input: "[x\ty](z)"
+  output: "<p><a href=\"z\">x\ty</a></p>"
+  message: should support a tab in a link label
+- name: test_misc_tabs_case_37
+  input: "[x](\ty)"
+  output: "<p><a href=\"y\">x</a></p>"
+  message: should support a tab starting a link resource
+  comment: 'Note: CM.js bug, see: <https://github.com/commonmark/commonmark.js/issues/191>'
+- name: test_misc_tabs_case_38
+  input: "[x](y\t)"
+  output: "<p><a href=\"y\">x</a></p>"
+  message: should support a tab ending a link resource
+- name: test_misc_tabs_case_39
+  input: "[x](y\t\"z\")"
+  output: "<p><a href=\"y\" title=\"z\">x</a></p>"
+  message: should support a tab between a link destination and title
+- name: test_misc_tabs_case_40
+  input: "```\n\tx"
+  output: "<pre><code>\tx\n</code></pre>\n"
+  message: should support a tab in fenced code
+- name: test_misc_tabs_case_41
+  input: " ```\n\tx"
+  output: |
+    <pre><code>   x
+    </code></pre>
+  message: "should strip 1 space from an initial tab in fenced code if the opening fence is indented as such"
+- name: test_misc_tabs_case_42
+  input: "  ```\n\tx"
+  output: |
+    <pre><code>  x
+    </code></pre>
+  message: "should strip 2 spaces from an initial tab in fenced code if the opening fence is indented as such"
+- name: test_misc_tabs_case_43
+  input: "   ```\n\tx"
+  output: |
+    <pre><code> x
+    </code></pre>
+  message: "should strip 3 spaces from an initial tab in fenced code if the opening fence is indented as such"
+- name: test_misc_tabs_case_44
+  input: "-\ta\n\n\tb"
+  output: "<ul>\n<li>\n<p>a</p>\n<p>\tb</p>\n</li>\n</ul>"
+  message: "should support a part of a tab as a container, and the rest of a tab as flow"
+  comment: |-
+    To do: CM.js does not output the tab before `b`. See if that makes sense?
+    "<ul>\n<li>\n<p>a</p>\n<p>b</p>\n</li>\n</ul>"
+to_html_with_options:
+- name: test_misc_tabs_case_18
+  input: "<x\ty\tz\t=\t\"\tx\t\">"
+  output: "<x\ty\tz\t=\t\"\tx\t\">"
+  message: should support tabs in HTML (if whitespace is allowed)
+  options: danger
+to_mdast: []

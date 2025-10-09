@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: misc_default_line_ending
+  created: 2025-10-09
+  modified: 2025-10-09
+to_html:
+- name: test_misc_default_line_ending_case_1
+  input: "> a"
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+  message: "should use `\\n` default"
+- name: test_misc_default_line_ending_case_2
+  input: "> a\n"
+  output: |
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+  message: should infer the first line ending (1)
+- name: test_misc_default_line_ending_case_3
+  input: "> a\r"
+  output: "<blockquote>\r<p>a</p>\r</blockquote>\r"
+  message: should infer the first line ending (2)
+- name: test_misc_default_line_ending_case_4
+  input: "> a\r\n"
+  output: "<blockquote>\r\n<p>a</p>\r\n</blockquote>\r\n"
+  message: should infer the first line ending (3)
+to_html_with_options:
+- name: test_misc_default_line_ending_case_5
+  input: "> a"
+  output: "<blockquote>\r<p>a</p>\r</blockquote>"
+  message: "should support the given line ending"
+  options:
+    extend: default
+    compile:
+      default_line_ending: carriage_return
+- name: test_misc_default_line_ending_case_6
+  input: "> a\n"
+  output: "<blockquote>\n<p>a</p>\n</blockquote>\n"
+  message: "should support the given line ending, even if line endings exist"
+  options:
+    extend: default
+    compile:
+      default_line_ending: carriage_return
+to_mdast: []

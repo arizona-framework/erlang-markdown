@@ -1,0 +1,160 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: misc_dangerous_protocol
+  created: 2025-10-09
+  modified: 2025-10-09
+shared_options:
+- name: options
+  options:
+    compile:
+      allow_any_img_src: true
+to_html:
+- name: test_misc_dangerous_protocol_case_1
+  input: <javascript:alert(1)>
+  output: "<p><a href=\"\">javascript:alert(1)</a></p>"
+  message: should be safe by default
+- name: test_misc_dangerous_protocol_case_2
+  input: <http://a>
+  output: "<p><a href=\"http://a\">http://a</a></p>"
+  message: should allow `http:`
+- name: test_misc_dangerous_protocol_case_3
+  input: <https://a>
+  output: "<p><a href=\"https://a\">https://a</a></p>"
+  message: should allow `https:`
+- name: test_misc_dangerous_protocol_case_4
+  input: <irc:///help>
+  output: "<p><a href=\"irc:///help\">irc:///help</a></p>"
+  message: should allow `irc:`
+- name: test_misc_dangerous_protocol_case_5
+  input: <mailto:a>
+  output: "<p><a href=\"mailto:a\">mailto:a</a></p>"
+  message: should allow `mailto:`
+- name: test_misc_dangerous_protocol_case_6
+  input: '![](javascript:alert(1))'
+  output: "<p><img src=\"\" alt=\"\" /></p>"
+  message: should be safe by default
+- name: test_misc_dangerous_protocol_case_7
+  input: '![](http://a)'
+  output: "<p><img src=\"http://a\" alt=\"\" /></p>"
+  message: should allow `http:`
+- name: test_misc_dangerous_protocol_case_8
+  input: '![](https://a)'
+  output: "<p><img src=\"https://a\" alt=\"\" /></p>"
+  message: should allow `https:`
+- name: test_misc_dangerous_protocol_case_9
+  input: '![](irc:///help)'
+  output: "<p><img src=\"\" alt=\"\" /></p>"
+  message: should not allow `irc:`
+- name: test_misc_dangerous_protocol_case_10
+  input: '![](mailto:a)'
+  output: "<p><img src=\"\" alt=\"\" /></p>"
+  message: should not allow `mailto:`
+- name: test_misc_dangerous_protocol_case_11
+  input: '![](#a)'
+  output: "<p><img src=\"#a\" alt=\"\" /></p>"
+  message: should allow a hash
+- name: test_misc_dangerous_protocol_case_12
+  input: '![](?a)'
+  output: "<p><img src=\"?a\" alt=\"\" /></p>"
+  message: should allow a search
+- name: test_misc_dangerous_protocol_case_13
+  input: '![](/a)'
+  output: "<p><img src=\"/a\" alt=\"\" /></p>"
+  message: should allow an absolute
+- name: test_misc_dangerous_protocol_case_14
+  input: '![](./a)'
+  output: "<p><img src=\"./a\" alt=\"\" /></p>"
+  message: should allow an relative
+- name: test_misc_dangerous_protocol_case_15
+  input: '![](../a)'
+  output: "<p><img src=\"../a\" alt=\"\" /></p>"
+  message: should allow an upwards relative
+- name: test_misc_dangerous_protocol_case_16
+  input: '![](a#b:c)'
+  output: "<p><img src=\"a#b:c\" alt=\"\" /></p>"
+  message: should allow a colon in a hash
+- name: test_misc_dangerous_protocol_case_17
+  input: '![](a?b:c)'
+  output: "<p><img src=\"a?b:c\" alt=\"\" /></p>"
+  message: should allow a colon in a search
+- name: test_misc_dangerous_protocol_case_18
+  input: '![](a/b:c)'
+  output: "<p><img src=\"a/b:c\" alt=\"\" /></p>"
+  message: should allow a colon in a path
+- name: test_misc_dangerous_protocol_case_19
+  input: '[](javascript:alert(1))'
+  output: "<p><a href=\"\"></a></p>"
+  message: should be safe by default
+- name: test_misc_dangerous_protocol_case_20
+  input: '[](http://a)'
+  output: "<p><a href=\"http://a\"></a></p>"
+  message: should allow `http:`
+- name: test_misc_dangerous_protocol_case_21
+  input: '[](https://a)'
+  output: "<p><a href=\"https://a\"></a></p>"
+  message: should allow `https:`
+- name: test_misc_dangerous_protocol_case_22
+  input: '[](irc:///help)'
+  output: "<p><a href=\"irc:///help\"></a></p>"
+  message: should allow `irc:`
+- name: test_misc_dangerous_protocol_case_23
+  input: '[](mailto:a)'
+  output: "<p><a href=\"mailto:a\"></a></p>"
+  message: should allow `mailto:`
+- name: test_misc_dangerous_protocol_case_24
+  input: '[](#a)'
+  output: "<p><a href=\"#a\"></a></p>"
+  message: should allow a hash
+- name: test_misc_dangerous_protocol_case_25
+  input: '[](?a)'
+  output: "<p><a href=\"?a\"></a></p>"
+  message: should allow a search
+- name: test_misc_dangerous_protocol_case_26
+  input: '[](/a)'
+  output: "<p><a href=\"/a\"></a></p>"
+  message: should allow an absolute
+- name: test_misc_dangerous_protocol_case_27
+  input: '[](./a)'
+  output: "<p><a href=\"./a\"></a></p>"
+  message: should allow an relative
+- name: test_misc_dangerous_protocol_case_28
+  input: '[](../a)'
+  output: "<p><a href=\"../a\"></a></p>"
+  message: should allow an upwards relative
+- name: test_misc_dangerous_protocol_case_29
+  input: '[](a#b:c)'
+  output: "<p><a href=\"a#b:c\"></a></p>"
+  message: should allow a colon in a hash
+- name: test_misc_dangerous_protocol_case_30
+  input: '[](a?b:c)'
+  output: "<p><a href=\"a?b:c\"></a></p>"
+  message: should allow a colon in a search
+- name: test_misc_dangerous_protocol_case_31
+  input: '[](a/b:c)'
+  output: "<p><a href=\"a/b:c\"></a></p>"
+  message: should allow a colon in a path
+to_html_with_options:
+- name: test_misc_dangerous_protocol_case_32
+  input: '![](javascript:alert(1))'
+  output: "<p><img src=\"javascript:alert(1)\" alt=\"\" /></p>"
+  message: "should allow javascript protocol with allow_any_img_src option"
+  options: options
+- name: test_misc_dangerous_protocol_case_33
+  input: '![](irc:///help)'
+  output: "<p><img src=\"irc:///help\" alt=\"\" /></p>"
+  message: "should allow irc protocol with allow_any_img_src option"
+  options: options
+- name: test_misc_dangerous_protocol_case_34
+  input: '![](mailto:a)'
+  output: "<p><img src=\"mailto:a\" alt=\"\" /></p>"
+  message: "should allow mailto protocol with allow_any_img_src option"
+  options: options
+to_mdast: []
