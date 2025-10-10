@@ -300,9 +300,11 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
             on_enter_heading(CompileContext1);
         heading_setext ->
             on_enter_heading(CompileContext1);
-        % %% on_enter_html
-        % html_flow -> on_enter_html(CompileContext1);
-        % html_text -> on_enter_html(CompileContext1);
+        %% on_enter_html
+        html_flow ->
+            on_enter_html(CompileContext1);
+        html_text ->
+            on_enter_html(CompileContext1);
         %% on_enter_image
         image ->
             on_enter_image(CompileContext1);
@@ -716,6 +718,24 @@ on_enter_heading(CompileContext1 = #markdown_mdast_compile_context{}) ->
             })
         ),
     {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:{[`HtmlFlow`][Name::HtmlFlow],[`HtmlText`][Name::HtmlText]}.
+""".
+-spec on_enter_html(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_html(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    CompileContext2 =
+        markdown_mdast_compile_context:tail_push(
+            CompileContext1,
+            markdown_mdast_node:html(#markdown_mdast_html{
+                value = <<>>,
+                position = none
+            })
+        ),
+    CompileContext3 = markdown_mdast_compile_context:buffer(CompileContext2),
+    {ok, CompileContext3}.
 
 %% @private
 -doc """
@@ -1351,9 +1371,11 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         %% on_exit_gfm_table
         gfm_table ->
             on_exit_gfm_table(CompileContext1);
-        % %% on_exit_gfm_task_list_item_value
-        % gfm_task_list_item_value_unchecked -> on_exit_gfm_task_list_item_value(CompileContext1);
-        % gfm_task_list_item_value_checked -> on_exit_gfm_task_list_item_value(CompileContext1);
+        %% on_exit_gfm_task_list_item_value
+        gfm_task_list_item_value_unchecked ->
+            on_exit_gfm_task_list_item_value(CompileContext1);
+        gfm_task_list_item_value_checked ->
+            on_exit_gfm_task_list_item_value(CompileContext1);
         %% on_exit_hard_break
         hard_break_escape ->
             on_exit_hard_break(CompileContext1);
@@ -1371,9 +1393,11 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         %% on_exit_heading_setext_text
         heading_setext_text ->
             on_exit_heading_setext_text(CompileContext1);
-        % %% on_exit_html
-        % html_flow -> on_exit_html(CompileContext1);
-        % html_text -> on_exit_html(CompileContext1);
+        %% on_exit_html
+        html_flow ->
+            on_exit_html(CompileContext1);
+        html_text ->
+            on_exit_html(CompileContext1);
         %% on_exit_label_text
         label_text ->
             on_exit_label_text(CompileContext1);
@@ -1853,6 +1877,33 @@ on_exit_gfm_table(CompileContext1 = #markdown_mdast_compile_context{}) ->
 
 %% @private
 -doc """
+Handle [`Exit`][Kind::Exit]:{[`GfmTaskListItemValueChecked`][Name::GfmTaskListItemValueChecked],[`GfmTaskListItemValueUnchecked`][Name::GfmTaskListItemValueUnchecked]}.
+""".
+-spec on_exit_gfm_task_list_item_value(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_gfm_task_list_item_value(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = Index}) ->
+    Event = markdown_vec:get(Events, Index),
+    Checked = Event#markdown_event.name =:= gfm_task_list_item_value_checked,
+    NodeMutFunc = fun on_exit_gfm_task_list_item_value__node_mut_func/2,
+    {CompileContext2, none} = markdown_mdast_compile_context:tail_penultimate_mut(
+        CompileContext1, {some, Checked}, NodeMutFunc
+    ),
+    {ok, CompileContext2}.
+
+%% @private
+-spec on_exit_gfm_task_list_item_value__node_mut_func(Node, OptionChecked) -> {Node, OptionChecked} when
+    Node :: markdown_mdast_node:t(), OptionChecked :: markdown_option:t(Checked), Checked :: boolean().
+on_exit_gfm_task_list_item_value__node_mut_func(
+    Node1 = #markdown_mdast_node{inner = ListItem1 = #markdown_mdast_list_item{}}, {some, Checked}
+) ->
+    ListItem2 = ListItem1#markdown_mdast_list_item{checked = {some, Checked}},
+    Node2 = Node1#markdown_mdast_node{inner = ListItem2},
+    {Node2, none};
+on_exit_gfm_task_list_item_value__node_mut_func(_Node, {some, _Checked}) ->
+    ?'unreachable!'("expected list item on stack", []).
+
+%% @private
+-doc """
 Handle [`Exit`][Kind::Exit]:{[`HardBreakEscape`][Name::HardBreakEscape],[`HardBreakTrailing`][Name::HardBreakTrailing]}.
 """.
 -spec on_exit_hard_break(CompileContext) -> {ok, CompileContext} | {error, Message} when
@@ -1952,6 +2003,29 @@ on_exit_heading_setext_underline_sequence__node_mut_func(
     {Node2, none};
 on_exit_heading_setext_underline_sequence__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Depth}) ->
     ?'unreachable!'("expected heading on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:{[`HtmlFlow`][Name::HtmlFlow],[`HtmlText`][Name::HtmlText]}.
+""".
+-spec on_exit_html(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_html(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Value = markdown_mdast_node:to_string(Node),
+    NodeMutFunc = fun on_exit_html__node_mut_func/2,
+    {CompileContext3, none} = markdown_mdast_compile_context:tail_mut(CompileContext2, {some, Value}, NodeMutFunc),
+    on_exit(CompileContext3).
+
+%% @private
+-spec on_exit_html__node_mut_func(Node, OptionValue) -> {Node, OptionValue} when
+    Node :: markdown_mdast_node:t(), OptionValue :: markdown_option:t(Value), Value :: unicode:unicode_binary().
+on_exit_html__node_mut_func(Node1 = #markdown_mdast_node{inner = Html1 = #markdown_mdast_html{}}, {some, Value}) ->
+    Html2 = Html1#markdown_mdast_html{value = Value},
+    Node2 = Node1#markdown_mdast_node{inner = Html2},
+    {Node2, none};
+on_exit_html__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
+    ?'unreachable!'("expected html on stack for value", []).
 
 %% @private
 -doc """

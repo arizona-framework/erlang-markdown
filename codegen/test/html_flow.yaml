@@ -1,0 +1,1336 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: html_flow
+  created: 2025-10-10
+  modified: 2025-10-10
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_html_flow_case_1
+  input: <!-- asd -->
+  output: '&lt;!-- asd --&gt;'
+  message: should support a heading w/ rank 1
+to_html_with_options:
+- name: test_html_flow_case_2
+  input: <!-- asd -->
+  output: <!-- asd -->
+  message: should support a heading w/ rank 1
+  options: danger
+- name: test_html_flow_case_3
+  input: <x>
+  output: <p>&lt;x&gt;</p>
+  message: should support turning off html (flow)
+  options:
+    extend: default
+    parse:
+      constructs:
+        html_flow: false
+- name: test_html_flow_case_5
+  input: |-
+    <pre language="haskell"><code>
+    import Text.HTML.TagSoup
+
+    main :: IO ()
+    main = print $ parseTags tags
+    </code></pre>
+    okay
+  output: |-
+    <pre language="haskell"><code>
+    import Text.HTML.TagSoup
+
+    main :: IO ()
+    main = print $ parseTags tags
+    </code></pre>
+    <p>okay</p>
+  message: should support raw pre tags (type 1)
+  options: danger
+- name: test_html_flow_case_6
+  input: |-
+    <script type="text/javascript">
+    // JavaScript example
+
+    document.getElementById("demo").innerHTML = "Hello JavaScript!";
+    </script>
+    okay
+  output: |-
+    <script type="text/javascript">
+    // JavaScript example
+
+    document.getElementById("demo").innerHTML = "Hello JavaScript!";
+    </script>
+    <p>okay</p>
+  message: should support raw script tags
+  options: danger
+- name: test_html_flow_case_7
+  input: |-
+    <style
+      type="text/css">
+    h1 {color:red;}
+
+    p {color:blue;}
+    </style>
+    okay
+  output: |-
+    <style
+      type="text/css">
+    h1 {color:red;}
+
+    p {color:blue;}
+    </style>
+    <p>okay</p>
+  message: should support raw style tags
+  options: danger
+- name: test_html_flow_case_8
+  input: |-
+    <style
+      type="text/css">
+
+    foo
+  output: |-
+    <style
+      type="text/css">
+
+    foo
+  message: should support raw tags w/o ending
+  options: danger
+- name: test_html_flow_case_9
+  input: |-
+    <style>p{color:red;}</style>
+    *foo*
+  output: |-
+    <style>p{color:red;}</style>
+    <p><em>foo</em></p>
+  message: should support raw tags w/ start and end on a single line
+  options: danger
+- name: test_html_flow_case_10
+  input: |-
+    <script>
+    foo
+    </script>1. *bar*
+  output: |-
+    <script>
+    foo
+    </script>1. *bar*
+  message: should support raw tags w/ more data on ending line
+  options: danger
+- name: test_html_flow_case_11
+  input: <script
+  output: <script
+  message: should support an eof directly after a raw tag name
+  options: danger
+- name: test_html_flow_case_12
+  input: |-
+    </script
+    more
+  output: |-
+    <p>&lt;/script
+    more</p>
+  message: should not support a raw closing tag
+  options: danger
+- name: test_html_flow_case_13
+  input: <script/
+  output: <p>&lt;script/</p>
+  message: should not support an eof after a self-closing slash
+  options: danger
+- name: test_html_flow_case_14
+  input: |-
+    <script/
+    *asd*
+  output: |-
+    <p>&lt;script/
+    <em>asd</em></p>
+  message: should not support a line ending after a self-closing slash
+  options: danger
+- name: test_html_flow_case_15
+  input: <script/>
+  output: <script/>
+  message: should support an eof after a self-closing tag
+  options: danger
+- name: test_html_flow_case_16
+  input: |-
+    <script/>
+    a
+  output: |-
+    <script/>
+    a
+  message: should support a line ending after a self-closing tag
+  options: danger
+- name: test_html_flow_case_17
+  input: <script/>a
+  output: <p><script/>a</p>
+  message: should not support other characters after a self-closing tag
+  options: danger
+- name: test_html_flow_case_18
+  input: <script>a
+  output: <script>a
+  message: should support other characters after a raw opening tag
+  options: danger
+- name: test_html_flow_case_19
+  input: |-
+    Foo
+    <script
+  output: |-
+    <p>Foo</p>
+    <script
+  message: should support interrupting paragraphs w/ raw tags
+  comment: Extra.
+  options: danger
+- name: test_html_flow_case_20
+  input: |-
+    <script>a</script
+    b
+  output: |-
+    <script>a</script
+    b
+  message: should not support stopping raw if the closing tag does not have a `>`
+  options: danger
+- name: test_html_flow_case_21
+  input: "<script>\n  \n  \n</script>"
+  output: "<script>\n  \n  \n</script>"
+  message: should support blank lines in raw
+  options: danger
+- name: test_html_flow_case_22
+  input: |-
+    > <script>
+    a
+  output: |-
+    <blockquote>
+    <script>
+    </blockquote>
+    <p>a</p>
+  message: should not support lazyness (1)
+  options: danger
+- name: test_html_flow_case_23
+  input: |-
+    > a
+    <script>
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <script>
+  message: should not support lazyness (2)
+  options: danger
+- name: test_html_flow_case_24
+  input: |-
+    <!-- Foo
+
+    bar
+       baz -->
+    okay
+  output: |-
+    <!-- Foo
+
+    bar
+       baz -->
+    <p>okay</p>
+  message: should support comments (type 2)
+  options: danger
+- name: test_html_flow_case_25
+  input: |-
+    <!-- foo -->*bar*
+    *baz*
+  output: |-
+    <!-- foo -->*bar*
+    <p><em>baz</em></p>
+  message: should support comments w/ start and end on a single line
+  options: danger
+- name: test_html_flow_case_26
+  input: <!-asd-->
+  output: <p>&lt;!-asd--&gt;</p>
+  message: should not support a single dash to start comments
+  options: danger
+- name: test_html_flow_case_27
+  input: <!-->
+  output: <!-->
+  message: should support comments where the start dashes are the end dashes (1)
+  options: danger
+- name: test_html_flow_case_28
+  input: <!--->
+  output: <!--->
+  message: should support comments where the start dashes are the end dashes (2)
+  options: danger
+- name: test_html_flow_case_29
+  input: <!---->
+  output: <!---->
+  message: should support empty comments
+  options: danger
+- name: test_html_flow_case_30
+  input: |-
+    <!--
+    ->
+    "
+  output: |-
+    <!--
+    ->
+    "
+  message: should not end a comment at one dash (`->`)
+  comment: "If the `\\\"` is encoded, we’re in text. If it remains, we’re in HTML."
+  options: danger
+- name: test_html_flow_case_31
+  input: |-
+    <!--
+    -->
+    "
+  output: |-
+    <!--
+    -->
+    <p>&quot;</p>
+  message: should end a comment at two dashes (`-->`)
+  options: danger
+- name: test_html_flow_case_32
+  input: |-
+    <!--
+    --->
+    "
+  output: |-
+    <!--
+    --->
+    <p>&quot;</p>
+  message: should end a comment at three dashes (`--->`)
+  options: danger
+- name: test_html_flow_case_33
+  input: |-
+    <!--
+    ---->
+    "
+  output: |-
+    <!--
+    ---->
+    <p>&quot;</p>
+  message: should end a comment at four dashes (`---->`)
+  options: danger
+- name: test_html_flow_case_34
+  input: '  <!-- foo -->'
+  output: '  <!-- foo -->'
+  message: should support comments w/ indent
+  options: danger
+- name: test_html_flow_case_35
+  input: '    <!-- foo -->'
+  output: |-
+    <pre><code>&lt;!-- foo --&gt;
+    </code></pre>
+  message: should not support comments w/ a 4 character indent
+  options: danger
+- name: test_html_flow_case_36
+  input: |-
+    Foo
+    <!--
+  output: |-
+    <p>Foo</p>
+    <!--
+  message: should support interrupting paragraphs w/ comments
+  comment: Extra.
+  options: danger
+- name: test_html_flow_case_37
+  input: "<!--\n  \n  \n-->"
+  output: "<!--\n  \n  \n-->"
+  message: should support blank lines in comments
+  options: danger
+- name: test_html_flow_case_38
+  input: |-
+    > <!--
+    a
+  output: |-
+    <blockquote>
+    <!--
+    </blockquote>
+    <p>a</p>
+  message: should not support lazyness (1)
+  options: danger
+- name: test_html_flow_case_39
+  input: |-
+    > a
+    <!--
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <!--
+  message: should not support lazyness (2)
+  options: danger
+- name: test_html_flow_case_40
+  input: |-
+    <?php
+
+      echo ">";
+
+    ?>
+    okay
+  output: |-
+    <?php
+
+      echo ">";
+
+    ?>
+    <p>okay</p>
+  message: should support instructions (type 3)
+  options: danger
+- name: test_html_flow_case_41
+  input: <?>
+  output: <?>
+  message: "should support empty instructions where the `?` is part of both the start and the end"
+  options: danger
+- name: test_html_flow_case_42
+  input: <??>
+  output: <??>
+  message: should support empty instructions
+  options: danger
+- name: test_html_flow_case_43
+  input: |-
+    Foo
+    <?
+  output: |-
+    <p>Foo</p>
+    <?
+  message: should support interrupting paragraphs w/ instructions
+  comment: Extra.
+  options: danger
+- name: test_html_flow_case_44
+  input: "<?\n  \n  \n?>"
+  output: "<?\n  \n  \n?>"
+  message: should support blank lines in instructions
+  options: danger
+- name: test_html_flow_case_45
+  input: |-
+    > <?
+    a
+  output: |-
+    <blockquote>
+    <?
+    </blockquote>
+    <p>a</p>
+  message: should not support lazyness (1)
+  options: danger
+- name: test_html_flow_case_46
+  input: |-
+    > a
+    <?
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <?
+  message: should not support lazyness (2)
+  options: danger
+- name: test_html_flow_case_47
+  input: <!DOCTYPE html>
+  output: <!DOCTYPE html>
+  message: should support declarations (type 4)
+  options: danger
+- name: test_html_flow_case_48
+  input: <!123>
+  output: <p>&lt;!123&gt;</p>
+  message: should not support declarations that start w/o an alpha
+  options: danger
+- name: test_html_flow_case_49
+  input: <!>
+  output: <p>&lt;!&gt;</p>
+  message: should not support declarations w/o an identifier
+  options: danger
+- name: test_html_flow_case_50
+  input: <!a>
+  output: <!a>
+  message: should support declarations w/o a single alpha as identifier
+  options: danger
+- name: test_html_flow_case_51
+  input: |-
+    Foo
+    <!d
+  output: |-
+    <p>Foo</p>
+    <!d
+  message: should support interrupting paragraphs w/ declarations
+  comment: Extra.
+  options: danger
+- name: test_html_flow_case_52
+  input: "<!a\n  \n  \n>"
+  output: "<!a\n  \n  \n>"
+  message: should support blank lines in declarations
+  comment: "Note about the lower letter: <https://github.com/commonmark/commonmark-spec/pull/621>"
+  options: danger
+- name: test_html_flow_case_53
+  input: |-
+    > <!a
+    b
+  output: |-
+    <blockquote>
+    <!a
+    </blockquote>
+    <p>b</p>
+  message: should not support lazyness (1)
+  options: danger
+- name: test_html_flow_case_54
+  input: |-
+    > a
+    <!b
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <!b
+  message: should not support lazyness (2)
+  options: danger
+- name: test_html_flow_case_55
+  input: |-
+    <![CDATA[
+    function matchwo(a,b)
+    {
+      if (a < b && a < 0) then {
+        return 1;
+
+      } else {
+
+        return 0;
+      }
+    }
+    ]]>
+    okay
+  output: |-
+    <![CDATA[
+    function matchwo(a,b)
+    {
+      if (a < b && a < 0) then {
+        return 1;
+
+      } else {
+
+        return 0;
+      }
+    }
+    ]]>
+    <p>okay</p>
+  message: should support cdata (type 5)
+  options: danger
+- name: test_html_flow_case_56
+  input: <![CDATA[]]>
+  output: <![CDATA[]]>
+  message: should support empty cdata
+  options: danger
+- name: test_html_flow_case_57
+  input: <![CDATA]]>
+  output: <p>&lt;![CDATA]]&gt;</p>
+  message: should not support cdata w/ a missing `[`
+  options: danger
+- name: test_html_flow_case_58
+  input: <![CDATA[]]]>
+  output: <![CDATA[]]]>
+  message: should support cdata w/ a single `]` as content
+  options: danger
+- name: test_html_flow_case_59
+  input: |-
+    Foo
+    <![CDATA[
+  output: |-
+    <p>Foo</p>
+    <![CDATA[
+  message: should support interrupting paragraphs w/ cdata
+  comment: Extra.
+  options: danger
+- name: test_html_flow_case_60
+  input: <![cdata[]]>
+  output: <p>&lt;![cdata[]]&gt;</p>
+  message: should not support lowercase cdata
+  comment: "Note: cmjs parses this differently. See: <https://github.com/commonmark/commonmark.js/issues/193>"
+  options: danger
+- name: test_html_flow_case_61
+  input: "<![CDATA[\n  \n  \n]]>"
+  output: "<![CDATA[\n  \n  \n]]>"
+  message: should support blank lines in cdata
+  options: danger
+- name: test_html_flow_case_62
+  input: |-
+    > <![CDATA[
+    a
+  output: |-
+    <blockquote>
+    <![CDATA[
+    </blockquote>
+    <p>a</p>
+  message: should not support lazyness (1)
+  options: danger
+- name: test_html_flow_case_63
+  input: |-
+    > a
+    <![CDATA[
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <![CDATA[
+  message: should not support lazyness (2)
+  options: danger
+- name: test_html_flow_case_64
+  input: |-
+    <table><tr><td>
+    <pre>
+    **Hello**,
+
+    _world_.
+    </pre>
+    </td></tr></table>
+  output: |-
+    <table><tr><td>
+    <pre>
+    **Hello**,
+    <p><em>world</em>.
+    </pre></p>
+    </td></tr></table>
+  message: should support html (basic)
+  options: danger
+- name: test_html_flow_case_65
+  input: |-
+    <table>
+      <tr>
+        <td>
+               hi
+        </td>
+      </tr>
+    </table>
+
+    okay.
+  output: |-
+    <table>
+      <tr>
+        <td>
+               hi
+        </td>
+      </tr>
+    </table>
+    <p>okay.</p>
+  message: should support html of type 6 (1)
+  options: danger
+- name: test_html_flow_case_66
+  input: |2-
+     <div>
+      *hello*
+             <foo><a>
+  output: |2-
+     <div>
+      *hello*
+             <foo><a>
+  message: should support html of type 6 (2)
+  options: danger
+- name: test_html_flow_case_67
+  input: |-
+    </div>
+    *foo*
+  output: |-
+    </div>
+    *foo*
+  message: should support html starting w/ a closing tag
+  options: danger
+- name: test_html_flow_case_68
+  input: |-
+    <DIV CLASS="foo">
+
+    *Markdown*
+
+    </DIV>
+  output: |-
+    <DIV CLASS="foo">
+    <p><em>Markdown</em></p>
+    </DIV>
+  message: should support html w/ markdown in between
+  options: danger
+- name: test_html_flow_case_69
+  input: |-
+    <div id="foo"
+      class="bar">
+    </div>
+  output: |-
+    <div id="foo"
+      class="bar">
+    </div>
+  message: should support html w/ line endings (1)
+  options: danger
+- name: test_html_flow_case_70
+  input: |-
+    <div id="foo" class="bar
+      baz">
+    </div>
+  output: |-
+    <div id="foo" class="bar
+      baz">
+    </div>
+  message: should support html w/ line endings (2)
+  options: danger
+- name: test_html_flow_case_71
+  input: |-
+    <div>
+    *foo*
+
+    *bar*
+  output: |-
+    <div>
+    *foo*
+    <p><em>bar</em></p>
+  message: should support an unclosed html element
+  options: danger
+- name: test_html_flow_case_72
+  input: |-
+    <div id="foo"
+    *hi*
+  output: |-
+    <div id="foo"
+    *hi*
+  message: should support garbage html (1)
+  options: danger
+- name: test_html_flow_case_73
+  input: |-
+    <div class
+    foo
+  output: |-
+    <div class
+    foo
+  message: should support garbage html (2)
+  options: danger
+- name: test_html_flow_case_74
+  input: |-
+    <div *???-&&&-<---
+    *foo*
+  output: |-
+    <div *???-&&&-<---
+    *foo*
+  message: should support garbage html (3)
+  options: danger
+- name: test_html_flow_case_75
+  input: "<div><a href=\"bar\">*foo*</a></div>"
+  output: "<div><a href=\"bar\">*foo*</a></div>"
+  message: should support other tags in the opening (1)
+  options: danger
+- name: test_html_flow_case_76
+  input: |-
+    <table><tr><td>
+    foo
+    </td></tr></table>
+  output: |-
+    <table><tr><td>
+    foo
+    </td></tr></table>
+  message: should support other tags in the opening (2)
+  options: danger
+- name: test_html_flow_case_77
+  input: |-
+    <div></div>
+    ``` c
+    int x = 33;
+    ```
+  output: |-
+    <div></div>
+    ``` c
+    int x = 33;
+    ```
+  message: should include everything ’till a blank line
+  options: danger
+- name: test_html_flow_case_78
+  input: |-
+    > <div>
+    > foo
+
+    bar
+  output: |-
+    <blockquote>
+    <div>
+    foo
+    </blockquote>
+    <p>bar</p>
+  message: should support basic tags w/o ending in containers (1)
+  options: danger
+- name: test_html_flow_case_79
+  input: |-
+    - <div>
+    - foo
+  output: |-
+    <ul>
+    <li>
+    <div>
+    </li>
+    <li>foo</li>
+    </ul>
+  message: should support basic tags w/o ending in containers (2)
+  options: danger
+- name: test_html_flow_case_80
+  input: '  <div>'
+  output: '  <div>'
+  message: should support basic tags w/ indent
+  options: danger
+- name: test_html_flow_case_81
+  input: '    <div>'
+  output: |-
+    <pre><code>&lt;div&gt;
+    </code></pre>
+  message: should not support basic tags w/ a 4 character indent
+  options: danger
+- name: test_html_flow_case_82
+  input: |-
+    Foo
+    <div>
+    bar
+    </div>
+  output: |-
+    <p>Foo</p>
+    <div>
+    bar
+    </div>
+  message: should support interrupting paragraphs w/ basic tags
+  options: danger
+- name: test_html_flow_case_83
+  input: |-
+    <div>
+    bar
+    </div>
+    *foo*
+  output: |-
+    <div>
+    bar
+    </div>
+    *foo*
+  message: should require a blank line to end
+  options: danger
+- name: test_html_flow_case_84
+  input: |-
+    <div>
+
+    *Emphasized* text.
+
+    </div>
+  output: |-
+    <div>
+    <p><em>Emphasized</em> text.</p>
+    </div>
+  message: should support interleaving w/ blank lines
+  options: danger
+- name: test_html_flow_case_85
+  input: |-
+    <div>
+    *Emphasized* text.
+    </div>
+  output: |-
+    <div>
+    *Emphasized* text.
+    </div>
+  message: should not support interleaving w/o blank lines
+  options: danger
+- name: test_html_flow_case_86
+  input: |-
+    <table>
+
+    <tr>
+
+    <td>
+    Hi
+    </td>
+
+    </tr>
+
+    </table>
+  output: |-
+    <table>
+    <tr>
+    <td>
+    Hi
+    </td>
+    </tr>
+    </table>
+  message: should support blank lines between adjacent html
+  options: danger
+- name: test_html_flow_case_87
+  input: |-
+    <table>
+
+      <tr>
+
+        <td>
+          Hi
+        </td>
+
+      </tr>
+
+    </table>
+  output: |-
+    <table>
+      <tr>
+    <pre><code>&lt;td&gt;
+      Hi
+    &lt;/td&gt;
+    </code></pre>
+      </tr>
+    </table>
+  message: should not support indented, blank-line delimited, adjacent html
+  options: danger
+- name: test_html_flow_case_88
+  input: </1>
+  output: <p>&lt;/1&gt;</p>
+  message: should not support basic tags w/ an incorrect name start character
+  options: danger
+- name: test_html_flow_case_89
+  input: <div
+  output: <div
+  message: should support an eof directly after a basic tag name
+  options: danger
+- name: test_html_flow_case_90
+  input: |
+    <div
+  output: |
+    <div
+  message: should support a line ending directly after a tag name
+  options: danger
+- name: test_html_flow_case_91
+  input: '<div '
+  output: '<div '
+  message: should support an eof after a space directly after a tag name
+  options: danger
+- name: test_html_flow_case_92
+  input: <div/
+  output: <p>&lt;div/</p>
+  message: should not support an eof directly after a self-closing slash
+  options: danger
+- name: test_html_flow_case_93
+  input: |-
+    <div/
+    *asd*
+  output: |-
+    <p>&lt;div/
+    <em>asd</em></p>
+  message: should not support a line ending after a self-closing slash
+  options: danger
+- name: test_html_flow_case_94
+  input: <div/>
+  output: <div/>
+  message: should support an eof after a self-closing tag
+  options: danger
+- name: test_html_flow_case_95
+  input: |-
+    <div/>
+    a
+  output: |-
+    <div/>
+    a
+  message: should support a line ending after a self-closing tag
+  options: danger
+- name: test_html_flow_case_96
+  input: <div/>a
+  output: <div/>a
+  message: should support another character after a self-closing tag
+  options: danger
+- name: test_html_flow_case_97
+  input: <div>a
+  output: <div>a
+  message: should support another character after a basic opening tag
+  options: danger
+- name: test_html_flow_case_98
+  input: |-
+    Foo
+    <div/>
+  output: |-
+    <p>Foo</p>
+    <div/>
+  message: should support interrupting paragraphs w/ self-closing basic tags
+  comment: Extra.
+  options: danger
+- name: test_html_flow_case_99
+  input: "<div\n  \n  \n>"
+  output: |-
+    <div
+    <blockquote>
+    </blockquote>
+  message: should not support blank lines in basic
+  options: danger
+- name: test_html_flow_case_100
+  input: |-
+    > <div
+    a
+  output: |-
+    <blockquote>
+    <div
+    </blockquote>
+    <p>a</p>
+  message: should not support lazyness (1)
+  options: danger
+- name: test_html_flow_case_101
+  input: |-
+    > a
+    <div
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <div
+  message: should not support lazyness (2)
+  options: danger
+- name: test_html_flow_case_102
+  input: |-
+    <a href="foo">
+    *bar*
+    </a>
+  output: |-
+    <a href="foo">
+    *bar*
+    </a>
+  message: should support complete tags (type 7)
+  options: danger
+- name: test_html_flow_case_103
+  input: |-
+    <Warning>
+    *bar*
+    </Warning>
+  output: |-
+    <Warning>
+    *bar*
+    </Warning>
+  message: should support non-html tag names
+  options: danger
+- name: test_html_flow_case_104
+  input: |-
+    <i class="foo">
+    *bar*
+    </i>
+  output: |-
+    <i class="foo">
+    *bar*
+    </i>
+  message: should support non-“block” html tag names (1)
+  options: danger
+- name: test_html_flow_case_105
+  input: |-
+    <del>
+    *foo*
+    </del>
+  output: |-
+    <del>
+    *foo*
+    </del>
+  message: should support non-“block” html tag names (2)
+  options: danger
+- name: test_html_flow_case_106
+  input: |-
+    </ins>
+    *bar*
+  output: |-
+    </ins>
+    *bar*
+  message: should support closing tags
+  options: danger
+- name: test_html_flow_case_107
+  input: |-
+    <del>
+
+    *foo*
+
+    </del>
+  output: |-
+    <del>
+    <p><em>foo</em></p>
+    </del>
+  message: should support interleaving
+  options: danger
+- name: test_html_flow_case_108
+  input: <del>*foo*</del>
+  output: <p><del><em>foo</em></del></p>
+  message: should not support interleaving w/o blank lines
+  options: danger
+- name: test_html_flow_case_109
+  input: "<div>\n  \nasd"
+  output: |-
+    <div>
+    <p>asd</p>
+  message: should support interleaving w/ whitespace-only blank lines
+  options: danger
+- name: test_html_flow_case_110
+  input: |-
+    Foo
+    <a href="bar">
+    baz
+  output: |-
+    <p>Foo
+    <a href="bar">
+    baz</p>
+  message: should not support interrupting paragraphs w/ complete tags
+  options: danger
+- name: test_html_flow_case_111
+  input: <x
+  output: <p>&lt;x</p>
+  message: should not support an eof directly after a tag name
+  options: danger
+- name: test_html_flow_case_112
+  input: <x/
+  output: <p>&lt;x/</p>
+  message: should not support an eof directly after a self-closing slash
+  options: danger
+- name: test_html_flow_case_113
+  input: |
+    <x
+  output: |
+    <p>&lt;x</p>
+  message: should not support a line ending directly after a tag name
+  options: danger
+- name: test_html_flow_case_114
+  input: '<x '
+  output: <p>&lt;x</p>
+  message: should not support an eof after a space directly after a tag name
+  options: danger
+- name: test_html_flow_case_115
+  input: <x/
+  output: <p>&lt;x/</p>
+  message: should not support an eof directly after a self-closing slash
+  options: danger
+- name: test_html_flow_case_116
+  input: |-
+    <x/
+    *asd*
+  output: |-
+    <p>&lt;x/
+    <em>asd</em></p>
+  message: should not support a line ending after a self-closing slash
+  options: danger
+- name: test_html_flow_case_117
+  input: <x/>
+  output: <x/>
+  message: should support an eof after a self-closing tag
+  options: danger
+- name: test_html_flow_case_118
+  input: |-
+    <x/>
+    a
+  output: |-
+    <x/>
+    a
+  message: should support a line ending after a self-closing tag
+  options: danger
+- name: test_html_flow_case_119
+  input: <x/>a
+  output: <p><x/>a</p>
+  message: should not support another character after a self-closing tag
+  options: danger
+- name: test_html_flow_case_120
+  input: <x>a
+  output: <p><x>a</p>
+  message: should not support another character after an opening tag
+  options: danger
+- name: test_html_flow_case_121
+  input: <x y>
+  output: <x y>
+  message: should support boolean attributes in a complete tag
+  options: danger
+- name: test_html_flow_case_122
+  input: |-
+    <x
+    y>
+  output: |-
+    <p><x
+    y></p>
+  message: should not support a line ending before an attribute name
+  options: danger
+- name: test_html_flow_case_123
+  input: |-
+    <x
+      y>
+  output: |-
+    <p><x
+    y></p>
+  message: should not support a line ending w/ whitespace before an attribute name
+  options: danger
+- name: test_html_flow_case_124
+  input: "<x\n  \ny>"
+  output: |-
+    <p>&lt;x</p>
+    <p>y&gt;</p>
+  message: "should not support a line ending w/ whitespace and another line ending before an attribute name"
+  options: danger
+- name: test_html_flow_case_125
+  input: |-
+    <x y
+    z>
+  output: |-
+    <p><x y
+    z></p>
+  message: should not support a line ending between attribute names
+  options: danger
+- name: test_html_flow_case_126
+  input: <x y   z>
+  output: <x y   z>
+  message: should support whitespace between attribute names
+  options: danger
+- name: test_html_flow_case_127
+  input: <x:y>
+  output: <p>&lt;x:y&gt;</p>
+  message: should not support a colon in a tag name
+  options: danger
+- name: test_html_flow_case_128
+  input: <x_y>
+  output: <p>&lt;x_y&gt;</p>
+  message: should not support an underscore in a tag name
+  options: danger
+- name: test_html_flow_case_129
+  input: <x.y>
+  output: <p>&lt;x.y&gt;</p>
+  message: should not support a dot in a tag name
+  options: danger
+- name: test_html_flow_case_130
+  input: <x :y>
+  output: <x :y>
+  message: should support a colon to start an attribute name
+  options: danger
+- name: test_html_flow_case_131
+  input: <x _y>
+  output: <x _y>
+  message: should support an underscore to start an attribute name
+  options: danger
+- name: test_html_flow_case_132
+  input: <x .y>
+  output: <p>&lt;x .y&gt;</p>
+  message: should not support a dot to start an attribute name
+  options: danger
+- name: test_html_flow_case_133
+  input: <x y:>
+  output: <x y:>
+  message: should support a colon to end an attribute name
+  options: danger
+- name: test_html_flow_case_134
+  input: <x y_>
+  output: <x y_>
+  message: should support an underscore to end an attribute name
+  options: danger
+- name: test_html_flow_case_135
+  input: <x y.>
+  output: <x y.>
+  message: should support a dot to end an attribute name
+  options: danger
+- name: test_html_flow_case_136
+  input: <x y123>
+  output: <x y123>
+  message: should support numbers to end an attribute name
+  options: danger
+- name: test_html_flow_case_137
+  input: <x data->
+  output: <x data->
+  message: should support a dash to end an attribute name
+  options: danger
+- name: test_html_flow_case_138
+  input: <x y=>
+  output: <p>&lt;x y=&gt;</p>
+  message: should not upport an initializer w/o a value
+  options: danger
+- name: test_html_flow_case_139
+  input: <x y==>
+  output: <p>&lt;x y==&gt;</p>
+  message: should not support an equals to as an initializer
+  options: danger
+- name: test_html_flow_case_140
+  input: <x y=z>
+  output: <x y=z>
+  message: should support a single character as an unquoted attribute value
+  options: danger
+- name: test_html_flow_case_141
+  input: "<x y=\"\">"
+  output: "<x y=\"\">"
+  message: should support an empty double quoted attribute value
+  options: danger
+- name: test_html_flow_case_142
+  input: "<x y=\"\">"
+  output: "<x y=\"\">"
+  message: should support an empty single quoted attribute value
+  options: danger
+- name: test_html_flow_case_143
+  input: |-
+    <x y="
+    ">
+  output: |-
+    <p><x y="
+    "></p>
+  message: should not support a line ending in a double quoted attribute value
+  options: danger
+- name: test_html_flow_case_144
+  input: |-
+    <x y="
+    ">
+  output: |-
+    <p><x y="
+    "></p>
+  message: should not support a line ending in a single quoted attribute value
+  options: danger
+- name: test_html_flow_case_145
+  input: |-
+    <w x=y
+    z>
+  output: |-
+    <p><w x=y
+    z></p>
+  message: should not support a line ending in/after an unquoted attribute value
+  options: danger
+- name: test_html_flow_case_146
+  input: "<w x=y\"z>"
+  output: <p>&lt;w x=y&quot;z&gt;</p>
+  message: should not support a double quote in/after an unquoted attribute value
+  options: danger
+- name: test_html_flow_case_147
+  input: <w x=y'z>
+  output: <p>&lt;w x=y'z&gt;</p>
+  message: should not support a single quote in/after an unquoted attribute value
+  options: danger
+- name: test_html_flow_case_148
+  input: "<x y=\"\"z>"
+  output: <p>&lt;x y=&quot;&quot;z&gt;</p>
+  message: should not support an attribute after a double quoted attribute value
+  options: danger
+- name: test_html_flow_case_149
+  input: "<x>\n  \n  \n>"
+  output: |-
+    <x>
+    <blockquote>
+    </blockquote>
+  message: should not support blank lines in complete
+  options: danger
+- name: test_html_flow_case_150
+  input: |-
+    > <a>
+    *bar*
+  output: |-
+    <blockquote>
+    <a>
+    </blockquote>
+    <p><em>bar</em></p>
+  message: should not support lazyness (1)
+  options: danger
+- name: test_html_flow_case_151
+  input: |-
+    > a
+    <a>
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <a>
+  message: should not support lazyness (2)
+  options: danger
+to_mdast:
+- name: test_html_flow_case_4
+  input: |-
+    <div>
+    stuff
+    </div>
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:html(#markdown_mdast_html{
+          value = <<"<div>\nstuff\n</div>">>,
+          position = {some, markdown_unist_position:new(1, 1, 0, 3, 7, 18)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 3, 7, 18)}
+    })
+  message: "should support HTML (flow) as `Html`s in mdast"
+  parse_options: ParseOptions::default()
