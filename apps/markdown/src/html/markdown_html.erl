@@ -601,7 +601,7 @@ enter(CompileContext1 = #markdown_html_compile_context{events = Events, index = 
             gfm_table_cell -> on_enter_gfm_table_cell(CompileContext1);
             gfm_table_head -> on_enter_gfm_table_head(CompileContext1);
             gfm_table_row -> on_enter_gfm_table_row(CompileContext1);
-            % gfm_task_list_item_check -> on_enter_gfm_task_list_item_check(CompileContext1);
+            gfm_task_list_item_check -> on_enter_gfm_task_list_item_check(CompileContext1);
             html_flow -> on_enter_html_flow(CompileContext1);
             html_text -> on_enter_html_text(CompileContext1);
             image -> on_enter_image(CompileContext1);
@@ -810,6 +810,25 @@ on_enter_gfm_table_row(CompileContext1 = #markdown_html_compile_context{}) ->
     CompileContext2 = markdown_html_compile_context:line_ending_if_needed(CompileContext1),
     CompileContext3 = markdown_html_compile_context:push(CompileContext2, <<"<tr>"/utf8>>),
     CompileContext3.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`GfmTaskListItemCheck`][Name::GfmTaskListItemCheck].
+""".
+-spec on_enter_gfm_task_list_item_check(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_enter_gfm_task_list_item_check(CompileContext1 = #markdown_html_compile_context{image_alt_inside = false}) ->
+    CompileContext2 = markdown_html_compile_context:push(CompileContext1, <<"<input type=\"checkbox\" "/utf8>>),
+    CompileContext3 =
+        case CompileContext2#markdown_html_compile_context.options of
+            #markdown_compile_options{gfm_task_list_item_checkable = false} ->
+                markdown_html_compile_context:push(CompileContext2, <<"disabled=\"\" "/utf8>>);
+            _ ->
+                CompileContext2
+        end,
+    CompileContext3;
+on_enter_gfm_task_list_item_check(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext1.
 
 %% @private
 -doc """
@@ -1085,8 +1104,8 @@ exit(CompileContext1 = #markdown_html_compile_context{events = Events, index = I
             gfm_table_cell -> on_exit_gfm_table_cell(CompileContext1);
             gfm_table_head -> on_exit_gfm_table_head(CompileContext1);
             gfm_table_row -> on_exit_gfm_table_row(CompileContext1);
-            % gfm_task_list_item_check -> on_exit_gfm_task_list_item_check(CompileContext1);
-            % gfm_task_list_item_value_checked -> on_exit_gfm_task_list_item_value_checked(CompileContext1);
+            gfm_task_list_item_check -> on_exit_gfm_task_list_item_check(CompileContext1);
+            gfm_task_list_item_value_checked -> on_exit_gfm_task_list_item_value_checked(CompileContext1);
             hard_break_escape -> on_exit_break(CompileContext1);
             hard_break_trailing -> on_exit_break(CompileContext1);
             heading_atx -> on_exit_heading_atx(CompileContext1);
@@ -1733,6 +1752,30 @@ on_exit_gfm_table_row__phantom_cells(CompileContext1 = #markdown_html_compile_co
     on_exit_gfm_table_row__phantom_cells(CompileContext3, Column + 1, Len);
 on_exit_gfm_table_row__phantom_cells(CompileContext, _Column, _Len) ->
     CompileContext.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmTaskListItemCheck`][Name::GfmTaskListItemCheck].
+""".
+-spec on_exit_gfm_task_list_item_check(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_task_list_item_check(CompileContext1 = #markdown_html_compile_context{image_alt_inside = false}) ->
+    CompileContext2 = markdown_html_compile_context:push(CompileContext1, <<"/>"/utf8>>),
+    CompileContext2;
+on_exit_gfm_task_list_item_check(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext1.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`GfmTaskListItemValueChecked`][Name::GfmTaskListItemValueChecked].
+""".
+-spec on_exit_gfm_task_list_item_value_checked(CompileContext) -> CompileContext when
+    CompileContext :: markdown_html_compile_context:t().
+on_exit_gfm_task_list_item_value_checked(CompileContext1 = #markdown_html_compile_context{image_alt_inside = false}) ->
+    CompileContext2 = markdown_html_compile_context:push(CompileContext1, <<"checked=\"\" "/utf8>>),
+    CompileContext2;
+on_exit_gfm_task_list_item_value_checked(CompileContext1 = #markdown_html_compile_context{}) ->
+    CompileContext1.
 
 %% @private
 -doc """

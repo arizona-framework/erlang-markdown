@@ -1,0 +1,216 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: gfm_task_list_item
+  created: 2025-10-10
+  modified: 2025-10-10
+to_html:
+- name: test_gfm_task_list_item_case_1
+  input: '* [x] y.'
+  output: |-
+    <ul>
+    <li>[x] y.</li>
+    </ul>
+  message: should ignore task list item checks by default
+to_html_with_options:
+- name: test_gfm_task_list_item_case_2
+  input: '* [x] y.'
+  output: |-
+    <ul>
+    <li><input type="checkbox" disabled="" checked="" /> y.</li>
+    </ul>
+  message: should support task list item checks
+  options: Options::gfm()
+- name: test_gfm_task_list_item_case_3
+  input: '* [ ] z.'
+  output: |-
+    <ul>
+    <li><input type="checkbox" disabled="" /> z.</li>
+    </ul>
+  message: should support unchecked task list item checks
+  options: Options::gfm()
+- name: test_gfm_task_list_item_case_4
+  input: '* [x] y.'
+  output: |-
+    <ul>
+    <li><input type="checkbox" checked="" /> y.</li>
+    </ul>
+  message: should support option for enabled (checkable) task list item checks
+  options:
+    extend: gfm
+    compile:
+      gfm_task_list_item_checkable: true
+- name: test_gfm_task_list_item_case_5
+  input: |-
+    *
+        [x]
+  output: |-
+    <ul>
+    <li>[x]</li>
+    </ul>
+  message: should not support laziness (1)
+  options: Options::gfm()
+- name: test_gfm_task_list_item_case_6
+  input: |-
+    *
+    [x]
+  output: |-
+    <ul>
+    <li></li>
+    </ul>
+    <p>[x]</p>
+  message: should not support laziness (2)
+  options: Options::gfm()
+- name: test_gfm_task_list_item_case_7
+  input: "\n* [ ] foo\n* [x] bar\n\n- [x] foo\n  - [ ] bar\n  - [x] baz\n- [ ] bim\n\n+ [ ] Unchecked?\n\n* [x] Checked?\n\n+ [y] What is this even?\n\n- [n]: #\n  [ ] After a definition\n\n+ [ ] In a setext heading\n  =======================\n\n* In the…\n\n  [ ] Second paragraph\n\n- [\t] With a tab\n\n+ [X] With an upper case `x`\n\n* [\n] In a lazy line\n\n- [  ] With two spaces\n\n+  [x] Two spaces indent\n\n*   [x] Three spaces indent\n\n-    [x] Four spaces indent\n\n+     [x] Five spaces indent\n\n[ ] here?\n\n* > [ ] here?\n\n- [ ]No space?\n\nEmpty?\n\n+ [ ]\n\nSpace after:\n\n+ [ ] \n\n* [ ] Text.\n\nTab after:\n\n+ [ ]\t\n\n* [ ]\tText.\n\nEOL after:\n\n+ [ ]\n\n* [ ]\n  Text.\n\n-\n  [ ] after blank?\n\n+ # [ ] ATX Heading\n\n> * [x] In a list in a block quote\n"
+  output: "<ul>\n<li><input type=\"checkbox\" disabled=\"\" /> foo</li>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> bar</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> foo\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" /> bar</li>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> baz</li>\n</ul>\n</li>\n<li><input type=\"checkbox\" disabled=\"\" /> bim</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" /> Unchecked?</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> Checked?</li>\n</ul>\n<ul>\n<li>[y] What is this even?</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" /> After a definition</li>\n</ul>\n<ul>\n<li>\n<h1>[ ] In a setext heading</h1>\n</li>\n</ul>\n<ul>\n<li>\n<p>In the…</p>\n<p>[ ] Second paragraph</p>\n</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" /> With a tab</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> With an upper case <code>x</code></li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" /> In a lazy line</li>\n</ul>\n<ul>\n<li>[  ] With two spaces</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> Two spaces indent</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> Three spaces indent</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> Four spaces indent</li>\n</ul>\n<ul>\n<li>\n<pre><code>[x] Five spaces indent\n</code></pre>\n</li>\n</ul>\n<p>[ ] here?</p>\n<ul>\n<li>\n<blockquote>\n<p>[ ] here?</p>\n</blockquote>\n</li>\n</ul>\n<ul>\n<li>[ ]No space?</li>\n</ul>\n<p>Empty?</p>\n<ul>\n<li>[ ]</li>\n</ul>\n<p>Space after:</p>\n<ul>\n<li>[ ]</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" /> Text.</li>\n</ul>\n<p>Tab after:</p>\n<ul>\n<li>[ ]</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" />\tText.</li>\n</ul>\n<p>EOL after:</p>\n<ul>\n<li>[ ]</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" />\nText.</li>\n</ul>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" /> after blank?</li>\n</ul>\n<ul>\n<li>\n<h1>[ ] ATX Heading</h1>\n</li>\n</ul>\n<blockquote>\n<ul>\n<li><input type=\"checkbox\" disabled=\"\" checked=\"\" /> In a list in a block quote</li>\n</ul>\n</blockquote>\n"
+  message: "should handle things like GitHub"
+  options: Options::gfm()
+to_mdast:
+- name: test_gfm_task_list_item_case_8
+  input: |-
+    * [x] a
+    * [ ] b
+    * c
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:list(#markdown_mdast_list{
+          ordered = false,
+          spread = false,
+          start = none,
+          children = ?'vec!'([
+            markdown_mdast_node:list_item(#markdown_mdast_list_item{
+              checked = {some, true},
+              spread = false,
+              children = ?'vec!'([
+                markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                  children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                      value = <<"a">>,
+                      position = {some, markdown_unist_position:new(1, 7, 6, 1, 8, 7)}
+                    })
+                  ]),
+                  position = {some, markdown_unist_position:new(1, 7, 6, 1, 8, 7)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(1, 1, 0, 1, 8, 7)}
+            }),
+            markdown_mdast_node:list_item(#markdown_mdast_list_item{
+              checked = {some, false},
+              spread = false,
+              children = ?'vec!'([
+                markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                  children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                      value = <<"b">>,
+                      position = {some, markdown_unist_position:new(2, 7, 14, 2, 8, 15)}
+                    })
+                  ]),
+                  position = {some, markdown_unist_position:new(2, 7, 14, 2, 8, 15)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(2, 1, 8, 2, 8, 15)}
+            }),
+            markdown_mdast_node:list_item(#markdown_mdast_list_item{
+              checked = none,
+              spread = false,
+              children = ?'vec!'([
+                markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                  children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                      value = <<"c">>,
+                      position = {some, markdown_unist_position:new(3, 3, 18, 3, 4, 19)}
+                    })
+                  ]),
+                  position = {some, markdown_unist_position:new(3, 3, 18, 3, 4, 19)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(3, 1, 16, 3, 4, 19)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 19)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 19)}
+    })
+  message: "should support task list items as `checked` fields on `ListItem`s in mdast"
+  parse_options: ParseOptions::gfm()
+- name: test_gfm_task_list_item_case_9
+  input: "* [x]\r\n  a\n* [ ]   b\n* [x]\t \r*c*"
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:list(#markdown_mdast_list{
+          ordered = false,
+          spread = false,
+          start = none,
+          children = ?'vec!'([
+            markdown_mdast_node:list_item(#markdown_mdast_list_item{
+              checked = {some, true},
+              spread = false,
+              children = ?'vec!'([
+                markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                  children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                      value = <<"a">>,
+                      position = {some, markdown_unist_position:new(2, 1, 7, 2, 4, 10)}
+                    })
+                  ]),
+                  position = {some, markdown_unist_position:new(2, 1, 7, 2, 4, 10)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(1, 1, 0, 2, 4, 10)}
+            }),
+            markdown_mdast_node:list_item(#markdown_mdast_list_item{
+              checked = {some, false},
+              spread = false,
+              children = ?'vec!'([
+                markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                  children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                      value = <<"  b">>,
+                      position = {some, markdown_unist_position:new(3, 7, 17, 3, 10, 20)}
+                    })
+                  ]),
+                  position = {some, markdown_unist_position:new(3, 7, 17, 3, 10, 20)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(3, 1, 11, 3, 10, 20)}
+            }),
+            markdown_mdast_node:list_item(#markdown_mdast_list_item{
+              checked = {some, true},
+              spread = false,
+              children = ?'vec!'([
+                markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                  children = ?'vec!'([
+                    markdown_mdast_node:emphasis(#markdown_mdast_emphasis{
+                      children = ?'vec!'([
+                        markdown_mdast_node:text(#markdown_mdast_text{
+                          value = <<"c">>,
+                          position = {some, markdown_unist_position:new(5, 2, 30, 5, 3, 31)}
+                        })
+                      ]),
+                      position = {some, markdown_unist_position:new(5, 1, 29, 5, 4, 32)}
+                    })
+                  ]),
+                  position = {some, markdown_unist_position:new(5, 1, 29, 5, 4, 32)}
+                })
+              ]),
+              position = {some, markdown_unist_position:new(4, 1, 21, 5, 4, 32)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 5, 4, 32)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 5, 4, 32)}
+    })
+  message: "should handle lots of whitespace after checkbox, and non-text"
+  parse_options: ParseOptions::gfm()

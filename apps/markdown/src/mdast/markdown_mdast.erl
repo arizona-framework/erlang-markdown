@@ -2205,7 +2205,7 @@ on_exit_list_item__move_past_eol(Bytes = <<Byte1:8, _/bytes>>, Point1 = #markdow
 ->
     Point2 = Point1#markdown_unist_point{
         offset = Point1#markdown_unist_point.offset + 1,
-        column = Point1#markdown_unist_point.column + 1,
+        column = 1,
         line = Point1#markdown_unist_point.line + 1
     },
     Start2 = Start1 + 1,
@@ -2235,13 +2235,14 @@ on_exit_list_item__node_mut_func(
             ParagraphNode1 = #markdown_mdast_node{
                 inner = Paragraph1 = #markdown_mdast_paragraph{position = {some, ParagraphPosition1}}
             }} ->
-            ParagraphChildren1 = ParagraphNode1#markdown_mdast_paragraph.children,
+            ParagraphChildren1 = Paragraph1#markdown_mdast_paragraph.children,
             case markdown_vec:first_option(ParagraphChildren1) of
                 {some,
                     TextNode1 = #markdown_mdast_node{
                         inner =
                             Text1 = #markdown_mdast_text{
-                                position = {some, #markdown_unist_position{start = Point1}}, value = Bytes
+                                position = {some, TextPosition1 = #markdown_unist_position{start = Point1}},
+                                value = Bytes
                             }
                     }} ->
                     Start1 = 0,
@@ -2256,17 +2257,16 @@ on_exit_list_item__node_mut_func(
                                 Paragraph1#markdown_mdast_paragraph{
                                     children = ParagraphChildren2, position = {some, ParagraphPosition2}
                                 };
-                            _ ->
-                                <<TextValue1:Start2/bytes, _/bytes>> = Bytes,
+                            Len ->
+                                TextValue1 = binary:part(Bytes, Start2, Len - Start2),
                                 TextValue2 = markdown_types:unicode_binary(TextValue1),
-                                {some, TextPosition1} = Text1#markdown_mdast_text.position,
                                 TextPosition2 = TextPosition1#markdown_unist_position{start = Point2},
                                 Text2 = Text1#markdown_mdast_text{
                                     value = TextValue2,
                                     position = {some, TextPosition2}
                                 },
                                 TextNode2 = TextNode1#markdown_mdast_node{inner = Text2},
-                                ParagraphChildren2 = markdown_vec:set(ParagraphPosition1, 0, TextNode2),
+                                ParagraphChildren2 = markdown_vec:set(ParagraphChildren1, 0, TextNode2),
                                 ParagraphPosition2 = ParagraphPosition1#markdown_unist_position{start = Point2},
                                 Paragraph1#markdown_mdast_paragraph{
                                     children = ParagraphChildren2, position = {some, ParagraphPosition2}
