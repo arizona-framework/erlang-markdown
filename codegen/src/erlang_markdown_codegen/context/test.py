@@ -27,7 +27,7 @@ from ..test_schema import (
     TestCaseToMdast as TestCaseToMdastSchema,
     TestRoot as TestRootSchema,
 )
-from . import Atom, Context
+from . import Atom, Context, Export
 
 
 TestCase = Union["TestCaseToHtml", "TestCaseToHtmlWithOptions", "TestCaseToMdast"]
@@ -188,10 +188,7 @@ class TestCaseToHtmlWithOptions(TestCaseMixin):
         elif isinstance(self.options, TestSharedOptions):
             return f"?{self.options.name}"
         elif isinstance(self.options, TestSuiteOptions):
-            if self.options.extend is None:
-                return self.ctx.erlang_map(self.options.as_dict)
-            else:
-                return f"markdown_options:{self.options.extend}({self.ctx.erlang_map(self.options.as_dict)})"
+            return self.options.options_for_erlang
         else:
             raise ValueError(f"For TestCaseToHtmlWithOptions, options is invalid: {repr(self.options)}")
 
@@ -235,7 +232,7 @@ class TestCaseToMdast(TestCaseMixin):
         elif isinstance(self.parse_options, TestSharedParseOptions):
             return f"?{self.parse_options.name}"
         elif isinstance(self.parse_options, TestSuiteParseOptions):
-            return self.ctx.erlang_map(self.parse_options.as_dict)
+            return self.parse_options.parse_options_for_erlang
         else:
             raise ValueError(f"For TestCaseToMdast, parse_options is invalid: {repr(self.parse_options)}")
 
@@ -257,6 +254,10 @@ class TestSharedOptions:
     def kind(self) -> Literal["shared_options"]:
         return "shared_options"
 
+    @property
+    def options_for_erlang(self) -> str:
+        return self.options.options_for_erlang
+
 
 @dataclass
 class TestSharedParseOptions:
@@ -274,6 +275,10 @@ class TestSharedParseOptions:
     @property
     def kind(self) -> Literal["shared_parse_options"]:
         return "shared_parse_options"
+
+    @property
+    def parse_options_for_erlang(self) -> str:
+        return self.parse_options.parse_options_for_erlang
 
 
 @dataclass
@@ -302,6 +307,13 @@ class TestSuiteOptions:
     def extend(self) -> Optional[str]:
         return self.schema.extend
 
+    @property
+    def options_for_erlang(self) -> str:
+        if self.extend is None:
+            return f"markdown_options:new({self.ctx.erlang_map(self.as_dict)})"
+        else:
+            return f"markdown_options:{self.extend}({self.ctx.erlang_map(self.as_dict)})"
+
 
 @dataclass
 class TestSuiteCompileOptions:
@@ -318,7 +330,7 @@ class TestSuiteCompileOptions:
         if self.allow_any_img_src is not None:
             out["allow_any_img_src"] = self.allow_any_img_src
         if self.default_line_ending is not None:
-            out["default_line_ending"] = Atom(ctx=self.ctx, name=self.default_line_ending)
+            out["default_line_ending"] = self.default_line_ending
         if self.gfm_footnote_label is not None:
             out["gfm_footnote_label"] = self.gfm_footnote_label
         if self.gfm_footnote_label_tag_name is not None:
@@ -348,8 +360,11 @@ class TestSuiteCompileOptions:
         return self.schema.allow_any_img_src
 
     @property
-    def default_line_ending(self) -> Optional[str]:
-        return self.schema.default_line_ending
+    def default_line_ending(self) -> Optional[Atom]:
+        if self.schema.default_line_ending is None:
+            return None
+        else:
+            return Atom.make(ctx=self.ctx, name=self.schema.default_line_ending)
 
     @property
     def gfm_footnote_label(self) -> Optional[Option[str]]:
@@ -648,9 +663,26 @@ class TestSuiteParseOptions:
         return self.schema.math_text_single_dollar
 
     @property
-    def mdx_expression_parse(self) -> Optional[str]:
-        return self.schema.mdx_expression_parse
+    def mdx_expression_parse(self) -> Optional[Option[Export]]:
+        if self.schema.mdx_expression_parse is None:
+            return None
+        else:
+            return Option.Some(Export.from_erlang(ctx=self.ctx, value=self.schema.mdx_expression_parse))
 
     @property
-    def mdx_esm_parse(self) -> Optional[str]:
-        return self.schema.mdx_esm_parse
+    def mdx_esm_parse(self) -> Optional[Option[Export]]:
+        if self.schema.mdx_esm_parse is None:
+            return None
+        else:
+            return Option.Some(Export.from_erlang(ctx=self.ctx, value=self.schema.mdx_esm_parse))
+
+    @property
+    def extend(self) -> Optional[str]:
+        return self.schema.extend
+
+    @property
+    def parse_options_for_erlang(self) -> str:
+        if self.extend is None:
+            return f"markdown_parse_options:new({self.ctx.erlang_map(self.as_dict)})"
+        else:
+            return f"markdown_parse_options:{self.extend}({self.ctx.erlang_map(self.as_dict)})"

@@ -76,6 +76,7 @@ class Options(Model):
 
 class ParseOptions(Model):
     constructs: Optional["ConstructOptions"] = None
+    extend: Optional[Literal["commonmark", "default", "gfm", "mdx"]] = None
     gfm_strikethrough_single_tilde: Optional[bool] = None
     math_text_single_dollar: Optional[bool] = None
     mdx_expression_parse: Optional[str] = None

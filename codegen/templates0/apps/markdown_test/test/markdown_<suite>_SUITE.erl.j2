@@ -1,4 +1,3 @@
-%%% % @format
 %%%-----------------------------------------------------------------------------
 %%% Copyright (c) Meta Platforms, Inc. and affiliates.
 %%% Copyright (c) WhatsApp LLC
@@ -6,6 +5,7 @@
 %%% This source code is licensed under the MIT license found in the
 %%% LICENSE.md file in the root directory of this source tree.
 %%%-----------------------------------------------------------------------------
+%%% % @format
 -module(markdown_~J< test.suite.name >._SUITE).
 -moduledoc """
 
@@ -44,9 +44,9 @@
 %% Macros
 ~J{ for shared in test.shared_list }.
 ~J{ if shared.kind == "shared_options" }.
--define(~J< shared.name >., markdown_options:new(~J< ctx.erlang_map(shared.options.as_dict) >.)).
+-define(~J< shared.name >., ~J< shared.options_for_erlang >.).
 ~J{ else }.
--define(~J< shared.name >., markdown_parse_options:new(~J< ctx.erlang_map(shared.parse_options.as_dict) >.)).
+-define(~J< shared.name >., ~J< shared.parse_options_for_erlang >.).
 ~J{ endif }.
 ~J{ endfor }.
 ~J{ endif }.

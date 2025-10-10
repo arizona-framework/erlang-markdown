@@ -18,6 +18,7 @@ Somewhere.
 -oncall("whatsapp_clr").
 
 -include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_unist.hrl").
 
 %% API
 -export([
@@ -27,7 +28,7 @@ Somewhere.
 ]).
 
 %% Types
--type inner() :: markdown_point:t() | markdown_position:t().
+-type inner() :: markdown_unist_point:t() | markdown_unist_position:t().
 
 -doc """
 Somewhere.
@@ -44,21 +45,21 @@ Somewhere.
 %%%=============================================================================
 
 -spec fmt(Place) -> {Format, Data} when Place :: t(), Format :: io:format(), Data :: [term()].
-fmt(#markdown_place{inner = Point = #markdown_point{}}) ->
-    markdown_point:fmt(Point);
-fmt(#markdown_place{inner = Position = #markdown_position{}}) ->
-    markdown_position:fmt(Position).
+fmt(#markdown_place{inner = Point = #markdown_unist_point{}}) ->
+    markdown_unist_point:fmt(Point);
+fmt(#markdown_place{inner = Position = #markdown_unist_position{}}) ->
+    markdown_unist_position:fmt(Position).
 
 -doc """
 At a point.
 """.
--spec point(Point) -> Place when Point :: markdown_point:t(), Place :: t().
-point(Point = #markdown_point{}) ->
+-spec point(Point) -> Place when Point :: markdown_unist_point:t(), Place :: t().
+point(Point = #markdown_unist_point{}) ->
     #markdown_place{inner = Point}.
 
 -doc """
 Between two points.
 """.
--spec position(Position) -> Place when Position :: markdown_position:t(), Place :: t().
-position(Position = #markdown_position{}) ->
+-spec position(Position) -> Place when Position :: markdown_unist_position:t(), Place :: t().
+position(Position = #markdown_unist_position{}) ->
     #markdown_place{inner = Position}.

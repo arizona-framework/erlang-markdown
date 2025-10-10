@@ -1322,6 +1322,12 @@
     content :: markdown_types:option(markdown_event:content())
 }).
 
+%% Relative byte index into a string, to an absolute byte index into the whole document.
+-record(markdown_stop, {
+    relative :: non_neg_integer(),
+    absolute :: non_neg_integer()
+}).
+
 -record(markdown_subresult, {
     done = false :: boolean(),
     gfm_footnote_definitions = markdown_vec:new() :: markdown_vec:t(unicode:unicode_binary()),

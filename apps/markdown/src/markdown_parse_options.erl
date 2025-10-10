@@ -59,8 +59,8 @@
     | math_text_single_dollar
     | mdx_expression_parse
     | mdx_esm_parse.
--type mdx_esm_parse() :: dynamic().
--type mdx_expression_parse() :: dynamic().
+-type mdx_esm_parse() :: markdown_mdx:esm_parse().
+-type mdx_expression_parse() :: markdown_mdx:expression_parse().
 -type t() :: #markdown_parse_options{}.
 -type value() ::
     markdown_construct_options:t()
@@ -133,7 +133,7 @@ cast_mdx_esm_parse(OptionFrom) ->
     From :: mdx_esm_parse(), To :: mdx_esm_parse().
 cast_mdx_esm_parse(none, _Config) ->
     none;
-cast_mdx_esm_parse({some, From}, _Config) ->
+cast_mdx_esm_parse({some, From}, _Config) when is_function(From, 1) ->
     To = From,
     {some, To}.
 
@@ -146,7 +146,7 @@ cast_mdx_expression_parse(OptionFrom) ->
     From :: mdx_expression_parse(), To :: mdx_expression_parse().
 cast_mdx_expression_parse(none, _Config) ->
     none;
-cast_mdx_expression_parse({some, From}, _Config) ->
+cast_mdx_expression_parse({some, From}, _Config) when is_function(From, 2) ->
     To = From,
     {some, To}.
 

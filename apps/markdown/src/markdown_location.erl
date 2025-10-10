@@ -23,6 +23,8 @@
 %% API
 -export([
     new/1,
+    relative_to_absolute/2,
+    relative_to_point/3,
     to_point/2
 ]).
 
@@ -47,6 +49,39 @@ Port of <https://github.com/vfile/vfile-location/blob/main/index.js>
 -spec new(Bytes) -> Location when Bytes :: binary(), Location :: t().
 new(Bytes) when is_binary(Bytes) ->
     new(Bytes, [], 0).
+
+-doc """
+Turn a relative offset into an absolute offset.
+""".
+-spec relative_to_absolute(Stops, Relative) -> OptionAbsolute when
+    Stops :: [Stop],
+    Stop :: markdown_stop:t(),
+    Relative :: non_neg_integer(),
+    OptionAbsolute :: markdown_option:t(Absolute),
+    Absolute :: non_neg_integer().
+relative_to_absolute(Stops, Relative) when ?is_non_neg_integer(Relative) ->
+    relative_to_absolute(Stops, Relative, 0, none).
+
+-doc """
+Like `to_point`, but takes a relative offset from a certain string
+instead of an absolute offset into the whole document.
+
+The relative offset is made absolute based on `Stops`, which represent
+where that certain string is in the whole document.
+""".
+-spec relative_to_point(Location, Stops, Relative) -> markdown_types:option(Point) when
+    Location :: t(),
+    Stops :: [Stop],
+    Relative :: non_neg_integer(),
+    Point :: markdown_unist_point:t(),
+    Stop :: {non_neg_integer(), non_neg_integer()}.
+relative_to_point(Location = #markdown_location{}, Stops, Relative) when ?is_non_neg_integer(Relative) ->
+    case relative_to_absolute(Stops, Relative) of
+        {some, Absolute} ->
+            to_point(Location, Absolute);
+        none ->
+            none
+    end.
 
 -doc """
 Get the line and column-based `Point` for `Offset` in the bound indices.
@@ -107,6 +142,27 @@ new(<<>>, Indices1, Index1) ->
     Indices2 = [Index2 | Indices1],
     Indices = array:fix(array:from_list(lists:reverse(Indices2))),
     #markdown_location{indices = Indices}.
+
+%% @private
+-spec relative_to_absolute(Stops, Relative, Index, OptionStop) -> OptionAbsolute when
+    Stops :: [Stop],
+    Stop :: markdown_stop:t(),
+    Relative :: non_neg_integer(),
+    Index :: non_neg_integer(),
+    OptionStop :: markdown_option:t(Stop),
+    OptionAbsolute :: markdown_option:t(Absolute),
+    Absolute :: non_neg_integer().
+relative_to_absolute([Stop = #markdown_stop{relative = StopRelative} | Stops], Relative, Index, _OptionStop) when
+    StopRelative =< Relative
+->
+    relative_to_absolute(Stops, Relative, Index + 1, {some, Stop});
+relative_to_absolute(
+    _Stops, Relative, Index, {some, #markdown_stop{relative = StopRelative, absolute = StopAbsolute}}
+) when Index > 0 ->
+    {some, StopAbsolute + (Relative - StopRelative)};
+relative_to_absolute(_Stops, _Relative, _Index = 0, none) ->
+    %% There are no points: that only occurs if there was an empty string.
+    none.
 
 % TODO: binary search here over a `tuple()`
 %% @private

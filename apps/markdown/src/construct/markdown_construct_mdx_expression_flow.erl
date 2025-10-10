@@ -57,7 +57,9 @@ See [`mdx_expression`][mdx_expression] for recommendations.
 %% API
 -export([
     start/1,
-    before/1
+    before/1,
+    'after'/1,
+    'end'/1
 ]).
 
 %%%=============================================================================
@@ -135,3 +137,74 @@ before(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when Current
 before(Tokenizer = #markdown_tokenizer{}) ->
     State = markdown_state:nok(),
     {Tokenizer, State}.
+
+-doc """
+After expression.
+
+```markdown
+> | {Math.PI}
+             ^
+```
+""".
+-spec 'after'(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+'after'(Tokenizer1 = #markdown_tokenizer{current = {some, Current}}) when Current =:= $\t orelse Current =:= $\s ->
+    OkState = markdown_state:next(mdx_expression_flow_end),
+    NokState = markdown_state:nok(),
+    Tokenizer2 = markdown_tokenizer:attempt(Tokenizer1, OkState, NokState),
+    {Tokenizer3, SpaceOrTabState} = markdown_construct_partial_space_or_tab:space_or_tab(Tokenizer2),
+    State = markdown_state:retry(SpaceOrTabState),
+    {Tokenizer3, State};
+'after'(Tokenizer1 = #markdown_tokenizer{}) ->
+    State = markdown_state:retry(mdx_expression_flow_end),
+    {Tokenizer1, State}.
+
+-doc """
+After expression, after optional whitespace.
+
+```markdown
+> | {Math.PI}␠␊
+              ^
+```
+""".
+-spec 'end'(Tokenizer) -> {Tokenizer, State} when Tokenizer :: markdown_tokenizer:t(), State :: markdown_state:t().
+'end'(Tokenizer1 = #markdown_tokenizer{current = Current}) when Current =:= none orelse Current =:= {some, $\n} ->
+    Tokenizer2 = reset(Tokenizer1),
+    State = markdown_state:ok(),
+    {Tokenizer2, State};
+'end'(
+    Tokenizer1 = #markdown_tokenizer{
+        current = {some, $<},
+        parse_state = #markdown_parse_state{
+            options = #markdown_parse_options{constructs = #markdown_construct_options{mdx_jsx_flow = true}}
+        },
+        tokenize_state = TokenizeState1
+    }
+) ->
+    %% Tag.
+    %% We can't just say: fine.
+    %% Lines of blocks have to be parsed until an eol/eof.
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{token_1 = mdx_jsx_flow_tag},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{tokenize_state = TokenizeState2},
+    OkState = markdown_state:next(mdx_jsx_flow_after),
+    NokState = markdown_state:next(mdx_jsx_flow_nok),
+    Tokenizer3 = markdown_tokenizer:attempt(Tokenizer2, OkState, NokState),
+    State = markdown_state:retry(mdx_jsx_start),
+    {Tokenizer3, State};
+'end'(Tokenizer1 = #markdown_tokenizer{}) ->
+    Tokenizer2 = reset(Tokenizer1),
+    State = markdown_state:nok(),
+    {Tokenizer2, State}.
+
+%%%-----------------------------------------------------------------------------
+%%% Internal functions
+%%%-----------------------------------------------------------------------------
+
+%% @private
+-doc """
+Reset state.
+""".
+-spec reset(Tokenizer) -> Tokenizer when Tokenizer :: markdown_tokenizer:t().
+reset(Tokenizer1 = #markdown_tokenizer{tokenize_state = TokenizeState1}) ->
+    TokenizeState2 = TokenizeState1#markdown_tokenize_state{token_1 = data},
+    Tokenizer2 = Tokenizer1#markdown_tokenizer{concrete = false, tokenize_state = TokenizeState2},
+    Tokenizer2.

@@ -644,6 +644,24 @@
           ],
           "default": null
         },
+        "extend": {
+          "anyOf": [
+            {
+              "enum": [
+                "commonmark",
+                "default",
+                "gfm",
+                "mdx"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extend"
+        },
         "gfm_strikethrough_single_tilde": {
           "anyOf": [
             {

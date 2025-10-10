@@ -20,10 +20,98 @@ from ..schema import Root as RootSchema
 from ..test_schema import TestRoot as TestRootSchema
 
 
-@dataclass
+@dataclass(frozen=True)
 class Atom:
-    ctx: "Context" = field(repr=False)
+    ctx: "Context" = field(repr=False, compare=False, hash=False)
     name: str
+
+    @classmethod
+    def make(cls, ctx: "Context", name: str) -> "Atom":
+        if name in ctx.atoms:
+            return ctx.atoms[name]
+        else:
+            atom = Atom(ctx=ctx, name=name)
+            ctx.atoms[name] = atom
+            return atom
+
+    @property
+    def as_erlang(self) -> str:
+        if len(self.name) == 0:
+            return "''"
+        elif self.name[0].isalpha() and self.name[0].islower() and all(c.isalnum() or c == "_" for c in self.name):
+            return self.name
+        else:
+            return f"'{self.name}'"
+
+
+@dataclass
+class Export:
+    ctx: "Context" = field(repr=False)
+    module: Atom
+    function: Atom
+    arity: int
+
+    @classmethod
+    def make(cls, ctx: "Context", module: Atom, function: Atom, arity: int) -> "Export":
+        if (module, function, arity) in ctx.exports:
+            return ctx.exports[(module, function, arity)]
+        else:
+            export = Export(ctx=ctx, module=module, function=function, arity=arity)
+            ctx.exports[(module, function, arity)] = export
+            return export
+
+    @classmethod
+    def from_erlang(cls, ctx: "Context", value: str) -> "Export":
+        """Parse an Erlang function string like "fun 'module':'function'/2" into an Export."""
+        # Remove 'fun ' prefix and split by ':'
+        if not value.startswith("fun "):
+            raise ValueError(f"Invalid Erlang export format: {value}")
+
+        content = value[4:]  # Remove 'fun ' prefix
+
+        # Split by ':' to separate module and function/arity
+        parts = content.split(":")
+        if len(parts) != 2:
+            raise ValueError(f"Invalid Erlang export format: {value}")
+
+        module_part = parts[0].strip()
+        func_arity_part = parts[1].strip()
+
+        # Extract module name (remove quotes)
+        if module_part.startswith("'") and module_part.endswith("'"):
+            module_name = module_part[1:-1]
+        else:
+            module_name = module_part
+
+        # Split function and arity by '/'
+        func_arity_split = func_arity_part.split("/")
+        if len(func_arity_split) != 2:
+            raise ValueError(f"Invalid function/arity format: {func_arity_part}")
+
+        function_part = func_arity_split[0].strip()
+        arity_part = func_arity_split[1].strip()
+
+        # Extract function name (remove quotes)
+        if function_part.startswith("'") and function_part.endswith("'"):
+            function_name = function_part[1:-1]
+        else:
+            function_name = function_part
+
+        # Parse arity as integer
+        try:
+            arity = int(arity_part)
+        except ValueError:
+            raise ValueError(f"Invalid arity format: {arity_part}")
+
+        # Create Atom objects and Export
+        module_atom = Atom.make(ctx, module_name)
+        function_atom = Atom.make(ctx, function_name)
+
+        return cls.make(ctx, module_atom, function_atom, arity)
+
+    @property
+    def as_erlang(self) -> str:
+        return f"fun {self.module.as_erlang}:{self.function.as_erlang}/{self.arity}"
 
 
 class NamesMixin:
@@ -72,6 +160,8 @@ class Context:
     resolve: "Resolve" = field(init=False)
     state: "State" = field(init=False)
     test: OrderedDict[str, "TestSuite"] = field(init=False)
+    atoms: OrderedDict[str, Atom] = field(init=False, default_factory=OrderedDict)
+    exports: OrderedDict[tuple[Atom, Atom, int], Export] = field(init=False, default_factory=OrderedDict)
 
     def __post_init__(self) -> None:
         from .commonmark import CommonMark
@@ -146,7 +236,9 @@ class Context:
         elif isinstance(value, OrderedDict):
             return self.erlang_map(value)
         elif isinstance(value, Atom):
-            return self.erlang_atom(value.name)
+            return value.as_erlang
+        elif isinstance(value, Export):
+            return value.as_erlang
         elif isinstance(value, Option):
             if value.is_none:
                 return "none"

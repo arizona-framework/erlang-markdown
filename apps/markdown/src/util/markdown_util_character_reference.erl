@@ -25,6 +25,7 @@ Helpers for character references.
     decode_named/2,
     decode_numeric/2,
     decode/3,
+    parse/1,
     value_max/1,
     value_test/2
 ]).
@@ -172,6 +173,19 @@ decode(Value, $x, Html5) when is_binary(Value) andalso is_boolean(Html5) -> {som
 decode(Value, $&, Html5) when is_binary(Value) andalso is_boolean(Html5) -> decode_named(Value, Html5).
 
 -doc """
+Decode character references in a string.
+
+> 👉 **Note**: this currently only supports the 252 named character
+> references from HTML 4, as it's only used for JSX.
+>
+> If it's ever needed to support HTML 5 (which is what normal markdown
+> uses), a boolean parameter can be added here.
+""".
+-spec parse(Value) -> Result when Value :: binary(), Result :: binary().
+parse(Value) when is_binary(Value) ->
+    parse_loop(Value, 0, byte_size(Value), <<>>, 0).
+
+-doc """
 Get the maximum size of a value for different kinds of references.
 
 The value is the stuff after the markers, before the `;`.
@@ -217,3 +231,77 @@ decode_numeric_is_invalid(C) when (C >= $\x7F andalso C =< $\x9F) ->
 decode_numeric_is_invalid(_) ->
     %% Lone surrogates, noncharacters, and out of range are handled by Erlang.
     false.
+
+%% @private
+-spec parse_loop(Value, Index, Len, Result, Start) -> FinalResult when
+    Value :: binary(),
+    Index :: non_neg_integer(),
+    Len :: non_neg_integer(),
+    Result :: binary(),
+    Start :: non_neg_integer(),
+    FinalResult :: binary().
+parse_loop(Value, Index, Len, Result, Start) when Index < Len ->
+    case binary:at(Value, Index) of
+        $& ->
+            {Marker, ValueStart} =
+                case Index + 1 < Len andalso binary:at(Value, Index + 1) =:= $# of
+                    true ->
+                        case
+                            Index + 2 < Len andalso
+                                (binary:at(Value, Index + 2) =:= $x orelse
+                                    binary:at(Value, Index + 2) =:= $X)
+                        of
+                            true -> {$x, Index + 3};
+                            false -> {$#, Index + 2}
+                        end;
+                    false ->
+                        {$&, Index + 1}
+                end,
+
+            Max = value_max(Marker),
+            ValueIndex = find_value_end(Value, ValueStart, Len, Marker, 0, Max),
+            ValueEnd = ValueStart + ValueIndex,
+
+            case ValueIndex > 0 andalso ValueEnd < Len andalso binary:at(Value, ValueEnd) =:= $; of
+                true ->
+                    ValueBinary = binary:part(Value, ValueStart, ValueIndex),
+                    case decode(ValueBinary, Marker, false) of
+                        {some, Decoded} ->
+                            Prefix = binary:part(Value, Start, Index - Start),
+                            NewResult = <<Result/binary, Prefix/binary, Decoded/binary>>,
+                            NewStart = ValueEnd + 1,
+                            parse_loop(Value, NewStart, Len, NewResult, NewStart);
+                        none ->
+                            parse_loop(Value, Index + 1, Len, Result, Start)
+                    end;
+                false ->
+                    parse_loop(Value, Index + 1, Len, Result, Start)
+            end;
+        _ ->
+            parse_loop(Value, Index + 1, Len, Result, Start)
+    end;
+parse_loop(Value, _Index, _Len, Result, Start) ->
+    Remaining = binary:part(Value, Start, byte_size(Value) - Start),
+    <<Result/binary, Remaining/binary>>.
+
+%% @private
+-spec find_value_end(Value, ValueStart, Len, Marker, ValueIndex, Max) -> FinalValueIndex when
+    Value :: binary(),
+    ValueStart :: non_neg_integer(),
+    Len :: non_neg_integer(),
+    Marker :: marker(),
+    ValueIndex :: non_neg_integer(),
+    Max :: non_neg_integer(),
+    FinalValueIndex :: non_neg_integer().
+find_value_end(Value, ValueStart, Len, Marker, ValueIndex, Max) when
+    ValueIndex < Max andalso (ValueStart + ValueIndex) < Len
+->
+    Byte = binary:at(Value, ValueStart + ValueIndex),
+    case value_test(Marker, Byte) of
+        true ->
+            find_value_end(Value, ValueStart, Len, Marker, ValueIndex + 1, Max);
+        false ->
+            ValueIndex
+    end;
+find_value_end(_Value, _ValueStart, _Len, _Marker, ValueIndex, _Max) ->
+    ValueIndex.

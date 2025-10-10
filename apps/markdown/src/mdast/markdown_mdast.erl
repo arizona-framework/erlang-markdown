@@ -21,6 +21,7 @@ Turn events into a syntax tree.
 
 -include_lib("markdown/include/markdown_const.hrl").
 -include_lib("markdown/include/markdown_mdast.hrl").
+-include_lib("markdown/include/markdown_mdx.hrl").
 -include_lib("markdown/include/markdown_parser.hrl").
 -include_lib("markdown/include/markdown_unist.hrl").
 -include_lib("markdown/include/markdown_util.hrl").
@@ -106,6 +107,20 @@ handle_loop(Index, CompileContext1 = #markdown_mdast_compile_context{events = Ev
     end;
 handle_loop(_Index, CompileContext = #markdown_mdast_compile_context{}) ->
     {ok, CompileContext}.
+
+%% @private
+-doc """
+Format a JSX tag, ignoring its attributes.
+""".
+-spec serialize_abbreviated_tag(JsxTag) -> String when
+    JsxTag :: markdown_mdast_jsx_tag:t(), String :: unicode:unicode_binary().
+serialize_abbreviated_tag(#markdown_mdast_jsx_tag{close = Close, name = OptionName}) ->
+    case {Close, OptionName} of
+        {false, none} -> <<"<>">>;
+        {false, {some, Name}} -> <<"<", Name/bytes, ">">>;
+        {true, none} -> <<"</>">>;
+        {true, {some, Name}} -> <<"</", Name/bytes, ">">>
+    end.
 
 %% @private
 -doc """
@@ -308,25 +323,35 @@ enter(CompileContext1 = #markdown_mdast_compile_context{events = Events, index =
         %% on_enter_math_text
         math_text ->
             on_enter_math_text(CompileContext1);
-        % %% on_enter_mdx_esm
-        % mdx_esm -> on_enter_mdx_esm(CompileContext1);
-        % %% on_enter_mdx_flow_expression
-        % mdx_flow_expression -> on_enter_mdx_flow_expression(CompileContext1);
-        % %% on_enter_mdx_text_expression
-        % mdx_text_expression -> on_enter_mdx_text_expression(CompileContext1);
-        % %% on_enter_mdx_jsx_tag
-        % mdx_jsx_flow_tag -> on_enter_mdx_jsx_tag(CompileContext1);
-        % mdx_jsx_text_tag -> on_enter_mdx_jsx_tag(CompileContext1);
-        % %% on_enter_mdx_jsx_tag_closing_marker
-        % mdx_jsx_tag_closing_marker -> on_enter_mdx_jsx_tag_closing_marker(CompileContext1);
-        % %% on_enter_mdx_jsx_tag_attribute
-        % mdx_jsx_tag_attribute -> on_enter_mdx_jsx_tag_attribute(CompileContext1);
-        % %% on_enter_mdx_jsx_tag_attribute_expression
-        % mdx_jsx_tag_attribute_expression -> on_enter_mdx_jsx_tag_attribute_expression(CompileContext1);
-        % %% on_enter_mdx_jsx_tag_attribute_value_expression
-        % mdx_jsx_tag_attribute_value_expression -> on_enter_mdx_jsx_tag_attribute_value_expression(CompileContext1);
-        % %% on_enter_mdx_jsx_tag_self_closing_marker
-        % mdx_jsx_tag_self_closing_marker -> on_enter_mdx_jsx_tag_self_closing_marker(CompileContext1);
+        %% on_enter_mdx_esm
+        mdx_esm ->
+            on_enter_mdx_esm(CompileContext1);
+        %% on_enter_mdx_flow_expression
+        mdx_flow_expression ->
+            on_enter_mdx_flow_expression(CompileContext1);
+        %% on_enter_mdx_text_expression
+        mdx_text_expression ->
+            on_enter_mdx_text_expression(CompileContext1);
+        %% on_enter_mdx_jsx_tag
+        mdx_jsx_flow_tag ->
+            on_enter_mdx_jsx_tag(CompileContext1);
+        mdx_jsx_text_tag ->
+            on_enter_mdx_jsx_tag(CompileContext1);
+        %% on_enter_mdx_jsx_tag_closing_marker
+        mdx_jsx_tag_closing_marker ->
+            on_enter_mdx_jsx_tag_closing_marker(CompileContext1);
+        %% on_enter_mdx_jsx_tag_attribute
+        mdx_jsx_tag_attribute ->
+            on_enter_mdx_jsx_tag_attribute(CompileContext1);
+        %% on_enter_mdx_jsx_tag_attribute_expression
+        mdx_jsx_tag_attribute_expression ->
+            on_enter_mdx_jsx_tag_attribute_expression(CompileContext1);
+        %% on_enter_mdx_jsx_tag_attribute_value_expression
+        mdx_jsx_tag_attribute_value_expression ->
+            on_enter_mdx_jsx_tag_attribute_value_expression(CompileContext1);
+        %% on_enter_mdx_jsx_tag_self_closing_marker
+        mdx_jsx_tag_self_closing_marker ->
+            on_enter_mdx_jsx_tag_self_closing_marker(CompileContext1);
         %% on_enter_paragraph
         paragraph ->
             on_enter_paragraph(CompileContext1);
@@ -817,6 +842,284 @@ on_enter_math_text(CompileContext1 = #markdown_mdast_compile_context{}) ->
 
 %% @private
 -doc """
+Handle [`Enter`][Kind::Enter]:[`MdxEsm`][Name::MdxEsm].
+""".
+-spec on_enter_mdx_esm(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_mdx_esm(CompileContext1 = #markdown_mdast_compile_context{events = Events, bytes = Bytes, index = Index}) ->
+    Result = markdown_mdx_collect:collect(
+        Events,
+        Bytes,
+        Index,
+        [mdx_esm_data, line_ending],
+        [mdx_esm]
+    ),
+    StopMapFun = fun(_Index, #markdown_stop{relative = Relative, absolute = Absolute}) ->
+        markdown_mdast_stop:new(Relative, Absolute)
+    end,
+    Stops = markdown_vec:map(Result#markdown_mdx_collect_result.stops, StopMapFun),
+    CompileContext2 = markdown_mdast_compile_context:tail_push(
+        CompileContext1,
+        markdown_mdast_node:mdxjs_esm(#markdown_mdast_mdxjs_esm{
+            value = Result#markdown_mdx_collect_result.value,
+            position = none,
+            stops = Stops
+        })
+    ),
+    CompileContext3 = markdown_mdast_compile_context:buffer(CompileContext2),
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MdxFlowExpression`][Name::MdxFlowExpression].
+""".
+-spec on_enter_mdx_flow_expression(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_mdx_flow_expression(
+    CompileContext1 = #markdown_mdast_compile_context{events = Events, bytes = Bytes, index = Index}
+) ->
+    Result = markdown_mdx_collect:collect(
+        Events,
+        Bytes,
+        Index,
+        [mdx_expression_data, line_ending],
+        [mdx_flow_expression]
+    ),
+    StopMapFun = fun(_Index, #markdown_stop{relative = Relative, absolute = Absolute}) ->
+        markdown_mdast_stop:new(Relative, Absolute)
+    end,
+    Stops = markdown_vec:map(Result#markdown_mdx_collect_result.stops, StopMapFun),
+    CompileContext2 = markdown_mdast_compile_context:tail_push(
+        CompileContext1,
+        markdown_mdast_node:mdx_flow_expression(#markdown_mdast_mdx_flow_expression{
+            value = Result#markdown_mdx_collect_result.value,
+            position = none,
+            stops = Stops
+        })
+    ),
+    CompileContext3 = markdown_mdast_compile_context:buffer(CompileContext2),
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:{[`MdxJsxFlowTag`][Name::MdxJsxFlowTag],[`MdxJsxTextTag`][Name::MdxJsxTextTag]}.
+""".
+-spec on_enter_mdx_jsx_tag(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_mdx_jsx_tag(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = Index}) ->
+    Event = markdown_vec:get(Events, Index),
+    Point = markdown_point:to_unist(Event#markdown_event.point),
+    JsxTag = markdown_mdast_jsx_tag:new(none, markdown_vec:new(), false, false, Point, Point),
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag}},
+    CompileContext3 = markdown_mdast_compile_context:buffer(CompileContext2),
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:{[`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute],[`MdxJsxTagAttributeExpression`][Name::MdxJsxTagAttributeExpression]}.
+""".
+-spec on_enter_mdx_jsx_tag_any_attribute(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_enter_mdx_jsx_tag_any_attribute(
+    CompileContext1 = #markdown_mdast_compile_context{jsx_tag = {some, JsxTag}, events = Events, index = Index}
+) ->
+    case JsxTag#markdown_mdast_jsx_tag.close of
+        true ->
+            Event = markdown_vec:get(Events, Index),
+            Point = markdown_point:to_unist(Event#markdown_event.point),
+            Place = markdown_place:point(Point),
+            Message = markdown_message:new(
+                {some, Place},
+                <<"Unexpected attribute in closing tag, expected the end of the tag"/utf8>>,
+                <<"unexpected-attribute"/utf8>>,
+                <<"erlang-markdown"/utf8>>
+            ),
+            {error, Message};
+        false ->
+            {ok, CompileContext1}
+    end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MdxJsxTagAttribute`][Name::MdxJsxTagAttribute].
+""".
+-spec on_enter_mdx_jsx_tag_attribute(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_enter_mdx_jsx_tag_attribute(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    case on_enter_mdx_jsx_tag_any_attribute(CompileContext1) of
+        {error, Message} ->
+            {error, Message};
+        {ok, CompileContext2} ->
+            {some, JsxTag1} = CompileContext2#markdown_mdast_compile_context.jsx_tag,
+            Attributes1 = JsxTag1#markdown_mdast_jsx_tag.attributes,
+            Attribute = markdown_mdast_mdx_jsx_attribute:new(<<>>, none),
+            AttributeContent = markdown_mdast_attribute_content:property(Attribute),
+            Attributes2 = markdown_vec:push(Attributes1, AttributeContent),
+            JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{attributes = Attributes2},
+            CompileContext3 = CompileContext2#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+            {ok, CompileContext3}
+    end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MdxJsxTagAttributeExpression`][Name::MdxJsxTagAttributeExpression].
+""".
+-spec on_enter_mdx_jsx_tag_attribute_expression(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_enter_mdx_jsx_tag_attribute_expression(
+    CompileContext1 = #markdown_mdast_compile_context{events = Events, bytes = Bytes, index = Index}
+) ->
+    case on_enter_mdx_jsx_tag_any_attribute(CompileContext1) of
+        {error, Message} ->
+            {error, Message};
+        {ok, CompileContext2} ->
+            Result = markdown_mdx_collect:collect(
+                Events,
+                Bytes,
+                Index,
+                [mdx_expression_data, line_ending],
+                [mdx_jsx_tag_attribute_expression]
+            ),
+            StopMapFun = fun(_Index, #markdown_stop{relative = Relative, absolute = Absolute}) ->
+                markdown_mdast_stop:new(Relative, Absolute)
+            end,
+            Stops = markdown_vec:map(Result#markdown_mdx_collect_result.stops, StopMapFun),
+            {some, JsxTag1} = CompileContext2#markdown_mdast_compile_context.jsx_tag,
+            Attributes1 = JsxTag1#markdown_mdast_jsx_tag.attributes,
+            ExpressionAttribute = markdown_mdast_mdx_jsx_expression_attribute:new(
+                Result#markdown_mdx_collect_result.value, Stops
+            ),
+            ExpressionAttributeContent = markdown_mdast_attribute_content:expression(ExpressionAttribute),
+            Attributes2 = markdown_vec:push(Attributes1, ExpressionAttributeContent),
+            JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{attributes = Attributes2},
+            CompileContext3 = CompileContext2#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+            CompileContext4 = markdown_mdast_compile_context:buffer(CompileContext3),
+            {ok, CompileContext4}
+    end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MdxJsxTagAttributeValueExpression`][Name::MdxJsxTagAttributeValueExpression].
+""".
+-spec on_enter_mdx_jsx_tag_attribute_value_expression(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_mdx_jsx_tag_attribute_value_expression(
+    CompileContext1 = #markdown_mdast_compile_context{events = Events, bytes = Bytes, index = Index}
+) ->
+    Result = markdown_mdx_collect:collect(
+        Events,
+        Bytes,
+        Index,
+        [mdx_expression_data, line_ending],
+        [mdx_jsx_tag_attribute_value_expression]
+    ),
+    StopMapFun = fun(_Index, #markdown_stop{relative = Relative, absolute = Absolute}) ->
+        markdown_mdast_stop:new(Relative, Absolute)
+    end,
+    Stops = markdown_vec:map(Result#markdown_mdx_collect_result.stops, StopMapFun),
+    {some, JsxTag1} = CompileContext1#markdown_mdast_compile_context.jsx_tag,
+    Attributes1 = JsxTag1#markdown_mdast_jsx_tag.attributes,
+    {some, LastAttribute} = markdown_vec:last_option(Attributes1),
+    case LastAttribute of
+        #markdown_mdast_attribute_content{inner = {property, Attribute1 = #markdown_mdast_mdx_jsx_attribute{}}} ->
+            ValueExpression = markdown_mdast_attribute_value_expression:new(
+                Result#markdown_mdx_collect_result.value, Stops
+            ),
+            AttributeValue = markdown_mdast_attribute_value:expression(ValueExpression),
+            Attribute2 = Attribute1#markdown_mdast_mdx_jsx_attribute{value = {some, AttributeValue}},
+            AttributeContent = markdown_mdast_attribute_content:property(Attribute2),
+            Attributes2 = markdown_vec:set_last(Attributes1, AttributeContent),
+            JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{attributes = Attributes2},
+            CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+            CompileContext3 = markdown_mdast_compile_context:buffer(CompileContext2),
+            {ok, CompileContext3};
+        _ ->
+            ?'unreachable!'("expected property", [])
+    end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MdxJsxTagClosingMarker`][Name::MdxJsxTagClosingMarker].
+""".
+-spec on_enter_mdx_jsx_tag_closing_marker(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_enter_mdx_jsx_tag_closing_marker(
+    CompileContext1 = #markdown_mdast_compile_context{jsx_tag_stack = JsxTagStack, events = Events, index = Index}
+) ->
+    case markdown_vec:is_empty(JsxTagStack) of
+        true ->
+            Event = markdown_vec:get(Events, Index),
+            Point = markdown_point:to_unist(Event#markdown_event.point),
+            Place = markdown_place:point(Point),
+            Message = markdown_message:new(
+                {some, Place},
+                <<"Unexpected closing slash `/` in tag, expected an open tag first"/utf8>>,
+                <<"unexpected-closing-slash"/utf8>>,
+                <<"erlang-markdown"/utf8>>
+            ),
+            {error, Message};
+        false ->
+            {ok, CompileContext1}
+    end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MdxJsxTagSelfClosingMarker`][Name::MdxJsxTagSelfClosingMarker].
+""".
+-spec on_enter_mdx_jsx_tag_self_closing_marker(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_enter_mdx_jsx_tag_self_closing_marker(
+    CompileContext1 = #markdown_mdast_compile_context{jsx_tag = {some, JsxTag}, events = Events, index = Index}
+) ->
+    case JsxTag#markdown_mdast_jsx_tag.close of
+        true ->
+            Event = markdown_vec:get(Events, Index),
+            Point = markdown_point:to_unist(Event#markdown_event.point),
+            Place = markdown_place:point(Point),
+            Message = markdown_message:new(
+                {some, Place},
+                <<"Unexpected self-closing slash `/` in closing tag, expected the end of the tag"/utf8>>,
+                <<"unexpected-self-closing-slash"/utf8>>,
+                <<"erlang-markdown"/utf8>>
+            ),
+            {error, Message};
+        false ->
+            {ok, CompileContext1}
+    end.
+
+%% @private
+-doc """
+Handle [`Enter`][Kind::Enter]:[`MdxTextExpression`][Name::MdxTextExpression].
+""".
+-spec on_enter_mdx_text_expression(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_enter_mdx_text_expression(
+    CompileContext1 = #markdown_mdast_compile_context{events = Events, bytes = Bytes, index = Index}
+) ->
+    Result = markdown_mdx_collect:collect(
+        Events,
+        Bytes,
+        Index,
+        [mdx_expression_data, line_ending],
+        [mdx_text_expression]
+    ),
+    StopMapFun = fun(_Index, #markdown_stop{relative = Relative, absolute = Absolute}) ->
+        markdown_mdast_stop:new(Relative, Absolute)
+    end,
+    Stops = markdown_vec:map(Result#markdown_mdx_collect_result.stops, StopMapFun),
+    CompileContext2 = markdown_mdast_compile_context:tail_push(
+        CompileContext1,
+        markdown_mdast_node:mdx_text_expression(#markdown_mdast_mdx_text_expression{
+            value = Result#markdown_mdx_collect_result.value,
+            position = none,
+            stops = Stops
+        })
+    ),
+    CompileContext3 = markdown_mdast_compile_context:buffer(CompileContext2),
+    {ok, CompileContext3}.
+
+%% @private
+-doc """
 Handle [`Enter`][Kind::Enter]:[`Paragraph`][Name::Paragraph].
 """.
 -spec on_enter_paragraph(CompileContext) -> {ok, CompileContext} when
@@ -1083,29 +1386,42 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
         %% on_exit_list_item_value
         list_item_value ->
             on_exit_list_item_value(CompileContext1);
-        % %% on_exit_mdx_esm_or_expression
-        % mdx_esm -> on_exit_mdx_esm_or_expression(CompileContext1);
-        % mdx_flow_expression -> on_exit_mdx_esm_or_expression(CompileContext1);
-        % mdx_text_expression -> on_exit_mdx_esm_or_expression(CompileContext1);
-        % %% on_exit_mdx_jsx_tag
-        % mdx_jsx_flow_tag -> on_exit_mdx_jsx_tag(CompileContext1);
-        % mdx_jsx_text_tag -> on_exit_mdx_jsx_tag(CompileContext1);
-        % %% on_exit_mdx_jsx_tag_closing_marker
-        % mdx_jsx_tag_closing_marker -> on_exit_mdx_jsx_tag_closing_marker(CompileContext1);
-        % %% on_exit_mdx_jsx_tag_name_primary
-        % mdx_jsx_tag_name_primary -> on_exit_mdx_jsx_tag_name_primary(CompileContext1);
-        % %% on_exit_mdx_jsx_tag_name_member
-        % mdx_jsx_tag_name_member -> on_exit_mdx_jsx_tag_name_member(CompileContext1);
-        % %% on_exit_mdx_jsx_tag_name_local
-        % mdx_jsx_tag_name_local -> on_exit_mdx_jsx_tag_name_local(CompileContext1);
-        % %% on_exit_mdx_jsx_tag_attribute_primary_name
-        % mdx_jsx_tag_attribute_primary_name -> on_exit_mdx_jsx_tag_attribute_primary_name(CompileContext1);
-        % %% on_exit_mdx_jsx_tag_attribute_name_local
-        % mdx_jsx_tag_attribute_name_local -> on_exit_mdx_jsx_tag_attribute_name_local(CompileContext1);
-        % %% on_exit_mdx_jsx_tag_attribute_value_literal
-        % mdx_jsx_tag_attribute_value_literal -> on_exit_mdx_jsx_tag_attribute_value_literal(CompileContext1);
-        % %% on_exit_mdx_jsx_tag_self_closing_marker
-        % mdx_jsx_tag_self_closing_marker -> on_exit_mdx_jsx_tag_self_closing_marker(CompileContext1);
+        %% on_exit_mdx_esm_or_expression
+        mdx_esm ->
+            on_exit_mdx_esm_or_expression(CompileContext1);
+        mdx_flow_expression ->
+            on_exit_mdx_esm_or_expression(CompileContext1);
+        mdx_text_expression ->
+            on_exit_mdx_esm_or_expression(CompileContext1);
+        %% on_exit_mdx_jsx_tag
+        mdx_jsx_flow_tag ->
+            on_exit_mdx_jsx_tag(CompileContext1);
+        mdx_jsx_text_tag ->
+            on_exit_mdx_jsx_tag(CompileContext1);
+        %% on_exit_mdx_jsx_tag_closing_marker
+        mdx_jsx_tag_closing_marker ->
+            on_exit_mdx_jsx_tag_closing_marker(CompileContext1);
+        %% on_exit_mdx_jsx_tag_name_primary
+        mdx_jsx_tag_name_primary ->
+            on_exit_mdx_jsx_tag_name_primary(CompileContext1);
+        %% on_exit_mdx_jsx_tag_name_member
+        mdx_jsx_tag_name_member ->
+            on_exit_mdx_jsx_tag_name_member(CompileContext1);
+        %% on_exit_mdx_jsx_tag_name_local
+        mdx_jsx_tag_name_local ->
+            on_exit_mdx_jsx_tag_name_local(CompileContext1);
+        %% on_exit_mdx_jsx_tag_attribute_primary_name
+        mdx_jsx_tag_attribute_primary_name ->
+            on_exit_mdx_jsx_tag_attribute_primary_name(CompileContext1);
+        %% on_exit_mdx_jsx_tag_attribute_name_local
+        mdx_jsx_tag_attribute_name_local ->
+            on_exit_mdx_jsx_tag_attribute_name_local(CompileContext1);
+        %% on_exit_mdx_jsx_tag_attribute_value_literal
+        mdx_jsx_tag_attribute_value_literal ->
+            on_exit_mdx_jsx_tag_attribute_value_literal(CompileContext1);
+        %% on_exit_mdx_jsx_tag_self_closing_marker
+        mdx_jsx_tag_self_closing_marker ->
+            on_exit_mdx_jsx_tag_self_closing_marker(CompileContext1);
         %% on_exit_reference_string
         reference_string ->
             on_exit_reference_string(CompileContext1);
@@ -2012,6 +2328,259 @@ on_exit_media__node_mut_func(Node1, OptionReference = {some, _Reference}) ->
     ChildrenMutFunc = fun on_exit_media__children_mut_func/2,
     {Node2, none} = markdown_mdast_node:children_mut(Node1, OptionReference, ChildrenMutFunc),
     {Node2, none}.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:{[`MdxEsm`][Name::MdxEsm],[`MdxFlowExpression`][Name::MdxFlowExpression],[`MdxTextExpression`][Name::MdxTextExpression]}.
+""".
+-spec on_exit_mdx_esm_or_expression(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_mdx_esm_or_expression(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, _Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    on_exit(CompileContext2).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:{[`MdxJsxFlowTag`][Name::MdxJsxFlowTag],[`MdxJsxTextTag`][Name::MdxJsxTextTag]}.
+""".
+-spec on_exit_mdx_jsx_tag(CompileContext) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(), Message :: markdown_message:t().
+on_exit_mdx_jsx_tag(CompileContext1 = #markdown_mdast_compile_context{jsx_tag = {some, JsxTag1}}) ->
+    %% End of a tag, so drop the buffer.
+    {CompileContext2, _Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    %% Set end point.
+    Event = markdown_vec:get(
+        CompileContext2#markdown_mdast_compile_context.events, CompileContext2#markdown_mdast_compile_context.index
+    ),
+    EndPoint = markdown_point:to_unist(Event#markdown_event.point),
+    JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{'end' = EndPoint},
+    JsxTagStack1 = CompileContext2#markdown_mdast_compile_context.jsx_tag_stack,
+    JsxTagStart = JsxTag2#markdown_mdast_jsx_tag.start,
+    JsxTagEnd = JsxTag2#markdown_mdast_jsx_tag.'end',
+    OptionTail = markdown_vec:last_option(JsxTagStack1),
+    case JsxTag2#markdown_mdast_jsx_tag.close of
+        true ->
+            %% Unwrap: we crashed earlier if there's nothing on the stack.
+            {some, Tail} = OptionTail,
+            JsxTag2Name = JsxTag2#markdown_mdast_jsx_tag.name,
+            case Tail#markdown_mdast_jsx_tag.name of
+                JsxTag2Name ->
+                    %% Remove from our custom stack.
+                    %% Note that this does not exit the node.
+                    {JsxTagStack2, _} = markdown_vec:pop(JsxTagStack1),
+                    CompileContext3 = CompileContext2#markdown_mdast_compile_context{jsx_tag_stack = JsxTagStack2},
+                    on_exit_mdx_jsx_tag__finalize(CompileContext3, JsxTag2);
+                _ ->
+                    Label = serialize_abbreviated_tag(JsxTag2),
+                    TailStartPoint = Tail#markdown_mdast_jsx_tag.start,
+                    Reason = markdown_types:unicode_binary(
+                        io_lib:format(
+                            "Unexpected closing tag `~ts`, expected corresponding closing tag for `~ts` (~w:~w)", [
+                                Label,
+                                serialize_abbreviated_tag(Tail),
+                                TailStartPoint#markdown_unist_point.line,
+                                TailStartPoint#markdown_unist_point.column
+                            ]
+                        )
+                    ),
+                    Place = markdown_place:position(markdown_unist_position:new(JsxTagStart, JsxTagEnd)),
+                    Message = markdown_message:new(
+                        {some, Place}, Reason, <<"end-tag-mismatch"/utf8>>, <<"erlang-markdown"/utf8>>
+                    ),
+                    {error, Message}
+            end;
+        false ->
+            EventName = Event#markdown_event.name,
+            Node =
+                case EventName of
+                    mdx_jsx_flow_tag ->
+                        markdown_mdast_node:mdx_jsx_flow_element(#markdown_mdast_mdx_jsx_flow_element{
+                            name = JsxTag2#markdown_mdast_jsx_tag.name,
+                            attributes = JsxTag2#markdown_mdast_jsx_tag.attributes,
+                            children = markdown_vec:new(),
+                            position = {some, markdown_unist_position:new(JsxTagStart, JsxTagEnd)}
+                        });
+                    _ ->
+                        markdown_mdast_node:mdx_jsx_text_element(#markdown_mdast_mdx_jsx_text_element{
+                            name = JsxTag2#markdown_mdast_jsx_tag.name,
+                            attributes = JsxTag2#markdown_mdast_jsx_tag.attributes,
+                            children = markdown_vec:new(),
+                            position = {some, markdown_unist_position:new(JsxTagStart, JsxTagEnd)}
+                        })
+                end,
+            CompileContext3 = markdown_mdast_compile_context:tail_push(CompileContext2, Node),
+            on_exit_mdx_jsx_tag__finalize(CompileContext3, JsxTag2)
+    end.
+
+%% @private
+-spec on_exit_mdx_jsx_tag__finalize(CompileContext, JsxTag) -> {ok, CompileContext} | {error, Message} when
+    CompileContext :: markdown_mdast_compile_context:t(),
+    JsxTag :: markdown_mdast_jsx_tag:t(),
+    Message :: markdown_message:t().
+on_exit_mdx_jsx_tag__finalize(CompileContext1 = #markdown_mdast_compile_context{}, JsxTag = #markdown_mdast_jsx_tag{}) ->
+    case JsxTag#markdown_mdast_jsx_tag.self_closing orelse JsxTag#markdown_mdast_jsx_tag.close of
+        true ->
+            markdown_mdast_compile_context:tail_pop(CompileContext1);
+        false ->
+            JsxTagStack1 = CompileContext1#markdown_mdast_compile_context.jsx_tag_stack,
+            JsxTagStack2 = markdown_vec:push(JsxTagStack1, JsxTag),
+            CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag_stack = JsxTagStack2},
+            {ok, CompileContext2}
+    end.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`MdxJsxTagAttributeNameLocal`][Name::MdxJsxTagAttributeNameLocal].
+""".
+-spec on_exit_mdx_jsx_tag_attribute_name_local(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_mdx_jsx_tag_attribute_name_local(
+    CompileContext1 = #markdown_mdast_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    Value = markdown_slice:as_binary(Slice),
+    {some, JsxTag1} = CompileContext1#markdown_mdast_compile_context.jsx_tag,
+    Attributes1 = JsxTag1#markdown_mdast_jsx_tag.attributes,
+    {some, LastAttribute} = markdown_vec:last_option(Attributes1),
+    case LastAttribute of
+        #markdown_mdast_attribute_content{inner = {property, Attribute1 = #markdown_mdast_mdx_jsx_attribute{}}} ->
+            Name1 = Attribute1#markdown_mdast_mdx_jsx_attribute.name,
+            Name2 = <<Name1/bytes, ":", Value/bytes>>,
+            Attribute2 = Attribute1#markdown_mdast_mdx_jsx_attribute{name = Name2},
+            AttributeContent = markdown_mdast_attribute_content:property(Attribute2),
+            Attributes2 = markdown_vec:set_last(Attributes1, AttributeContent),
+            JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{attributes = Attributes2},
+            CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+            {ok, CompileContext2};
+        _ ->
+            ?'unreachable!'("expected property", [])
+    end.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`MdxJsxTagAttributePrimaryName`][Name::MdxJsxTagAttributePrimaryName].
+""".
+-spec on_exit_mdx_jsx_tag_attribute_primary_name(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_mdx_jsx_tag_attribute_primary_name(
+    CompileContext1 = #markdown_mdast_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    Value = markdown_slice:as_binary(Slice),
+    {some, JsxTag1} = CompileContext1#markdown_mdast_compile_context.jsx_tag,
+    Attributes1 = JsxTag1#markdown_mdast_jsx_tag.attributes,
+    {some, LastAttribute} = markdown_vec:last_option(Attributes1),
+    case LastAttribute of
+        #markdown_mdast_attribute_content{inner = {property, Attribute1 = #markdown_mdast_mdx_jsx_attribute{}}} ->
+            Attribute2 = Attribute1#markdown_mdast_mdx_jsx_attribute{name = Value},
+            AttributeContent = markdown_mdast_attribute_content:property(Attribute2),
+            Attributes2 = markdown_vec:set_last(Attributes1, AttributeContent),
+            JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{attributes = Attributes2},
+            CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+            {ok, CompileContext2};
+        _ ->
+            ?'unreachable!'("expected property", [])
+    end.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`MdxJsxTagAttributeValueLiteral`][Name::MdxJsxTagAttributeValueLiteral].
+""".
+-spec on_exit_mdx_jsx_tag_attribute_value_literal(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_mdx_jsx_tag_attribute_value_literal(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    Value = markdown_mdast_node:to_string(Node),
+    {some, JsxTag1} = CompileContext2#markdown_mdast_compile_context.jsx_tag,
+    Attributes1 = JsxTag1#markdown_mdast_jsx_tag.attributes,
+    {some, LastAttribute} = markdown_vec:last_option(Attributes1),
+    case LastAttribute of
+        #markdown_mdast_attribute_content{inner = {property, Attribute1 = #markdown_mdast_mdx_jsx_attribute{}}} ->
+            ParsedValue = markdown_util_character_reference:parse(Value),
+            AttributeValue = markdown_mdast_attribute_value:literal(ParsedValue),
+            Attribute2 = Attribute1#markdown_mdast_mdx_jsx_attribute{value = {some, AttributeValue}},
+            AttributeContent = markdown_mdast_attribute_content:property(Attribute2),
+            Attributes2 = markdown_vec:set_last(Attributes1, AttributeContent),
+            JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{attributes = Attributes2},
+            CompileContext3 = CompileContext2#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+            {ok, CompileContext3};
+        _ ->
+            ?'unreachable!'("expected property", [])
+    end.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`MdxJsxTagClosingMarker`][Name::MdxJsxTagClosingMarker].
+""".
+-spec on_exit_mdx_jsx_tag_closing_marker(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_mdx_jsx_tag_closing_marker(CompileContext1 = #markdown_mdast_compile_context{jsx_tag = {some, JsxTag1}}) ->
+    JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{close = true},
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`MdxJsxTagNameLocal`][Name::MdxJsxTagNameLocal].
+""".
+-spec on_exit_mdx_jsx_tag_name_local(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_mdx_jsx_tag_name_local(
+    CompileContext1 = #markdown_mdast_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    Value = markdown_slice:as_binary(Slice),
+    {some, JsxTag1} = CompileContext1#markdown_mdast_compile_context.jsx_tag,
+    {some, Name1} = JsxTag1#markdown_mdast_jsx_tag.name,
+    Name2 = <<Name1/bytes, ":", Value/bytes>>,
+    JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{name = {some, Name2}},
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`MdxJsxTagNameMember`][Name::MdxJsxTagNameMember].
+""".
+-spec on_exit_mdx_jsx_tag_name_member(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_mdx_jsx_tag_name_member(
+    CompileContext1 = #markdown_mdast_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    Value = markdown_slice:as_binary(Slice),
+    {some, JsxTag1} = CompileContext1#markdown_mdast_compile_context.jsx_tag,
+    {some, Name1} = JsxTag1#markdown_mdast_jsx_tag.name,
+    Name2 = <<Name1/bytes, ".", Value/bytes>>,
+    JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{name = {some, Name2}},
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`MdxJsxTagNamePrimary`][Name::MdxJsxTagNamePrimary].
+""".
+-spec on_exit_mdx_jsx_tag_name_primary(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_mdx_jsx_tag_name_primary(
+    CompileContext1 = #markdown_mdast_compile_context{bytes = Bytes, events = Events, index = Index}
+) ->
+    Slice = markdown_slice:from_position(Bytes, markdown_position:from_exit_event(Events, Index)),
+    Value = markdown_slice:as_binary(Slice),
+    {some, JsxTag1} = CompileContext1#markdown_mdast_compile_context.jsx_tag,
+    JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{name = {some, Value}},
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+    {ok, CompileContext2}.
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:[`MdxJsxTagSelfClosingMarker`][Name::MdxJsxTagSelfClosingMarker].
+""".
+-spec on_exit_mdx_jsx_tag_self_closing_marker(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_mdx_jsx_tag_self_closing_marker(CompileContext1 = #markdown_mdast_compile_context{jsx_tag = {some, JsxTag1}}) ->
+    JsxTag2 = JsxTag1#markdown_mdast_jsx_tag{self_closing = true},
+    CompileContext2 = CompileContext1#markdown_mdast_compile_context{jsx_tag = {some, JsxTag2}},
+    {ok, CompileContext2}.
 
 %% @private
 -doc """

@@ -1,0 +1,371 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: mdx_esm
+  created: 2025-10-09
+  modified: 2025-10-09
+shared_options:
+  - name: swc
+    options:
+      extend: mdx
+      parse:
+        mdx_esm_parse: fun markdown_test_utils_swc:parse_esm/1
+        mdx_expression_parse: fun markdown_test_utils_swc:parse_expression/2
+shared_parse_options:
+  - name: swc_parse
+    parse_options:
+      extend: mdx
+      mdx_esm_parse: fun markdown_test_utils_swc:parse_esm/1
+      mdx_expression_parse: fun markdown_test_utils_swc:parse_expression/2
+to_html: []
+to_html_with_options:
+- name: test_mdx_esm_case_1
+  input: |-
+    import a from 'b'
+
+    c
+  output: <p>c</p>
+  message: should support an import
+  options: swc
+- name: test_mdx_esm_case_2
+  input: |-
+    export default a
+
+    b
+  output: <p>b</p>
+  message: should support an export
+  options: swc
+- name: test_mdx_esm_case_3
+  input: impossible
+  output: <p>impossible</p>
+  message: should not support other keywords (`impossible`)
+  options: swc
+- name: test_mdx_esm_case_4
+  input: exporting
+  output: <p>exporting</p>
+  message: should not support other keywords (`exporting`)
+  options: swc
+- name: test_mdx_esm_case_5
+  input: import.
+  output: <p>import.</p>
+  message: should not support a non-whitespace after the keyword
+  options: swc
+- name: test_mdx_esm_case_6
+  input: import('a')
+  output: <p>import('a')</p>
+  message: should not support a non-whitespace after the keyword (import-as-a-function)
+  options: swc
+- name: test_mdx_esm_case_7
+  input: |2-
+      import a from 'b'
+      export default c
+  output: |-
+    <p>import a from 'b'
+    export default c</p>
+  message: should not support an indent
+  options: swc
+- name: test_mdx_esm_case_8
+  input: |-
+    - import a from 'b'
+    > export default c
+  output: |-
+    <ul>
+    <li>import a from 'b'</li>
+    </ul>
+    <blockquote>
+    <p>export default c</p>
+    </blockquote>
+  message: should not support keywords in containers
+  options: swc
+- name: test_mdx_esm_case_9
+  input: |-
+    import a from 'b'
+    export default c
+  output: ''
+  message: should support imports and exports in the same “block”
+  options: swc
+- name: test_mdx_esm_case_10
+  input: |-
+    import a from 'b'
+
+    export default c
+  output: ''
+  message: should support imports and exports in separate “blocks”
+  options: swc
+- name: test_mdx_esm_case_11
+  input: |-
+    a
+
+    import a from 'b'
+
+    b
+
+    export default c
+  output: |
+    <p>a</p>
+    <p>b</p>
+  message: should support imports and exports in between other constructs
+  options: swc
+- name: test_mdx_esm_case_12
+  input: |-
+    a
+    import a from 'b'
+
+    b
+    export default c
+  output: |-
+    <p>a
+    import a from 'b'</p>
+    <p>b
+    export default c</p>
+  message: should not support import/exports when interrupting paragraphs
+  options: swc
+- name: test_mdx_esm_case_13
+  input: |-
+    export {
+      a
+    } from 'b'
+
+    c
+  output: <p>c</p>
+  message: should support line endings in import/exports
+  options: swc
+- name: test_mdx_esm_case_14
+  input: |-
+    export {
+
+      a
+
+    } from 'b'
+
+    c
+  output: <p>c</p>
+  message: should support blank lines in import/exports
+  options: swc
+- name: test_mdx_esm_case_15
+  input: |-
+    export var a = 1
+    // b
+    /* c */
+
+    d
+  output: <p>d</p>
+  message: should support comments in “blocks”
+  options: swc
+- name: test_mdx_esm_case_16
+  input: |-
+    import a from 'b'
+    export {a}
+
+    c
+  output: <p>c</p>
+  message: should support a reexport from another import
+  options: swc
+- name: test_mdx_esm_case_17
+  input: |-
+    import a from 'b';
+    export {a};
+
+    c
+  output: <p>c</p>
+  message: should support a reexport from another import w/ semicolons
+  options: swc
+- name: test_mdx_esm_case_18
+  input: |-
+    import a from 'b'
+    export {a as default}
+
+    c
+  output: <p>c</p>
+  message: should support a reexport default from another import
+  options: swc
+- name: test_mdx_esm_case_19
+  input: export var a = () => <b />
+  output: ''
+  message: should support JSX by default
+  options: swc
+- name: test_mdx_esm_case_20
+  input: |
+    export {a}
+  output: ''
+  message: should support EOF after EOL
+  options: swc
+- name: test_mdx_esm_case_21
+  input: |-
+    import a from 'b'
+
+    export {a}
+
+    c
+  output: <p>c</p>
+  message: should support a reexport from another esm block (1)
+  options: swc
+- name: test_mdx_esm_case_22
+  input: |-
+    import a from 'b'
+
+    export {a}
+
+    # c
+  output: <h1>c</h1>
+  message: should support a reexport from another esm block (2)
+  options: swc
+- name: test_mdx_esm_case_23
+  input: "import a from \"b\""
+  output: ""
+  message: "should support imports: default"
+  options: swc
+- name: test_mdx_esm_case_24
+  input: "import * as a from \"b\""
+  output: ""
+  message: "should support imports: whole"
+  options: swc
+- name: test_mdx_esm_case_25
+  input: "import {a} from \"b\""
+  output: ""
+  message: "should support imports: destructuring"
+  options: swc
+- name: test_mdx_esm_case_26
+  input: "import {a as b} from \"c\""
+  output: ""
+  message: "should support imports: destructuring and rename"
+  options: swc
+- name: test_mdx_esm_case_27
+  input: "import a, {b as c} from \"d\""
+  output: ""
+  message: "should support imports: default and destructuring"
+  options: swc
+- name: test_mdx_esm_case_28
+  input: "import a, * as b from \"c\""
+  output: ""
+  message: "should support imports: default and whole"
+  options: swc
+- name: test_mdx_esm_case_29
+  input: "import \"a\""
+  output: ""
+  message: "should support imports: side-effects"
+  options: swc
+- name: test_mdx_esm_case_30
+  input: "export var a = \"\""
+  output: ""
+  message: "should support exports: var"
+  options: swc
+- name: test_mdx_esm_case_31
+  input: "export const a = \"\""
+  output: ""
+  message: "should support exports: const"
+  options: swc
+- name: test_mdx_esm_case_32
+  input: "export let a = \"\""
+  output: ""
+  message: "should support exports: let"
+  options: swc
+- name: test_mdx_esm_case_33
+  input: "export var a, b"
+  output: ""
+  message: "should support exports: multiple"
+  options: swc
+- name: test_mdx_esm_case_34
+  input: "export var a = \"a\", b = \"b\""
+  output: ""
+  message: "should support exports: multiple w/ assignment"
+  options: swc
+- name: test_mdx_esm_case_35
+  input: "export function a() {}"
+  output: ""
+  message: "should support exports: function"
+  options: swc
+- name: test_mdx_esm_case_36
+  input: "export class a {}"
+  output: ""
+  message: "should support exports: class"
+  options: swc
+- name: test_mdx_esm_case_37
+  input: "export var {a} = {}"
+  output: ""
+  message: "should support exports: destructuring"
+  options: swc
+- name: test_mdx_esm_case_38
+  input: "export var {a: b} = {}"
+  output: ""
+  message: "should support exports: rename destructuring"
+  options: swc
+- name: test_mdx_esm_case_39
+  input: "export var [a] = []"
+  output: ""
+  message: "should support exports: array destructuring"
+  options: swc
+- name: test_mdx_esm_case_40
+  input: "export default a = 1"
+  output: ""
+  message: "should support exports: default"
+  options: swc
+- name: test_mdx_esm_case_41
+  input: "export default function a() {}"
+  output: ""
+  message: "should support exports: default function"
+  options: swc
+- name: test_mdx_esm_case_42
+  input: "export default class a {}"
+  output: ""
+  message: "should support exports: default class"
+  options: swc
+- name: test_mdx_esm_case_43
+  input: "export * from \"a\""
+  output: ""
+  message: "should support exports: aggregate"
+  options: swc
+- name: test_mdx_esm_case_44
+  input: "export * as a from \"b\""
+  output: ""
+  message: "should support exports: whole reexport"
+  options: swc
+- name: test_mdx_esm_case_45
+  input: "export {a} from \"b\""
+  output: ""
+  message: "should support exports: reexport destructuring"
+  options: swc
+- name: test_mdx_esm_case_46
+  input: "export {a as b} from \"c\""
+  output: ""
+  message: "should support exports: reexport destructuring w rename"
+  options: swc
+- name: test_mdx_esm_case_47
+  input: "export {default} from \"b\""
+  output: ""
+  message: "should support exports: reexport as a default whole"
+  options: swc
+- name: test_mdx_esm_case_48
+  input: "export {default as a, b} from \"c\""
+  output: ""
+  message: "should support exports: reexport default and non-default"
+  options: swc
+to_mdast:
+- name: test_mdx_esm_case_49
+  input: |-
+    import a from 'b'
+    export {a}
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:mdxjs_esm(#markdown_mdast_mdxjs_esm{
+          value = <<"import a from 'b'\nexport {a}">>,
+          position = {some, markdown_unist_position:new(1, 1, 0, 2, 11, 28)},
+          stops = ?'vec!'([
+            markdown_mdast_stop:new(0, 0),
+            markdown_mdast_stop:new(17, 17),
+            markdown_mdast_stop:new(18, 18)
+          ])
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 2, 11, 28)}
+    })
+  message: "should support mdx esm as `MdxjsEsm`s in mdast"
+  parse_options: swc_parse
