@@ -1,0 +1,439 @@
+# yaml-language-server: $schema=./schema.json
+
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) WhatsApp LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.md file in the root directory of this source tree.
+
+---
+suite:
+  name: html_text
+  created: 2025-10-10
+  modified: 2025-10-10
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_html_text_case_1
+  input: a <b> c
+  output: <p>a &lt;b&gt; c</p>
+  message: should encode dangerous html by default
+to_html_with_options:
+- name: test_html_text_case_2
+  input: <a><bab><c2c>
+  output: <p><a><bab><c2c></p>
+  message: should support opening tags
+  options: danger
+- name: test_html_text_case_3
+  input: <a/><b2/>
+  output: <p><a/><b2/></p>
+  message: should support self-closing tags
+  options: danger
+- name: test_html_text_case_4
+  input: |-
+    <a  /><b2
+    data="foo" >
+  output: |-
+    <p><a  /><b2
+    data="foo" ></p>
+  message: should support whitespace in tags
+  options: danger
+- name: test_html_text_case_5
+  input: |-
+    <a foo="bar" bam = 'baz <em>"</em>'
+    _boolean zoop:33=zoop:33 />
+  output: |-
+    <p><a foo="bar" bam = 'baz <em>"</em>'
+    _boolean zoop:33=zoop:33 /></p>
+  message: should support attributes on tags
+  options: danger
+- name: test_html_text_case_6
+  input: "Foo <responsive-image src=\"foo.jpg\" />"
+  output: "<p>Foo <responsive-image src=\"foo.jpg\" /></p>"
+  message: should support non-html tags
+  options: danger
+- name: test_html_text_case_7
+  input: <33> <__>
+  output: <p>&lt;33&gt; &lt;__&gt;</p>
+  message: should not support nonconforming tag names
+  options: danger
+- name: test_html_text_case_8
+  input: "<a h*#ref=\"hi\">"
+  output: <p>&lt;a h*#ref=&quot;hi&quot;&gt;</p>
+  message: should not support nonconforming attribute names
+  options: danger
+- name: test_html_text_case_9
+  input: "<a href=\"hi'> <a href=hi'>"
+  output: <p>&lt;a href=&quot;hi'&gt; &lt;a href=hi'&gt;</p>
+  message: should not support nonconforming attribute values
+  options: danger
+- name: test_html_text_case_10
+  input: |-
+    < a><
+    foo><bar/ >
+    <foo bar=baz
+    bim!bop />
+  output: |-
+    <p>&lt; a&gt;&lt;
+    foo&gt;&lt;bar/ &gt;
+    &lt;foo bar=baz
+    bim!bop /&gt;</p>
+  message: should not support nonconforming whitespace
+  options: danger
+- name: test_html_text_case_11
+  input: <a href='bar'title=title>
+  output: <p>&lt;a href='bar'title=title&gt;</p>
+  message: should not support missing whitespace
+  options: danger
+- name: test_html_text_case_12
+  input: </a></foo >
+  output: <p></a></foo ></p>
+  message: should support closing tags
+  options: danger
+- name: test_html_text_case_13
+  input: "</a href=\"foo\">"
+  output: <p>&lt;/a href=&quot;foo&quot;&gt;</p>
+  message: should not support closing tags w/ attributes
+  options: danger
+- name: test_html_text_case_14
+  input: |-
+    foo <!-- this is a
+    comment - with hyphen -->
+  output: |-
+    <p>foo <!-- this is a
+    comment - with hyphen --></p>
+  message: should support comments
+  options: danger
+- name: test_html_text_case_15
+  input: foo <!-- not a comment -- two hyphens -->
+  output: <p>foo <!-- not a comment -- two hyphens --></p>
+  message: should support comments w/ two dashes inside
+  options: danger
+- name: test_html_text_case_16
+  input: foo <!--> foo -->
+  output: <p>foo <!--> foo --&gt;</p>
+  message: should support nonconforming comments (1)
+  options: danger
+- name: test_html_text_case_17
+  input: foo <!-- foo--->
+  output: <p>foo <!-- foo---></p>
+  message: should support nonconforming comments (2)
+  options: danger
+- name: test_html_text_case_18
+  input: foo <?php echo $a; ?>
+  output: <p>foo <?php echo $a; ?></p>
+  message: should support instructions
+  options: danger
+- name: test_html_text_case_19
+  input: foo <!ELEMENT br EMPTY>
+  output: <p>foo <!ELEMENT br EMPTY></p>
+  message: should support declarations
+  options: danger
+- name: test_html_text_case_20
+  input: foo <![CDATA[>&<]]>
+  output: <p>foo <![CDATA[>&<]]></p>
+  message: should support cdata
+  options: danger
+- name: test_html_text_case_21
+  input: "foo <a href=\"&ouml;\">"
+  output: "<p>foo <a href=\"&ouml;\"></p>"
+  message: should support (ignore) character references
+  options: danger
+- name: test_html_text_case_22
+  input: "foo <a href=\"\\*\">"
+  output: "<p>foo <a href=\"\\*\"></p>"
+  message: should not support character escapes (1)
+  options: danger
+- name: test_html_text_case_23
+  input: "<a href=\"\\\"\">"
+  output: <p>&lt;a href=&quot;&quot;&quot;&gt;</p>
+  message: should not support character escapes (2)
+  options: danger
+- name: test_html_text_case_24
+  input: foo <!1>
+  output: <p>foo &lt;!1&gt;</p>
+  message: should not support non-comment, non-cdata, and non-named declaration
+  comment: 'Extra:'
+  options: danger
+- name: test_html_text_case_25
+  input: foo <!-not enough!-->
+  output: <p>foo &lt;!-not enough!--&gt;</p>
+  message: should not support comments w/ not enough dashes
+  options: danger
+- name: test_html_text_case_26
+  input: foo <!---ok-->
+  output: <p>foo <!---ok--></p>
+  message: "should support comments that start w/ a dash, if it’s not followed by a greater than"
+  options: danger
+- name: test_html_text_case_27
+  input: foo <!--->
+  output: <p>foo <!---></p>
+  message: should support comments that start w/ `->`
+  options: danger
+- name: test_html_text_case_28
+  input: foo <!-- -> -->
+  output: <p>foo <!-- -> --></p>
+  message: should support `->` in a comment
+  options: danger
+- name: test_html_text_case_29
+  input: foo <!--
+  output: <p>foo &lt;!--</p>
+  message: should not support eof in a comment (1)
+  options: danger
+- name: test_html_text_case_30
+  input: foo <!--a
+  output: <p>foo &lt;!--a</p>
+  message: should not support eof in a comment (2)
+  options: danger
+- name: test_html_text_case_31
+  input: foo <!--a-
+  output: <p>foo &lt;!--a-</p>
+  message: should not support eof in a comment (3)
+  options: danger
+- name: test_html_text_case_32
+  input: foo <!--a--
+  output: <p>foo &lt;!--a--</p>
+  message: should not support eof in a comment (4)
+  options: danger
+- name: test_html_text_case_33
+  input: foo <![cdata[]]>
+  output: <p>foo &lt;![cdata[]]&gt;</p>
+  message: should not support lowercase “cdata”
+  comment: "Note: cmjs parses this differently. See: <https://github.com/commonmark/commonmark.js/issues/193>"
+  options: danger
+- name: test_html_text_case_34
+  input: foo <![CDATA
+  output: <p>foo &lt;![CDATA</p>
+  message: should not support eof in a CDATA (1)
+  options: danger
+- name: test_html_text_case_35
+  input: foo <![CDATA[
+  output: <p>foo &lt;![CDATA[</p>
+  message: should not support eof in a CDATA (2)
+  options: danger
+- name: test_html_text_case_36
+  input: foo <![CDATA[]
+  output: <p>foo &lt;![CDATA[]</p>
+  message: should not support eof in a CDATA (3)
+  options: danger
+- name: test_html_text_case_37
+  input: foo <![CDATA[]]
+  output: <p>foo &lt;![CDATA[]]</p>
+  message: should not support eof in a CDATA (4)
+  options: danger
+- name: test_html_text_case_38
+  input: foo <![CDATA[asd
+  output: <p>foo &lt;![CDATA[asd</p>
+  message: should not support eof in a CDATA (5)
+  options: danger
+- name: test_html_text_case_39
+  input: foo <![CDATA[]]]]>
+  output: <p>foo <![CDATA[]]]]></p>
+  message: should support end-like constructs in CDATA
+  options: danger
+- name: test_html_text_case_40
+  input: foo <!doctype
+  output: <p>foo &lt;!doctype</p>
+  message: should not support eof in declarations
+  options: danger
+- name: test_html_text_case_41
+  input: foo <?php
+  output: <p>foo &lt;?php</p>
+  message: should not support eof in instructions (1)
+  options: danger
+- name: test_html_text_case_42
+  input: foo <?php?
+  output: <p>foo &lt;?php?</p>
+  message: should not support eof in instructions (2)
+  options: danger
+- name: test_html_text_case_43
+  input: foo <???>
+  output: <p>foo <???></p>
+  message: should support question marks in instructions
+  options: danger
+- name: test_html_text_case_44
+  input: foo </3>
+  output: <p>foo &lt;/3&gt;</p>
+  message: should not support closing tags that don’t start w/ alphas
+  options: danger
+- name: test_html_text_case_45
+  input: foo </a->
+  output: <p>foo </a-></p>
+  message: should support dashes in closing tags
+  options: danger
+- name: test_html_text_case_46
+  input: foo </a   >
+  output: <p>foo </a   ></p>
+  message: should support whitespace after closing tag names
+  options: danger
+- name: test_html_text_case_47
+  input: foo </a!>
+  output: <p>foo &lt;/a!&gt;</p>
+  message: should not support other characters after closing tag names
+  options: danger
+- name: test_html_text_case_48
+  input: foo <a->
+  output: <p>foo <a-></p>
+  message: should support dashes in opening tags
+  options: danger
+- name: test_html_text_case_49
+  input: foo <a   >
+  output: <p>foo <a   ></p>
+  message: should support whitespace after opening tag names
+  options: danger
+- name: test_html_text_case_50
+  input: foo <a!>
+  output: <p>foo &lt;a!&gt;</p>
+  message: should not support other characters after opening tag names
+  options: danger
+- name: test_html_text_case_51
+  input: foo <a !>
+  output: <p>foo &lt;a !&gt;</p>
+  message: should not support other characters in opening tags (1)
+  options: danger
+- name: test_html_text_case_52
+  input: foo <a b!>
+  output: <p>foo &lt;a b!&gt;</p>
+  message: should not support other characters in opening tags (2)
+  options: danger
+- name: test_html_text_case_53
+  input: foo <a b/>
+  output: <p>foo <a b/></p>
+  message: should support a self-closing slash after an attribute name
+  options: danger
+- name: test_html_text_case_54
+  input: foo <a b>
+  output: <p>foo <a b></p>
+  message: should support a greater than after an attribute name
+  options: danger
+- name: test_html_text_case_55
+  input: foo <a b=<>
+  output: <p>foo &lt;a b=&lt;&gt;</p>
+  message: should not support less than to start an unquoted attribute value
+  options: danger
+- name: test_html_text_case_56
+  input: foo <a b=>>
+  output: <p>foo &lt;a b=&gt;&gt;</p>
+  message: should not support greater than to start an unquoted attribute value
+  options: danger
+- name: test_html_text_case_57
+  input: foo <a b==>
+  output: <p>foo &lt;a b==&gt;</p>
+  message: should not support equals to to start an unquoted attribute value
+  options: danger
+- name: test_html_text_case_58
+  input: foo <a b=`>
+  output: <p>foo &lt;a b=`&gt;</p>
+  message: should not support grave accent to start an unquoted attribute value
+  options: danger
+- name: test_html_text_case_59
+  input: "foo <a b=\"asd"
+  output: <p>foo &lt;a b=&quot;asd</p>
+  message: should not support eof in double quoted attribute value
+  options: danger
+- name: test_html_text_case_60
+  input: foo <a b='asd
+  output: <p>foo &lt;a b='asd</p>
+  message: should not support eof in single quoted attribute value
+  options: danger
+- name: test_html_text_case_61
+  input: foo <a b=asd
+  output: <p>foo &lt;a b=asd</p>
+  message: should not support eof in unquoted attribute value
+  options: danger
+- name: test_html_text_case_62
+  input: |-
+    foo <a b=
+    asd>
+  output: |-
+    <p>foo <a b=
+    asd></p>
+  message: should support an eol before an attribute value
+  options: danger
+- name: test_html_text_case_63
+  input: <x> a
+  output: <p><x> a</p>
+  message: "should support starting a line w/ a tag if followed by anything other than an eol (after optional space/tabs)"
+  options: danger
+- name: test_html_text_case_64
+  input: <span foo=
+  output: <p>&lt;span foo=</p>
+  message: should support an EOF before an attribute value
+  options: danger
+- name: test_html_text_case_65
+  input: |-
+    a <!b
+    c>
+  output: |-
+    <p>a <!b
+    c></p>
+  message: should support an EOL in a declaration
+  options: danger
+- name: test_html_text_case_66
+  input: |-
+    a <![CDATA[
+    ]]>
+  output: |-
+    <p>a <![CDATA[
+    ]]></p>
+  message: should support an EOL in cdata
+  options: danger
+- name: test_html_text_case_67
+  input: |-
+    a <?
+    ?>
+  output: |-
+    <p>a <?
+    ?></p>
+  message: should support an EOL in an instruction
+  comment: "Note: cmjs parses this differently. See: <https://github.com/commonmark/commonmark.js/issues/196>"
+  options: danger
+- name: test_html_text_case_68
+  input: a <x>
+  output: <p>a &lt;x&gt;</p>
+  message: should support turning off html (text)
+  options:
+    extend: default
+    parse:
+      constructs:
+        html_text: false
+to_mdast:
+- name: test_html_text_case_69
+  input: alpha <i>bravo</b> charlie.
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+      children = ?'vec!'([
+        markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+          children = ?'vec!'([
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"alpha ">>,
+              position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+            }),
+            markdown_mdast_node:html(#markdown_mdast_html{
+              value = <<"<i>">>,
+              position = {some, markdown_unist_position:new(1, 7, 6, 1, 10, 9)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<"bravo">>,
+              position = {some, markdown_unist_position:new(1, 10, 9, 1, 15, 14)}
+            }),
+            markdown_mdast_node:html(#markdown_mdast_html{
+              value = <<"</b>">>,
+              position = {some, markdown_unist_position:new(1, 15, 14, 1, 19, 18)}
+            }),
+            markdown_mdast_node:text(#markdown_mdast_text{
+              value = <<" charlie.">>,
+              position = {some, markdown_unist_position:new(1, 19, 18, 1, 28, 27)}
+            })
+          ]),
+          position = {some, markdown_unist_position:new(1, 1, 0, 1, 28, 27)}
+        })
+      ]),
+      position = {some, markdown_unist_position:new(1, 1, 0, 1, 28, 27)}
+    })
+  message: "should support HTML (text) as `Html`s in mdast"
+  parse_options: ParseOptions::default()
