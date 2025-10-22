@@ -14,4 +14,4 @@ TBD
 
 ## License
 
-`markdown` is MIT licensed, as found in the [LICENSE](LICENSE.md) file.
+`markdown` is Apache License Version 2.0 licensed, as found in the [LICENSE](LICENSE.md) file.

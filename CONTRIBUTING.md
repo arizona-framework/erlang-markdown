@@ -35,4 +35,4 @@ Please run `make format` before submitting your changes.
 
 ## License
 
-By contributing to `erlang-markdown`, you agree that your contributions will be licensed under the MIT license found in the LICENSE.md file in the root directory of this source tree.
+By contributing to `erlang-markdown`, you agree that your contributions will be licensed under the Apache License Version 2.0 license found in the LICENSE.md file in the root directory of this source tree.

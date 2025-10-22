@@ -1,21 +1,32 @@
 %%%-----------------------------------------------------------------------------
+%%% %CopyrightBegin%
+%%%
+%%% SPDX-License-Identifier: Apache-2.0
+%%%
 %%% Copyright (c) Meta Platforms, Inc. and affiliates.
 %%% Copyright (c) WhatsApp LLC
 %%%
-%%% This source code is licensed under the MIT license found in the
-%%% LICENSE.md file in the root directory of this source tree.
+%%% Licensed under the Apache License, Version 2.0 (the "License");
+%%% you may not use this file except in compliance with the License.
+%%% You may obtain a copy of the License at
 %%%
-%%% @author Andrew Bennett <potatosaladx@meta.com>
-%%% @copyright (c) Meta Platforms, Inc. and affiliates.
-%%% @doc
+%%%     http://www.apache.org/licenses/LICENSE-2.0
 %%%
-%%% @end
-%%% Created :  03 Dec 2024 by Andrew Bennett <potatosaladx@meta.com>
+%%% Unless required by applicable law or agreed to in writing, software
+%%% distributed under the License is distributed on an "AS IS" BASIS,
+%%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%%% See the License for the specific language governing permissions and
+%%% limitations under the License.
+%%%
+%%% %CopyrightEnd%
 %%%-----------------------------------------------------------------------------
+%%% % @format
 -module(markdown).
+-moduledoc #{author => ["Andrew Bennett <potatosaladx@meta.com>"]}.
+-moduledoc #{created => "2024-12-03", modified => "2024-12-03"}.
+-moduledoc #{copyright => "Meta Platforms, Inc. and affiliates."}.
 -compile(warn_missing_spec_all).
 -oncall("whatsapp_clr").
--wacov(ignore).
 
 -include_lib("markdown/include/markdown_parser.hrl").
 -include_lib("markdown/include/markdown_vec.hrl").
@@ -92,7 +103,7 @@ counter_reset() ->
 -spec doc() -> binary().
 doc() ->
     <<"a\\\nb."/utf8>>.
-    % <<"[foo [bar](/uri)](/uri)\n"/utf8>>.
+% <<"[foo [bar](/uri)](/uri)\n"/utf8>>.
     % <<"*foo __bar *baz bim__ bam*"/utf8>>.
     % <<"[bar](/foo)">>.
     % %% erlfmt-ignore
