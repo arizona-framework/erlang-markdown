@@ -43,6 +43,7 @@ from ..test_schema import (
     TestCaseToHtmlWithOptions as TestCaseToHtmlWithOptionsSchema,
     TestCaseToMdast as TestCaseToMdastSchema,
     TestRoot as TestRootSchema,
+    TestSuite as TestSuiteSchema,
 )
 from . import Atom, Context, Export
 
@@ -108,7 +109,7 @@ class Test:
 @dataclass
 class TestSuite:
     ctx: Context = field(repr=False)
-    schema: TestRootSchema = field(repr=False)
+    schema: TestSuiteSchema = field(repr=False)
     test: "Test" = field(repr=False)
 
     @property
