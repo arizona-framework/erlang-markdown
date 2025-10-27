@@ -1,0 +1,225 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: character_reference
+  created: 2025-10-27
+  modified: 2025-10-27
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_character_reference_case_1
+  input: |-
+    &nbsp; &amp; &copy; &AElig; &Dcaron;
+    &frac34; &HilbertSpace; &DifferentialD;
+    &ClockwiseContourIntegral; &ngE;
+  output: "<p>\xa0 &amp; © Æ Ď\n¾ ℋ ⅆ\n∲ ≧̸</p>"
+  message: should support named character references
+- name: test_character_reference_case_2
+  input: '&#35; &#1234; &#992; &#0;'
+  output: <p># Ӓ Ϡ �</p>
+  message: should support decimal character references
+- name: test_character_reference_case_3
+  input: '&#X22; &#XD06; &#xcab;'
+  output: <p>&quot; ആ ಫ</p>
+  message: should support hexadecimal character references
+- name: test_character_reference_case_4
+  input: |-
+    &nbsp &x; &#; &#x;
+    &#987654321;
+    &#abcdef0;
+    &ThisIsNotDefined; &hi?;
+  output: |-
+    <p>&amp;nbsp &amp;x; &amp;#; &amp;#x;
+    &amp;#987654321;
+    &amp;#abcdef0;
+    &amp;ThisIsNotDefined; &amp;hi?;</p>
+  message: should not support other things that look like character references
+- name: test_character_reference_case_5
+  input: '&copy'
+  output: <p>&amp;copy</p>
+  message: should not support character references w/o semicolon
+- name: test_character_reference_case_6
+  input: '&MadeUpEntity;'
+  output: <p>&amp;MadeUpEntity;</p>
+  message: should not support unknown named character references
+- name: test_character_reference_case_8
+  input: "[foo](/f&ouml;&ouml; \"f&ouml;&ouml;\")"
+  output: "<p><a href=\"/f%C3%B6%C3%B6\" title=\"föö\">foo</a></p>"
+  message: should support character references in resource URLs and titles
+- name: test_character_reference_case_9
+  input: |-
+    [foo]: /f&ouml;&ouml; "f&ouml;&ouml;"
+
+    [foo]
+  output: "<p><a href=\"/f%C3%B6%C3%B6\" title=\"föö\">foo</a></p>"
+  message: should support character references in definition URLs and titles
+- name: test_character_reference_case_10
+  input: |-
+    ``` f&ouml;&ouml;
+    foo
+    ```
+  output: |-
+    <pre><code class="language-föö">foo
+    </code></pre>
+  message: should support character references in code language
+- name: test_character_reference_case_11
+  input: '`f&ouml;&ouml;`'
+  output: <p><code>f&amp;ouml;&amp;ouml;</code></p>
+  message: should not support character references in text code
+- name: test_character_reference_case_12
+  input: '    f&ouml;f&ouml;'
+  output: |-
+    <pre><code>f&amp;ouml;f&amp;ouml;
+    </code></pre>
+  message: should not support character references in indented code
+- name: test_character_reference_case_13
+  input: |-
+    &#42;foo&#42;
+    *foo*
+  output: |-
+    <p>*foo*
+    <em>foo</em></p>
+  message: should not support character references as construct markers (1)
+- name: test_character_reference_case_14
+  input: |-
+    &#42; foo
+
+    * foo
+  output: |-
+    <p>* foo</p>
+    <ul>
+    <li>foo</li>
+    </ul>
+  message: should not support character references as construct markers (2)
+- name: test_character_reference_case_15
+  input: '[a](url &quot;tit&quot;)'
+  output: <p>[a](url &quot;tit&quot;)</p>
+  message: should not support character references as construct markers (3)
+- name: test_character_reference_case_16
+  input: foo&#10;&#10;bar
+  output: |-
+    <p>foo
+
+    bar</p>
+  message: should not support character references as whitespace (1)
+- name: test_character_reference_case_17
+  input: '&#9;foo'
+  output: "<p>\tfoo</p>"
+  message: should not support character references as whitespace (2)
+- name: test_character_reference_case_18
+  input: '&CounterClockwiseContourIntegral;'
+  output: <p>∳</p>
+  message: should support the longest possible named character reference
+  comment: 'Extra:'
+- name: test_character_reference_case_19
+  input: '&#xff9999;'
+  output: <p>�</p>
+  message: should “support” a longest possible hexadecimal character reference
+- name: test_character_reference_case_20
+  input: '&#9999999;'
+  output: <p>�</p>
+  message: should “support” a longest possible decimal character reference
+- name: test_character_reference_case_21
+  input: '&CounterClockwiseContourIntegrali;'
+  output: <p>&amp;CounterClockwiseContourIntegrali;</p>
+  message: should not support the longest possible named character reference
+- name: test_character_reference_case_22
+  input: '&#xff99999;'
+  output: <p>&amp;#xff99999;</p>
+  message: should not support a longest possible hexadecimal character reference
+- name: test_character_reference_case_23
+  input: '&#99999999;'
+  output: <p>&amp;#99999999;</p>
+  message: should not support a longest possible decimal character reference
+- name: test_character_reference_case_24
+  input: '&-;'
+  output: <p>&amp;-;</p>
+  message: should not support the other characters after `&`
+- name: test_character_reference_case_25
+  input: '&#-;'
+  output: <p>&amp;#-;</p>
+  message: should not support the other characters after `#`
+- name: test_character_reference_case_26
+  input: '&#x-;'
+  output: <p>&amp;#x-;</p>
+  message: should not support the other characters after `#x`
+- name: test_character_reference_case_27
+  input: '&lt-;'
+  output: <p>&amp;lt-;</p>
+  message: should not support the other characters inside a name
+- name: test_character_reference_case_28
+  input: '&#9-;'
+  output: <p>&amp;#9-;</p>
+  message: should not support the other characters inside a demical
+- name: test_character_reference_case_29
+  input: '&#x9-;'
+  output: <p>&amp;#x9-;</p>
+  message: should not support the other characters inside a hexademical
+to_html_with_options:
+- name: test_character_reference_case_7
+  input: "<a href=\"&ouml;&ouml;.html\">"
+  output: "<a href=\"&ouml;&ouml;.html\">"
+  message: should not care about character references in html
+  options: danger
+- name: test_character_reference_case_30
+  input: '&amp;'
+  output: <p>&amp;amp;</p>
+  message: should support turning off character references
+  options:
+    parse:
+      constructs:
+        character_reference: false
+to_mdast:
+- name: test_character_reference_case_31
+  input: |-
+    &nbsp; &amp; &copy; &AElig; &Dcaron;
+    &frac34; &HilbertSpace; &DifferentialD;
+    &ClockwiseContourIntegral; &ngE;
+    &#35; &#1234; &#992; &#0;
+    &#X22; &#XD06; &#xcab;
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<"\x{a0} & © Æ Ď\n¾ ℋ ⅆ\n∲ ≧̸\n# Ӓ Ϡ �\n\" ആ ಫ"/utf8>>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 5, 23, 158)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 5, 23, 158)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 5, 23, 158)}
+    })
+  message: "should support character references as `Text`s in mdast"
+  parse_options: {}
+

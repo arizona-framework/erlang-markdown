@@ -1,0 +1,260 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: autolink
+  created: 2025-10-27
+  modified: 2025-10-27
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_autolink_case_1
+  input: <http://foo.bar.baz>
+  output: "<p><a href=\"http://foo.bar.baz\">http://foo.bar.baz</a></p>"
+  message: should support protocol autolinks (1)
+- name: test_autolink_case_2
+  input: <http://foo.bar.baz/test?q=hello&id=22&boolean>
+  output: "<p><a href=\"http://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean\">http://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean</a></p>"
+  message: should support protocol autolinks (2)
+- name: test_autolink_case_3
+  input: <irc://foo.bar:2233/baz>
+  output: "<p><a href=\"irc://foo.bar:2233/baz\">irc://foo.bar:2233/baz</a></p>"
+  message: should support protocol autolinks w/ non-HTTP schemes
+- name: test_autolink_case_4
+  input: <MAILTO:FOO@BAR.BAZ>
+  output: "<p><a href=\"MAILTO:FOO@BAR.BAZ\">MAILTO:FOO@BAR.BAZ</a></p>"
+  message: should support protocol autolinks in uppercase
+- name: test_autolink_case_5
+  input: <a+b+c:d>
+  output: "<p><a href=\"\">a+b+c:d</a></p>"
+  message: should support protocol autolinks w/ incorrect URIs (1, default)
+- name: test_autolink_case_7
+  input: <made-up-scheme://foo,bar>
+  output: "<p><a href=\"\">made-up-scheme://foo,bar</a></p>"
+  message: should support protocol autolinks w/ incorrect URIs (2, default)
+- name: test_autolink_case_9
+  input: <http://../>
+  output: "<p><a href=\"http://../\">http://../</a></p>"
+  message: should support protocol autolinks w/ incorrect URIs (3)
+- name: test_autolink_case_11
+  input: <http://foo.bar/baz bim>
+  output: <p>&lt;http://foo.bar/baz bim&gt;</p>
+  message: should not support protocol autolinks w/ spaces
+- name: test_autolink_case_12
+  input: "<http://example.com/\\[\\>"
+  output: "<p><a href=\"http://example.com/%5C%5B%5C\">http://example.com/\\[\\</a></p>"
+  message: should not support character escapes in protocol autolinks
+- name: test_autolink_case_13
+  input: <foo@bar.example.com>
+  output: "<p><a href=\"mailto:foo@bar.example.com\">foo@bar.example.com</a></p>"
+  message: should support email autolinks (1)
+- name: test_autolink_case_14
+  input: <foo+special@Bar.baz-bar0.com>
+  output: "<p><a href=\"mailto:foo+special@Bar.baz-bar0.com\">foo+special@Bar.baz-bar0.com</a></p>"
+  message: should support email autolinks (2)
+- name: test_autolink_case_15
+  input: <a@b.c>
+  output: "<p><a href=\"mailto:a@b.c\">a@b.c</a></p>"
+  message: should support email autolinks (3)
+- name: test_autolink_case_16
+  input: "<foo\\+@bar.example.com>"
+  output: <p>&lt;foo+@bar.example.com&gt;</p>
+  message: should not support character escapes in email autolinks
+- name: test_autolink_case_17
+  input: <>
+  output: <p>&lt;&gt;</p>
+  message: should not support empty autolinks
+- name: test_autolink_case_18
+  input: < http://foo.bar >
+  output: <p>&lt; http://foo.bar &gt;</p>
+  message: should not support autolinks w/ space
+- name: test_autolink_case_19
+  input: <m:abc>
+  output: <p>&lt;m:abc&gt;</p>
+  message: should not support autolinks w/ a single character for a scheme
+- name: test_autolink_case_20
+  input: <foo.bar.baz>
+  output: <p>&lt;foo.bar.baz&gt;</p>
+  message: should not support autolinks w/o a colon or at sign
+- name: test_autolink_case_21
+  input: http://example.com
+  output: <p>http://example.com</p>
+  message: should not support protocol autolinks w/o angle brackets
+- name: test_autolink_case_22
+  input: foo@bar.example.com
+  output: <p>foo@bar.example.com</p>
+  message: should not support email autolinks w/o angle brackets
+- name: test_autolink_case_23
+  input: <*@example.com>
+  output: "<p><a href=\"mailto:*@example.com\">*@example.com</a></p>"
+  message: should support autolinks w/ atext (1)
+  comment: 'Extra:'
+- name: test_autolink_case_24
+  input: <a*@example.com>
+  output: "<p><a href=\"mailto:a*@example.com\">a*@example.com</a></p>"
+  message: should support autolinks w/ atext (2)
+- name: test_autolink_case_25
+  input: <aa*@example.com>
+  output: "<p><a href=\"mailto:aa*@example.com\">aa*@example.com</a></p>"
+  message: should support autolinks w/ atext (3)
+- name: test_autolink_case_26
+  input: <aaa©@example.com>
+  output: <p>&lt;aaa©@example.com&gt;</p>
+  message: should support non-atext in email autolinks local part (1)
+- name: test_autolink_case_27
+  input: <a*a©@example.com>
+  output: <p>&lt;a*a©@example.com&gt;</p>
+  message: should support non-atext in email autolinks local part (2)
+- name: test_autolink_case_28
+  input: <asd@.example.com>
+  output: <p>&lt;asd@.example.com&gt;</p>
+  message: should not support a dot after an at sign in email autolinks
+- name: test_autolink_case_29
+  input: <asd@e..xample.com>
+  output: <p>&lt;asd@e..xample.com&gt;</p>
+  message: should not support a dot after another dot in email autolinks
+- name: test_autolink_case_30
+  input: <asd@012345678901234567890123456789012345678901234567890123456789012>
+  output: "<p><a href=\"mailto:asd@012345678901234567890123456789012345678901234567890123456789012\">asd@012345678901234567890123456789012345678901234567890123456789012</a></p>"
+  message: should support 63 character in email autolinks domains
+- name: test_autolink_case_31
+  input: <asd@0123456789012345678901234567890123456789012345678901234567890123>
+  output: "<p>&lt;asd@0123456789012345678901234567890123456789012345678901234567890123&gt;</p>"
+  message: should not support 64 character in email autolinks domains
+- name: test_autolink_case_32
+  input: <asd@012345678901234567890123456789012345678901234567890123456789012.a>
+  output: "<p><a href=\"mailto:asd@012345678901234567890123456789012345678901234567890123456789012.a\">asd@012345678901234567890123456789012345678901234567890123456789012.a</a></p>"
+  message: should support a TLD after a 63 character domain in email autolinks
+- name: test_autolink_case_33
+  input: <asd@0123456789012345678901234567890123456789012345678901234567890123.a>
+  output: "<p>&lt;asd@0123456789012345678901234567890123456789012345678901234567890123.a&gt;</p>"
+  message: should not support a TLD after a 64 character domain in email autolinks
+- name: test_autolink_case_34
+  input: <asd@a.012345678901234567890123456789012345678901234567890123456789012>
+  output: "<p><a href=\"mailto:asd@a.012345678901234567890123456789012345678901234567890123456789012\">asd@a.012345678901234567890123456789012345678901234567890123456789012</a></p>"
+  message: should support a 63 character TLD in email autolinks
+- name: test_autolink_case_35
+  input: <asd@a.0123456789012345678901234567890123456789012345678901234567890123>
+  output: "<p>&lt;asd@a.0123456789012345678901234567890123456789012345678901234567890123&gt;</p>"
+  message: should not support a 64 character TLD in email autolinks
+- name: test_autolink_case_36
+  input: <asd@-example.com>
+  output: <p>&lt;asd@-example.com&gt;</p>
+  message: should not support a dash after `@` in email autolinks
+- name: test_autolink_case_37
+  input: <asd@e-xample.com>
+  output: "<p><a href=\"mailto:asd@e-xample.com\">asd@e-xample.com</a></p>"
+  message: should support a dash after other domain characters in email autolinks
+- name: test_autolink_case_38
+  input: <asd@e--xample.com>
+  output: "<p><a href=\"mailto:asd@e--xample.com\">asd@e--xample.com</a></p>"
+  message: should support a dash after another dash in email autolinks
+- name: test_autolink_case_39
+  input: <asd@example-.com>
+  output: <p>&lt;asd@example-.com&gt;</p>
+  message: should not support a dash before a dot in email autolinks
+- name: test_autolink_case_40
+  input: <@example.com>
+  output: <p>&lt;@example.com&gt;</p>
+  message: should not support an at sign at the start of email autolinks
+to_html_with_options:
+- name: test_autolink_case_6
+  input: <a+b+c:d>
+  output: "<p><a href=\"a+b+c:d\">a+b+c:d</a></p>"
+  message: should support protocol autolinks w/ incorrect URIs (1, danger)
+  options: danger
+- name: test_autolink_case_8
+  input: <made-up-scheme://foo,bar>
+  output: "<p><a href=\"made-up-scheme://foo,bar\">made-up-scheme://foo,bar</a></p>"
+  message: should support protocol autolinks w/ incorrect URIs (2, danger)
+  options: danger
+- name: test_autolink_case_10
+  input: <localhost:5001/foo>
+  output: "<p><a href=\"localhost:5001/foo\">localhost:5001/foo</a></p>"
+  message: should support protocol autolinks w/ incorrect URIs (4)
+  options: danger
+- name: test_autolink_case_41
+  input: <a@b.co>
+  output: <p>&lt;a@b.co&gt;</p>
+  message: should support turning off autolinks
+  options:
+    parse:
+      constructs:
+        autolink: false
+to_mdast:
+- name: test_autolink_case_42
+  input: a <https://alpha.com> b <bravo@charlie.com> c.
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<"a ">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 3, 2)}
+                    }),
+                    markdown_mdast_node:link(#markdown_mdast_link{
+                        url = <<"https://alpha.com">>,
+                        title = none,
+                        children = ?'vec!'([
+                            markdown_mdast_node:text(#markdown_mdast_text{
+                                value = <<"https://alpha.com">>,
+                                position = {some, markdown_unist_position:new(1, 4, 3, 1, 21, 20)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 3, 2, 1, 22, 21)}
+                    }),
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<" b ">>,
+                        position = {some, markdown_unist_position:new(1, 22, 21, 1, 25, 24)}
+                    }),
+                    markdown_mdast_node:link(#markdown_mdast_link{
+                        url = <<"mailto:bravo@charlie.com">>,
+                        title = none,
+                        children = ?'vec!'([
+                            markdown_mdast_node:text(#markdown_mdast_text{
+                                value = <<"bravo@charlie.com">>,
+                                position = {some, markdown_unist_position:new(1, 26, 25, 1, 43, 42)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 25, 24, 1, 44, 43)}
+                    }),
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<" c.">>,
+                        position = {some, markdown_unist_position:new(1, 44, 43, 1, 47, 46)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 47, 46)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 47, 46)}
+    })
+  message: "should support autolinks as `Link`s in mdast"
+  parse_options: {}

@@ -1,0 +1,143 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: character_escape
+  created: 2025-10-27
+  modified: 2025-10-27
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_character_escape_case_1
+  input: "\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\`\\{\\|\\}\\~"
+  output: "<p>!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\\]^_`{|}~</p>"
+  message: should support escaped ascii punctuation
+- name: test_character_escape_case_2
+  input: "\\→\\A\\a\\ \\3\\φ\\«"
+  output: "<p>\\→\\A\\a\\ \\3\\φ\\«</p>"
+  message: should not support other characters after a backslash
+- name: test_character_escape_case_3
+  input: |-
+    \*not emphasized*
+    \<br/> not a tag
+    \[not a link](/foo)
+    \`not code`
+    1\. not a list
+    \* not a list
+    \# not a heading
+    \[foo]: /url "not a reference"
+    \&ouml; not a character entity
+  output: |-
+    <p>*not emphasized*
+    &lt;br/&gt; not a tag
+    [not a link](/foo)
+    `not code`
+    1. not a list
+    * not a list
+    # not a heading
+    [foo]: /url &quot;not a reference&quot;
+    &amp;ouml; not a character entity</p>
+  message: should escape other constructs
+- name: test_character_escape_case_4
+  input: |-
+    foo\
+    bar
+  output: |-
+    <p>foo<br />
+    bar</p>
+  message: should escape a line break
+- name: test_character_escape_case_5
+  input: "`` \\[\\` ``"
+  output: "<p><code>\\[\\`</code></p>"
+  message: should not escape in text code
+- name: test_character_escape_case_6
+  input: "    \\[\\]"
+  output: |-
+    <pre><code>\[\]
+    </code></pre>
+  message: should not escape in indented code
+- name: test_character_escape_case_7
+  input: "<http://example.com?find=\\*>"
+  output: "<p><a href=\"http://example.com?find=%5C*\">http://example.com?find=\\*</a></p>"
+  message: should not escape in autolink
+- name: test_character_escape_case_9
+  input: "[foo](/bar\\* \"ti\\*tle\")"
+  output: "<p><a href=\"/bar*\" title=\"ti*tle\">foo</a></p>"
+  message: should escape in resource and title
+- name: test_character_escape_case_10
+  input: |-
+    [foo]: /bar\* "ti\*tle"
+
+    [foo]
+  output: "<p><a href=\"/bar*\" title=\"ti*tle\">foo</a></p>"
+  message: should escape in definition resource and title
+- name: test_character_escape_case_11
+  input: |-
+    ``` foo\+bar
+    foo
+    ```
+  output: |-
+    <pre><code class="language-foo+bar">foo
+    </code></pre>
+  message: should escape in fenced code info
+to_html_with_options:
+- name: test_character_escape_case_8
+  input: "<a href=\"/bar\\/)\">"
+  output: "<a href=\"/bar\\/)\">"
+  message: should not escape in flow html
+  options: danger
+- name: test_character_escape_case_12
+  input: "\\> a"
+  output: "<p>\\&gt; a</p>"
+  message: should support turning off character escapes
+  options:
+    parse:
+      constructs:
+        character_escape: false
+to_mdast:
+- name: test_character_escape_case_13
+  input: "a \\* b"
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<"a * b">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 7, 6)}
+    })
+  message: "should support character escapes as `Text`s in mdast"
+  parse_options: {}

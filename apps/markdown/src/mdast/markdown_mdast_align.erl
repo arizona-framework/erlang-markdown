@@ -80,7 +80,7 @@ Phrasing content is aligned as defined by the host environment.
       ^^^
 ```
 """.
--type none() :: none.
+-type nope() :: none.
 -doc """
 Right alignment.
 
@@ -98,7 +98,7 @@ See the `right` value of the `text-align` CSS property.
     center/0,
     kind/0,
     left/0,
-    none/0,
+    nope/0,
     right/0
 ]).
 

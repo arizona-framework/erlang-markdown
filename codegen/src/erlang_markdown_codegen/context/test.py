@@ -437,6 +437,8 @@ class TestSuiteConstructOptions:
         out: OrderedDict[str, Any] = OrderedDict()
         if self.autolink is not None:
             out["autolink"] = self.autolink
+        if self.block_quote is not None:
+            out["block_quote"] = self.block_quote
         if self.character_escape is not None:
             out["character_escape"] = self.character_escape
         if self.character_reference is not None:

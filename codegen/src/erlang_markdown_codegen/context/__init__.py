@@ -295,6 +295,9 @@ class Context:
             # Handle printable ASCII characters
             elif 32 <= code < 127:
                 result.append(char)
+            # Handle non-printable ASCII characters
+            elif code < 32:
+                result.append(f"\\x{code:02x}")
             # Handle other characters as octal escapes
             else:
                 result.append(char)

@@ -84,8 +84,8 @@ to_html_with_options:
   message: should support math (text) w/ unbalanced padding
   options: math
 - name: test_math_text_case_8
-  input: "$\\u{a0}b\\u{a0}$"
-  output: "<p><code class=\"language-math math-inline\">\\u{a0}b\\u{a0}</code></p>"
+  input: "$\xa0b\xa0$"
+  output: "<p><code class=\"language-math math-inline\">\xa0b\xa0</code></p>"
   message: should support math (text) w/ non-padding whitespace
   options: math
 - name: test_math_text_case_9
