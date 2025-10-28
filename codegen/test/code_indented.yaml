@@ -1,0 +1,355 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: code_indented
+  created: 2025-10-27
+  modified: 2025-10-27
+shared_options:
+  - name: 'off'
+    options:
+      parse:
+        constructs:
+          code_indented: false
+  - name: 'off_danger'
+    options:
+      parse:
+        constructs:
+          code_indented: false
+      compile:
+        allow_dangerous_html: true
+to_html:
+- name: test_code_indented_case_1
+  input: |2-
+        a simple
+          indented code block
+  output: |-
+    <pre><code>a simple
+      indented code block
+    </code></pre>
+  message: should support indented code
+- name: test_code_indented_case_2
+  input: |2-
+      - foo
+
+        bar
+  output: |-
+    <ul>
+    <li>
+    <p>foo</p>
+    <p>bar</p>
+    </li>
+    </ul>
+  message: should prefer list item content over indented code (1)
+- name: test_code_indented_case_3
+  input: |-
+    1.  foo
+
+        - bar
+  output: |-
+    <ol>
+    <li>
+    <p>foo</p>
+    <ul>
+    <li>bar</li>
+    </ul>
+    </li>
+    </ol>
+  message: should prefer list item content over indented code (2)
+- name: test_code_indented_case_4
+  input: |2-
+        <a/>
+        *hi*
+
+        - one
+  output: |-
+    <pre><code>&lt;a/&gt;
+    *hi*
+
+    - one
+    </code></pre>
+  message: should support blank lines in indented code (1)
+- name: test_code_indented_case_5
+  input: "    chunk1\n\n    chunk2\n  \n \n \n    chunk3"
+  output: |-
+    <pre><code>chunk1
+
+    chunk2
+
+
+
+    chunk3
+    </code></pre>
+  message: should support blank lines in indented code (2)
+- name: test_code_indented_case_6
+  input: "    chunk1\n      \n      chunk2"
+  output: "<pre><code>chunk1\n  \n  chunk2\n</code></pre>"
+  message: should support blank lines in indented code (3)
+- name: test_code_indented_case_7
+  input: |-
+    Foo
+        bar
+  output: |-
+    <p>Foo
+    bar</p>
+  message: should not support interrupting paragraphs
+- name: test_code_indented_case_8
+  input: |2-
+        foo
+    bar
+  output: |-
+    <pre><code>foo
+    </code></pre>
+    <p>bar</p>
+  message: should support paragraphs directly after indented code
+- name: test_code_indented_case_9
+  input: |-
+    # Heading
+        foo
+    Heading
+    ------
+        foo
+    ----
+  output: |-
+    <h1>Heading</h1>
+    <pre><code>foo
+    </code></pre>
+    <h2>Heading</h2>
+    <pre><code>foo
+    </code></pre>
+    <hr />
+  message: should mix w/ other content
+- name: test_code_indented_case_10
+  input: |2-
+            foo
+        bar
+  output: |-
+    <pre><code>    foo
+    bar
+    </code></pre>
+  message: should support extra whitespace on the first line
+- name: test_code_indented_case_11
+  input: "\n    \n    foo\n    "
+  output: |-
+    <pre><code>foo
+    </code></pre>
+  message: should not support initial blank lines
+- name: test_code_indented_case_12
+  input: '    foo  '
+  output: "<pre><code>foo  \n</code></pre>"
+  message: should support trailing whitespace
+- name: test_code_indented_case_13
+  input: |-
+    >     a
+    b
+  output: |-
+    <blockquote>
+    <pre><code>a
+    </code></pre>
+    </blockquote>
+    <p>b</p>
+  message: should not support lazyness (1)
+- name: test_code_indented_case_14
+  input: |-
+    > a
+        b
+  output: |-
+    <blockquote>
+    <p>a
+    b</p>
+    </blockquote>
+  message: should not support lazyness (2)
+- name: test_code_indented_case_15
+  input: |-
+    > a
+         b
+  output: |-
+    <blockquote>
+    <p>a
+    b</p>
+    </blockquote>
+  message: should not support lazyness (3)
+- name: test_code_indented_case_16
+  input: |-
+    > a
+          b
+  output: |-
+    <blockquote>
+    <p>a
+    b</p>
+    </blockquote>
+  message: should not support lazyness (4)
+- name: test_code_indented_case_17
+  input: |-
+    >     a
+        b
+  output: |-
+    <blockquote>
+    <pre><code>a
+    </code></pre>
+    </blockquote>
+    <pre><code>b
+    </code></pre>
+  message: should not support lazyness (5)
+- name: test_code_indented_case_18
+  input: |-
+    >     a
+         b
+  output: |-
+    <blockquote>
+    <pre><code>a
+    </code></pre>
+    </blockquote>
+    <pre><code> b
+    </code></pre>
+  message: should not support lazyness (6)
+- name: test_code_indented_case_19
+  input: |-
+    >     a
+          b
+  output: |-
+    <blockquote>
+    <pre><code>a
+    </code></pre>
+    </blockquote>
+    <pre><code>  b
+    </code></pre>
+  message: should not support lazyness (7)
+to_html_with_options:
+- name: test_code_indented_case_20
+  input: '    a'
+  output: <p>a</p>
+  message: should support turning off code (indented, 1)
+  options: 'off'
+- name: test_code_indented_case_21
+  input: |-
+    > a
+        b
+  output: |-
+    <blockquote>
+    <p>a
+    b</p>
+    </blockquote>
+  message: should support turning off code (indented, 2)
+  options: 'off'
+- name: test_code_indented_case_22
+  input: |-
+    - a
+        b
+  output: |-
+    <ul>
+    <li>a
+    b</li>
+    </ul>
+  message: should support turning off code (indented, 3)
+  options: 'off'
+- name: test_code_indented_case_23
+  input: |-
+    - a
+        - b
+  output: |-
+    <ul>
+    <li>a
+    <ul>
+    <li>b</li>
+    </ul>
+    </li>
+    </ul>
+  message: should support turning off code (indented, 4)
+  options: 'off'
+- name: test_code_indented_case_24
+  input: |-
+    - a
+        - b
+  output: |-
+    <ul>
+    <li>a
+    <ul>
+    <li>b</li>
+    </ul>
+    </li>
+    </ul>
+  message: should support turning off code (indented, 5)
+  options: 'off'
+- name: test_code_indented_case_25
+  input: |-
+    ```
+    a
+        ```
+  output: |-
+    <pre><code>a
+    </code></pre>
+  message: should support turning off code (indented, 6)
+  options: 'off'
+- name: test_code_indented_case_26
+  input: |-
+    a <?
+        ?>
+  output: |-
+    <p>a <?
+    ?></p>
+  message: should support turning off code (indented, 7)
+  options: 'off_danger'
+- name: test_code_indented_case_27
+  input: |-
+    - Foo
+    ---
+  output: |-
+    <ul>
+    <li>Foo</li>
+    </ul>
+    <hr />
+  message: should support turning off code (indented, 8)
+  options: 'off'
+- name: test_code_indented_case_28
+  input: |-
+    - Foo
+         ---
+  output: |-
+    <ul>
+    <li>
+    <h2>Foo</h2>
+    </li>
+    </ul>
+  message: should support turning off code (indented, 9)
+  options: 'off'
+to_mdast:
+- name: test_code_indented_case_29
+  input: "\tconsole.log(1)\n    console.log(2)\n"
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:code(#markdown_mdast_code{
+                lang = none,
+                meta = none,
+                value = <<"console.log(1)\nconsole.log(2)">>,
+                position = {some, markdown_unist_position:new(1, 1, 0, 2, 19, 34)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 3, 1, 35)}
+    })
+  message: "should support code (indented) as `Code`s in mdast"
+  parse_options: {}
