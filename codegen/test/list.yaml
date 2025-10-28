@@ -1,0 +1,1523 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: list
+  created: 2025-10-28
+  modified: 2025-10-28
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_list_case_1
+  input: |-
+    A paragraph
+    with two lines.
+
+        indented code
+
+    > A block quote.
+  output: |-
+    <p>A paragraph
+    with two lines.</p>
+    <pre><code>indented code
+    </code></pre>
+    <blockquote>
+    <p>A block quote.</p>
+    </blockquote>
+  message: should support documents
+- name: test_list_case_2
+  input: |-
+    1.  a
+        b.
+
+            c
+
+        > d.
+  output: |-
+    <ol>
+    <li>
+    <p>a
+    b.</p>
+    <pre><code>c
+    </code></pre>
+    <blockquote>
+    <p>d.</p>
+    </blockquote>
+    </li>
+    </ol>
+  message: should support documents in list items
+- name: test_list_case_3
+  input: |-
+    - one
+
+     two
+  output: |-
+    <ul>
+    <li>one</li>
+    </ul>
+    <p>two</p>
+  message: should not support 1 space for a two-character list prefix
+- name: test_list_case_4
+  input: |-
+    - a
+
+      b
+  output: |-
+    <ul>
+    <li>
+    <p>a</p>
+    <p>b</p>
+    </li>
+    </ul>
+  message: should support blank lines in list items
+- name: test_list_case_5
+  input: |2-
+     -    one
+
+         two
+  output: |-
+    <ul>
+    <li>one</li>
+    </ul>
+    <pre><code> two
+    </code></pre>
+  message: should support indented code after lists
+- name: test_list_case_6
+  input: |2-
+       > > 1.  one
+    >>
+    >>     two
+  output: |-
+    <blockquote>
+    <blockquote>
+    <ol>
+    <li>
+    <p>one</p>
+    <p>two</p>
+    </li>
+    </ol>
+    </blockquote>
+    </blockquote>
+  message: should support proper indent mixed w/ block quotes (1)
+- name: test_list_case_7
+  input: |-
+    >>- one
+    >>
+      >  > two
+  output: |-
+    <blockquote>
+    <blockquote>
+    <ul>
+    <li>one</li>
+    </ul>
+    <p>two</p>
+    </blockquote>
+    </blockquote>
+  message: should support proper indent mixed w/ block quotes (2)
+- name: test_list_case_8
+  input: |-
+    -one
+
+    2.two
+  output: |-
+    <p>-one</p>
+    <p>2.two</p>
+  message: should not support a missing space after marker
+- name: test_list_case_9
+  input: |-
+    - foo
+
+
+      bar
+  output: |-
+    <ul>
+    <li>
+    <p>foo</p>
+    <p>bar</p>
+    </li>
+    </ul>
+  message: should support multiple blank lines between items
+- name: test_list_case_10
+  input: |-
+    1.  foo
+
+        ```
+        bar
+        ```
+
+        baz
+
+        > bam
+  output: |-
+    <ol>
+    <li>
+    <p>foo</p>
+    <pre><code>bar
+    </code></pre>
+    <p>baz</p>
+    <blockquote>
+    <p>bam</p>
+    </blockquote>
+    </li>
+    </ol>
+  message: should support flow in items
+- name: test_list_case_11
+  input: |-
+    - Foo
+
+          bar
+
+
+          baz
+  output: |-
+    <ul>
+    <li>
+    <p>Foo</p>
+    <pre><code>bar
+
+
+    baz
+    </code></pre>
+    </li>
+    </ul>
+  message: should support blank lines in indented code in items
+- name: test_list_case_12
+  input: 123456789. ok
+  output: |-
+    <ol start="123456789">
+    <li>ok</li>
+    </ol>
+  message: should support start on the first list item
+- name: test_list_case_13
+  input: 1234567890. not ok
+  output: <p>1234567890. not ok</p>
+  message: should not support ordered item values over 10 digits
+- name: test_list_case_14
+  input: 0. ok
+  output: |-
+    <ol start="0">
+    <li>ok</li>
+    </ol>
+  message: should support ordered item values of `0`
+- name: test_list_case_15
+  input: 003. ok
+  output: |-
+    <ol start="3">
+    <li>ok</li>
+    </ol>
+  message: should support ordered item values starting w/ `0`s
+- name: test_list_case_16
+  input: -1. not ok
+  output: <p>-1. not ok</p>
+  message: should not support “negative” ordered item values
+- name: test_list_case_17
+  input: |-
+    - foo
+
+          bar
+  output: |-
+    <ul>
+    <li>
+    <p>foo</p>
+    <pre><code>bar
+    </code></pre>
+    </li>
+    </ul>
+  message: should support indented code in list items (1)
+- name: test_list_case_18
+  input: |2-
+      10.  foo
+
+               bar
+  output: |-
+    <ol start="10">
+    <li>
+    <p>foo</p>
+    <pre><code>bar
+    </code></pre>
+    </li>
+    </ol>
+  message: should support indented code in list items (2)
+- name: test_list_case_19
+  input: |2-
+        indented code
+
+    paragraph
+
+        more code
+  output: |-
+    <pre><code>indented code
+    </code></pre>
+    <p>paragraph</p>
+    <pre><code>more code
+    </code></pre>
+  message: should support indented code in list items (3)
+- name: test_list_case_20
+  input: |-
+    1.     indented code
+
+       paragraph
+
+           more code
+  output: |-
+    <ol>
+    <li>
+    <pre><code>indented code
+    </code></pre>
+    <p>paragraph</p>
+    <pre><code>more code
+    </code></pre>
+    </li>
+    </ol>
+  message: should support indented code in list items (4)
+- name: test_list_case_21
+  input: |-
+    1.      indented code
+
+       paragraph
+
+           more code
+  output: |-
+    <ol>
+    <li>
+    <pre><code> indented code
+    </code></pre>
+    <p>paragraph</p>
+    <pre><code>more code
+    </code></pre>
+    </li>
+    </ol>
+  message: should support indented code in list items (5)
+- name: test_list_case_22
+  input: |2-
+       foo
+
+    bar
+  output: |-
+    <p>foo</p>
+    <p>bar</p>
+  message: should support indented code in list items (6)
+- name: test_list_case_23
+  input: |-
+    -    foo
+
+      bar
+  output: |-
+    <ul>
+    <li>foo</li>
+    </ul>
+    <p>bar</p>
+  message: should support indented code in list items (7)
+- name: test_list_case_24
+  input: |-
+    -  foo
+
+       bar
+  output: |-
+    <ul>
+    <li>
+    <p>foo</p>
+    <p>bar</p>
+    </li>
+    </ul>
+  message: should support indented code in list items (8)
+- name: test_list_case_25
+  input: |-
+    -
+      foo
+    -
+      ```
+      bar
+      ```
+    -
+          baz
+  output: |-
+    <ul>
+    <li>foo</li>
+    <li>
+    <pre><code>bar
+    </code></pre>
+    </li>
+    <li>
+    <pre><code>baz
+    </code></pre>
+    </li>
+    </ul>
+  message: should support blank first lines (1)
+- name: test_list_case_26
+  input: "-   \n  foo"
+  output: |-
+    <ul>
+    <li>foo</li>
+    </ul>
+  message: should support blank first lines (2)
+- name: test_list_case_27
+  input: |-
+    -
+
+      foo
+  output: |-
+    <ul>
+    <li></li>
+    </ul>
+    <p>foo</p>
+  message: should support empty only items
+- name: test_list_case_28
+  input: |-
+    - foo
+    -
+    - bar
+  output: |-
+    <ul>
+    <li>foo</li>
+    <li></li>
+    <li>bar</li>
+    </ul>
+  message: should support empty continued items
+- name: test_list_case_29
+  input: "- foo\n-   \n- bar"
+  output: |-
+    <ul>
+    <li>foo</li>
+    <li></li>
+    <li>bar</li>
+    </ul>
+  message: should support blank continued items
+- name: test_list_case_30
+  input: |-
+    1. foo
+    2.
+    3. bar
+  output: |-
+    <ol>
+    <li>foo</li>
+    <li></li>
+    <li>bar</li>
+    </ol>
+  message: should support empty continued items (ordered)
+- name: test_list_case_31
+  input: '*'
+  output: |-
+    <ul>
+    <li></li>
+    </ul>
+  message: should support a single empty item
+- name: test_list_case_32
+  input: |-
+    foo
+    *
+
+    foo
+    1.
+  output: |-
+    <p>foo
+    *</p>
+    <p>foo
+    1.</p>
+  message: should not support empty items to interrupt paragraphs
+- name: test_list_case_33
+  input: |2-
+     1.  A paragraph
+         with two lines.
+
+             indented code
+
+         > A block quote.
+  output: |-
+    <ol>
+    <li>
+    <p>A paragraph
+    with two lines.</p>
+    <pre><code>indented code
+    </code></pre>
+    <blockquote>
+    <p>A block quote.</p>
+    </blockquote>
+    </li>
+    </ol>
+  message: should support indenting w/ 1 space
+- name: test_list_case_34
+  input: |2-
+      1.  A paragraph
+          with two lines.
+
+              indented code
+
+          > A block quote.
+  output: |-
+    <ol>
+    <li>
+    <p>A paragraph
+    with two lines.</p>
+    <pre><code>indented code
+    </code></pre>
+    <blockquote>
+    <p>A block quote.</p>
+    </blockquote>
+    </li>
+    </ol>
+  message: should support indenting w/ 2 spaces
+- name: test_list_case_35
+  input: |2-
+       1.  A paragraph
+           with two lines.
+
+               indented code
+
+           > A block quote.
+  output: |-
+    <ol>
+    <li>
+    <p>A paragraph
+    with two lines.</p>
+    <pre><code>indented code
+    </code></pre>
+    <blockquote>
+    <p>A block quote.</p>
+    </blockquote>
+    </li>
+    </ol>
+  message: should support indenting w/ 3 spaces
+- name: test_list_case_36
+  input: |2-
+        1.  A paragraph
+            with two lines.
+
+                indented code
+
+            > A block quote.
+  output: |-
+    <pre><code>1.  A paragraph
+        with two lines.
+
+            indented code
+
+        &gt; A block quote.
+    </code></pre>
+  message: should not support indenting w/ 4 spaces
+- name: test_list_case_37
+  input: |2-
+      1.  A paragraph
+    with two lines.
+
+              indented code
+
+          > A block quote.
+  output: |-
+    <ol>
+    <li>
+    <p>A paragraph
+    with two lines.</p>
+    <pre><code>indented code
+    </code></pre>
+    <blockquote>
+    <p>A block quote.</p>
+    </blockquote>
+    </li>
+    </ol>
+  message: should support lazy lines
+- name: test_list_case_38
+  input: |2-
+      1.  A paragraph
+        with two lines.
+  output: |-
+    <ol>
+    <li>A paragraph
+    with two lines.</li>
+    </ol>
+  message: should support partially lazy lines
+- name: test_list_case_39
+  input: |-
+    > 1. > Blockquote
+    continued here.
+  output: |-
+    <blockquote>
+    <ol>
+    <li>
+    <blockquote>
+    <p>Blockquote
+    continued here.</p>
+    </blockquote>
+    </li>
+    </ol>
+    </blockquote>
+  message: should support lazy lines combined w/ other containers
+- name: test_list_case_40
+  input: |-
+    > 1. > Blockquote
+    > continued here.
+  output: |-
+    <blockquote>
+    <ol>
+    <li>
+    <blockquote>
+    <p>Blockquote
+    continued here.</p>
+    </blockquote>
+    </li>
+    </ol>
+    </blockquote>
+  message: "should support partially continued, partially lazy lines combined w/ other containers"
+- name: test_list_case_41
+  input: |-
+    - [
+    a
+  output: |-
+    <ul>
+    <li>[
+    a</li>
+    </ul>
+  message: should support lazy, definition-like lines
+- name: test_list_case_42
+  input: |-
+    - [a]: b
+    c
+  output: |-
+    <ul>
+    <li>c</li>
+    </ul>
+  message: should support a definition, followed by a lazy paragraph
+- name: test_list_case_43
+  input: |-
+    - foo
+      - bar
+        - baz
+          - boo
+  output: |-
+    <ul>
+    <li>foo
+    <ul>
+    <li>bar
+    <ul>
+    <li>baz
+    <ul>
+    <li>boo</li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+  message: should support sublists w/ enough spaces (1)
+- name: test_list_case_44
+  input: |-
+    - foo
+     - bar
+      - baz
+       - boo
+  output: |-
+    <ul>
+    <li>foo</li>
+    <li>bar</li>
+    <li>baz</li>
+    <li>boo</li>
+    </ul>
+  message: should not support sublists w/ too few spaces
+- name: test_list_case_45
+  input: |-
+    10) foo
+        - bar
+  output: |-
+    <ol start="10">
+    <li>foo
+    <ul>
+    <li>bar</li>
+    </ul>
+    </li>
+    </ol>
+  message: should support sublists w/ enough spaces (2)
+- name: test_list_case_46
+  input: |-
+    10) foo
+       - bar
+  output: |-
+    <ol start="10">
+    <li>foo</li>
+    </ol>
+    <ul>
+    <li>bar</li>
+    </ul>
+  message: should not support sublists w/ too few spaces (2)
+- name: test_list_case_47
+  input: '- - foo'
+  output: |-
+    <ul>
+    <li>
+    <ul>
+    <li>foo</li>
+    </ul>
+    </li>
+    </ul>
+  message: should support sublists (1)
+- name: test_list_case_48
+  input: 1. - 2. foo
+  output: |-
+    <ol>
+    <li>
+    <ul>
+    <li>
+    <ol start="2">
+    <li>foo</li>
+    </ol>
+    </li>
+    </ul>
+    </li>
+    </ol>
+  message: should support sublists (2)
+- name: test_list_case_49
+  input: |-
+    - # Foo
+    - Bar
+      ---
+      baz
+  output: |-
+    <ul>
+    <li>
+    <h1>Foo</h1>
+    </li>
+    <li>
+    <h2>Bar</h2>
+    baz</li>
+    </ul>
+  message: should support headings in list items
+- name: test_list_case_50
+  input: |-
+    - foo
+    - bar
+    + baz
+  output: |-
+    <ul>
+    <li>foo</li>
+    <li>bar</li>
+    </ul>
+    <ul>
+    <li>baz</li>
+    </ul>
+  message: should support a new list by changing the marker (unordered)
+- name: test_list_case_51
+  input: |-
+    1. foo
+    2. bar
+    3) baz
+  output: |-
+    <ol>
+    <li>foo</li>
+    <li>bar</li>
+    </ol>
+    <ol start="3">
+    <li>baz</li>
+    </ol>
+  message: should support a new list by changing the marker (ordered)
+- name: test_list_case_52
+  input: |-
+    Foo
+    - bar
+    - baz
+  output: |-
+    <p>Foo</p>
+    <ul>
+    <li>bar</li>
+    <li>baz</li>
+    </ul>
+  message: should support interrupting a paragraph
+- name: test_list_case_53
+  input: |-
+    a
+    2. b
+  output: |-
+    <p>a
+    2. b</p>
+  message: should not support interrupting a paragraph with a non-1 numbered item
+- name: test_list_case_54
+  input: |2-
+
+    2. a
+  output: |-
+    <ol start="2">
+    <li>a</li>
+    </ol>
+  message: should “interrupt” a blank line (1)
+- name: test_list_case_55
+  input: |-
+    a
+
+    2. b
+  output: |-
+    <p>a</p>
+    <ol start="2">
+    <li>b</li>
+    </ol>
+  message: should “interrupt” a blank line (2)
+- name: test_list_case_56
+  input: |-
+    a
+    1. b
+  output: |-
+    <p>a</p>
+    <ol>
+    <li>b</li>
+    </ol>
+  message: should support interrupting a paragraph with a 1 numbered item
+- name: test_list_case_57
+  input: |-
+    - foo
+
+    - bar
+
+
+    - baz
+  output: |-
+    <ul>
+    <li>
+    <p>foo</p>
+    </li>
+    <li>
+    <p>bar</p>
+    </li>
+    <li>
+    <p>baz</p>
+    </li>
+    </ul>
+  message: should support blank lines between items (1)
+- name: test_list_case_58
+  input: |-
+    - foo
+      - bar
+        - baz
+
+
+          bim
+  output: |-
+    <ul>
+    <li>foo
+    <ul>
+    <li>bar
+    <ul>
+    <li>
+    <p>baz</p>
+    <p>bim</p>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+  message: should support blank lines between items (2)
+- name: test_list_case_61
+  input: |-
+    - a
+     - b
+      - c
+       - d
+      - e
+     - f
+    - g
+  output: |-
+    <ul>
+    <li>a</li>
+    <li>b</li>
+    <li>c</li>
+    <li>d</li>
+    <li>e</li>
+    <li>f</li>
+    <li>g</li>
+    </ul>
+  message: should not support lists in lists w/ too few spaces (1)
+- name: test_list_case_62
+  input: |-
+    1. a
+
+      2. b
+
+       3. c
+  output: |-
+    <ol>
+    <li>
+    <p>a</p>
+    </li>
+    <li>
+    <p>b</p>
+    </li>
+    <li>
+    <p>c</p>
+    </li>
+    </ol>
+  message: should not support lists in lists w/ too few spaces (2)
+- name: test_list_case_63
+  input: |-
+    - a
+     - b
+      - c
+       - d
+        - e
+  output: |-
+    <ul>
+    <li>a</li>
+    <li>b</li>
+    <li>c</li>
+    <li>d
+    - e</li>
+    </ul>
+  message: should not support lists in lists w/ too few spaces (3)
+- name: test_list_case_64
+  input: |-
+    1. a
+
+      2. b
+
+        3. c
+  output: |-
+    <ol>
+    <li>
+    <p>a</p>
+    </li>
+    <li>
+    <p>b</p>
+    </li>
+    </ol>
+    <pre><code>3. c
+    </code></pre>
+  message: should not support lists in lists w/ too few spaces (3)
+- name: test_list_case_65
+  input: |-
+    - a
+    - b
+
+    - c
+  output: |-
+    <ul>
+    <li>
+    <p>a</p>
+    </li>
+    <li>
+    <p>b</p>
+    </li>
+    <li>
+    <p>c</p>
+    </li>
+    </ul>
+  message: should support loose lists w/ a blank line between (1)
+- name: test_list_case_66
+  input: |-
+    * a
+    *
+
+    * c
+  output: |-
+    <ul>
+    <li>
+    <p>a</p>
+    </li>
+    <li></li>
+    <li>
+    <p>c</p>
+    </li>
+    </ul>
+  message: should support loose lists w/ a blank line between (2)
+- name: test_list_case_67
+  input: |-
+    - a
+    - b
+
+      c
+    - d
+  output: |-
+    <ul>
+    <li>
+    <p>a</p>
+    </li>
+    <li>
+    <p>b</p>
+    <p>c</p>
+    </li>
+    <li>
+    <p>d</p>
+    </li>
+    </ul>
+  message: should support loose lists w/ a blank line in an item (1)
+- name: test_list_case_68
+  input: |-
+    - a
+    - b
+
+      [ref]: /url
+    - d
+  output: |-
+    <ul>
+    <li>
+    <p>a</p>
+    </li>
+    <li>
+    <p>b</p>
+    </li>
+    <li>
+    <p>d</p>
+    </li>
+    </ul>
+  message: should support loose lists w/ a blank line in an item (2)
+- name: test_list_case_69
+  input: |-
+    - a
+    - ```
+      b
+
+
+      ```
+    - c
+  output: |-
+    <ul>
+    <li>a</li>
+    <li>
+    <pre><code>b
+
+
+    </code></pre>
+    </li>
+    <li>c</li>
+    </ul>
+  message: should support tight lists w/ a blank line in fenced code
+- name: test_list_case_70
+  input: |-
+    - a
+      - b
+
+        c
+    - d
+  output: |-
+    <ul>
+    <li>a
+    <ul>
+    <li>
+    <p>b</p>
+    <p>c</p>
+    </li>
+    </ul>
+    </li>
+    <li>d</li>
+    </ul>
+  message: should support tight lists w/ a blank line in a sublist
+- name: test_list_case_71
+  input: |-
+    * a
+      > b
+      >
+    * c
+  output: |-
+    <ul>
+    <li>a
+    <blockquote>
+    <p>b</p>
+    </blockquote>
+    </li>
+    <li>c</li>
+    </ul>
+  message: should support tight lists w/ a blank line in a block quote
+- name: test_list_case_72
+  input: |-
+    - a
+      > b
+      ```
+      c
+      ```
+    - d
+  output: |-
+    <ul>
+    <li>a
+    <blockquote>
+    <p>b</p>
+    </blockquote>
+    <pre><code>c
+    </code></pre>
+    </li>
+    <li>d</li>
+    </ul>
+  message: should support tight lists w/ flow w/o blank line
+- name: test_list_case_73
+  input: '- a'
+  output: |-
+    <ul>
+    <li>a</li>
+    </ul>
+  message: should support tight lists w/ a single content
+- name: test_list_case_74
+  input: |-
+    - a
+      - b
+  output: |-
+    <ul>
+    <li>a
+    <ul>
+    <li>b</li>
+    </ul>
+    </li>
+    </ul>
+  message: should support tight lists w/ a sublist
+- name: test_list_case_75
+  input: |-
+    1. ```
+       foo
+       ```
+
+       bar
+  output: |-
+    <ol>
+    <li>
+    <pre><code>foo
+    </code></pre>
+    <p>bar</p>
+    </li>
+    </ol>
+  message: should support loose lists w/ a blank line in an item
+- name: test_list_case_76
+  input: |-
+    * foo
+      * bar
+
+      baz
+  output: |-
+    <ul>
+    <li>
+    <p>foo</p>
+    <ul>
+    <li>bar</li>
+    </ul>
+    <p>baz</p>
+    </li>
+    </ul>
+  message: should support loose lists w/ tight sublists (1)
+- name: test_list_case_77
+  input: |-
+    - a
+      - b
+      - c
+
+    - d
+      - e
+      - f
+  output: |-
+    <ul>
+    <li>
+    <p>a</p>
+    <ul>
+    <li>b</li>
+    <li>c</li>
+    </ul>
+    </li>
+    <li>
+    <p>d</p>
+    <ul>
+    <li>e</li>
+    <li>f</li>
+    </ul>
+    </li>
+    </ul>
+  message: should support loose lists w/ tight sublists (2)
+- name: test_list_case_78
+  input: "* a\n*\n\n  \n\t\n* b"
+  output: |-
+    <ul>
+    <li>
+    <p>a</p>
+    </li>
+    <li></li>
+    <li>
+    <p>b</p>
+    </li>
+    </ul>
+  message: should support continued list items after an empty list item w/ many blank lines
+  comment: Extra.
+- name: test_list_case_79
+  input: |-
+    *
+      ~~~p
+
+      ~~~
+  output: |-
+    <ul>
+    <li>
+    <pre><code class="language-p">
+    </code></pre>
+    </li>
+    </ul>
+  message: should support blank lines in code after an initial blank line
+- name: test_list_case_80
+  input: |-
+    * a tight item that ends with an html element: `x`
+
+    Paragraph
+  output: |-
+    <ul>
+    <li>a tight item that ends with an html element: <code>x</code></li>
+    </ul>
+    <p>Paragraph</p>
+  message: should ignore line endings after tight items ending in tags
+- name: test_list_case_81
+  input: |-
+    *   foo
+
+    *
+
+    *   bar
+  output: |-
+    <ul>
+    <li>
+    <p>foo</p>
+    </li>
+    <li></li>
+    <li>
+    <p>bar</p>
+    </li>
+    </ul>
+  message: should support empty items in a spread list
+- name: test_list_case_82
+  input: |-
+    - ```
+
+      ```
+  output: |-
+    <ul>
+    <li>
+    <pre><code>
+    </code></pre>
+    </li>
+    </ul>
+  message: should remove indent of code (fenced) in list (0 space)
+- name: test_list_case_83
+  input: "- ```\n \n  ```"
+  output: |-
+    <ul>
+    <li>
+    <pre><code>
+    </code></pre>
+    </li>
+    </ul>
+  message: should remove indent of code (fenced) in list (1 space)
+- name: test_list_case_84
+  input: "- ```\n  \n  ```"
+  output: |-
+    <ul>
+    <li>
+    <pre><code>
+    </code></pre>
+    </li>
+    </ul>
+  message: should remove indent of code (fenced) in list (2 spaces)
+- name: test_list_case_85
+  input: "- ```\n   \n  ```"
+  output: "<ul>\n<li>\n<pre><code> \n</code></pre>\n</li>\n</ul>"
+  message: should remove indent of code (fenced) in list (3 spaces)
+- name: test_list_case_86
+  input: "- ```\n    \n  ```"
+  output: "<ul>\n<li>\n<pre><code>  \n</code></pre>\n</li>\n</ul>"
+  message: should remove indent of code (fenced) in list (4 spaces)
+- name: test_list_case_87
+  input: "- ```\n\t\n  ```"
+  output: "<ul>\n<li>\n<pre><code>  \n</code></pre>\n</li>\n</ul>"
+  message: should remove indent of code (fenced) in list (1 tab)
+- name: test_list_case_88
+  input: |-
+    - +
+    -
+  output: |-
+    <ul>
+    <li>
+    <ul>
+    <li></li>
+    </ul>
+    </li>
+    <li></li>
+    </ul>
+  message: should support complex nested and empty lists (1)
+- name: test_list_case_89
+  input: |-
+    - 1.
+    -
+  output: |-
+    <ul>
+    <li>
+    <ol>
+    <li></li>
+    </ol>
+    </li>
+    <li></li>
+    </ul>
+  message: should support complex nested and empty lists (2)
+- name: test_list_case_90
+  input: |-
+    * - +
+    * -
+  output: |-
+    <ul>
+    <li>
+    <ul>
+    <li>
+    <ul>
+    <li></li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li>
+    <ul>
+    <li></li>
+    </ul>
+    </li>
+    </ul>
+  message: should support complex nested and empty lists (3)
+to_html_with_options:
+- name: test_list_case_59
+  input: |-
+    - foo
+    - bar
+
+    <!-- -->
+
+    - baz
+    - bim
+  output: |-
+    <ul>
+    <li>foo</li>
+    <li>bar</li>
+    </ul>
+    <!-- -->
+    <ul>
+    <li>baz</li>
+    <li>bim</li>
+    </ul>
+  message: should support HTML comments between lists
+  options: danger
+- name: test_list_case_60
+  input: |-
+    -   foo
+
+        notcode
+
+    -   foo
+
+    <!-- -->
+
+        code
+  output: |-
+    <ul>
+    <li>
+    <p>foo</p>
+    <p>notcode</p>
+    </li>
+    <li>
+    <p>foo</p>
+    </li>
+    </ul>
+    <!-- -->
+    <pre><code>code
+    </code></pre>
+  message: should support HTML comments between lists and indented code
+  options: danger
+- name: test_list_case_91
+  input: |-
+    * a
+
+    <!---->
+
+    * b
+  output: |-
+    <ul>
+    <li>a</li>
+    </ul>
+    <!---->
+    <ul>
+    <li>b</li>
+    </ul>
+  message: should support the common list breaking comment method
+  options: danger
+- name: test_list_case_92
+  input: |-
+    - one
+
+     two
+  output: |-
+    <p>- one</p>
+    <p>two</p>
+  message: should support turning off lists
+  options:
+    parse:
+      constructs:
+        list_item: false
+to_mdast:
+- name: test_list_case_93
+  input: '* a'
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:list(#markdown_mdast_list{
+                ordered = false,
+                spread = false,
+                start = none,
+                children = ?'vec!'([
+                    markdown_mdast_node:list_item(#markdown_mdast_list_item{
+                        checked = none,
+                        spread = false,
+                        children = ?'vec!'([
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"a">>,
+                                        position = {some, markdown_unist_position:new(1, 3, 2, 1, 4, 3)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(1, 3, 2, 1, 4, 3)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+    })
+  message: "should support lists, list items as `List`, `ListItem`s in mdast"
+  parse_options: {}
+- name: test_list_case_94
+  input: |-
+    3. a
+    4. b
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:list(#markdown_mdast_list{
+                ordered = true,
+                spread = false,
+                start = {some, 3},
+                children = ?'vec!'([
+                    markdown_mdast_node:list_item(#markdown_mdast_list_item{
+                        checked = none,
+                        spread = false,
+                        children = ?'vec!'([
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"a">>,
+                                        position = {some, markdown_unist_position:new(1, 4, 3, 1, 5, 4)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(1, 4, 3, 1, 5, 4)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 5, 4)}
+                    }),
+                    markdown_mdast_node:list_item(#markdown_mdast_list_item{
+                        checked = none,
+                        spread = false,
+                        children = ?'vec!'([
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"b">>,
+                                        position = {some, markdown_unist_position:new(2, 4, 8, 2, 5, 9)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(2, 4, 8, 2, 5, 9)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(2, 1, 5, 2, 5, 9)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 2, 5, 9)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 2, 5, 9)}
+    })
+  message: "should support `start` fields on `List` w/ `ordered: true` in mdast"
+  parse_options: {}
+- name: test_list_case_95
+  input: |-
+    * a
+
+      b
+    * c
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:list(#markdown_mdast_list{
+                ordered = false,
+                spread = false,
+                start = none,
+                children = ?'vec!'([
+                    markdown_mdast_node:list_item(#markdown_mdast_list_item{
+                        checked = none,
+                        spread = true,
+                        children = ?'vec!'([
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"a">>,
+                                        position = {some, markdown_unist_position:new(1, 3, 2, 1, 4, 3)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(1, 3, 2, 1, 4, 3)}
+                            }),
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"b">>,
+                                        position = {some, markdown_unist_position:new(3, 3, 7, 3, 4, 8)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(3, 3, 7, 3, 4, 8)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 3, 4, 8)}
+                    }),
+                    markdown_mdast_node:list_item(#markdown_mdast_list_item{
+                        checked = none,
+                        spread = false,
+                        children = ?'vec!'([
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"c">>,
+                                        position = {some, markdown_unist_position:new(4, 3, 11, 4, 4, 12)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(4, 3, 11, 4, 4, 12)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(4, 1, 9, 4, 4, 12)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 4, 4, 12)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 4, 4, 12)}
+    })
+  message: "should support `spread` fields on `List`, `ListItem`s in mdast"
+  parse_options: {}
+

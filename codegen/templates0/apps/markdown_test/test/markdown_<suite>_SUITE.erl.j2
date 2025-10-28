@@ -51,7 +51,9 @@
 -export([
 ~J{ set test_case_joiner = joiner(",") }.
 ~J{ for test_case in test.case_list }.
-    ~J< test_case_joiner() >. ~J< test_case.name >./1
+    ~J< test_case_joiner() >. ~J{ if test_case.comment }.
+    ~J< ctx.erlang_comment(test_case.comment) >.
+~J{ endif }.~J< test_case.name >./1
 ~J{ endfor }.
 ]).
 
@@ -82,7 +84,9 @@ groups() ->
         {static, [parallel], [
 ~J{ set test_case_joiner = joiner(",") }.
 ~J{ for test_case in test.case_list }.
-        ~J< test_case_joiner() >. ~J< test_case.name >.
+        ~J< test_case_joiner() >. ~J{ if test_case.comment }.
+    ~J< ctx.erlang_comment(test_case.comment) >.
+~J{ endif }.~J< test_case.name >.
 ~J{ endfor }.
         ]}
     ].

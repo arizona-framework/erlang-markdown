@@ -1,0 +1,226 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: thematic_break
+  created: 2025-10-28
+  modified: 2025-10-28
+to_html:
+- name: test_thematic_break_case_1
+  input: |-
+    ***
+    ---
+    ___
+  output: |-
+    <hr />
+    <hr />
+    <hr />
+  message: should support thematic breaks w/ asterisks, dashes, and underscores
+- name: test_thematic_break_case_2
+  input: +++
+  output: <p>+++</p>
+  message: should not support thematic breaks w/ plusses
+- name: test_thematic_break_case_3
+  input: ===
+  output: <p>===</p>
+  message: should not support thematic breaks w/ equals
+- name: test_thematic_break_case_4
+  input: --
+  output: <p>--</p>
+  message: should not support thematic breaks w/ two dashes
+- name: test_thematic_break_case_5
+  input: '**'
+  output: <p>**</p>
+  message: should not support thematic breaks w/ two asterisks
+- name: test_thematic_break_case_6
+  input: __
+  output: <p>__</p>
+  message: should not support thematic breaks w/ two underscores
+- name: test_thematic_break_case_7
+  input: ' ***'
+  output: <hr />
+  message: should support thematic breaks w/ 1 space
+- name: test_thematic_break_case_8
+  input: '  ***'
+  output: <hr />
+  message: should support thematic breaks w/ 2 spaces
+- name: test_thematic_break_case_9
+  input: '   ***'
+  output: <hr />
+  message: should support thematic breaks w/ 3 spaces
+- name: test_thematic_break_case_10
+  input: '    ***'
+  output: |-
+    <pre><code>***
+    </code></pre>
+  message: should not support thematic breaks w/ 4 spaces
+- name: test_thematic_break_case_11
+  input: |-
+    Foo
+        ***
+  output: |-
+    <p>Foo
+    ***</p>
+  message: should not support thematic breaks w/ 4 spaces as paragraph continuation
+- name: test_thematic_break_case_12
+  input: _____________________________________
+  output: <hr />
+  message: should support thematic breaks w/ many markers
+- name: test_thematic_break_case_13
+  input: ' - - -'
+  output: <hr />
+  message: should support thematic breaks w/ spaces (1)
+- name: test_thematic_break_case_14
+  input: ' **  * ** * ** * **'
+  output: <hr />
+  message: should support thematic breaks w/ spaces (2)
+- name: test_thematic_break_case_15
+  input: '-     -      -      -'
+  output: <hr />
+  message: should support thematic breaks w/ spaces (3)
+- name: test_thematic_break_case_16
+  input: '- - - -    '
+  output: <hr />
+  message: should support thematic breaks w/ trailing spaces
+- name: test_thematic_break_case_17
+  input: _ _ _ _ a
+  output: <p>_ _ _ _ a</p>
+  message: should not support thematic breaks w/ other characters (1)
+- name: test_thematic_break_case_18
+  input: a------
+  output: <p>a------</p>
+  message: should not support thematic breaks w/ other characters (2)
+- name: test_thematic_break_case_19
+  input: '---a---'
+  output: <p>---a---</p>
+  message: should not support thematic breaks w/ other characters (3)
+- name: test_thematic_break_case_20
+  input: ' *-*'
+  output: <p><em>-</em></p>
+  message: should not support thematic breaks w/ mixed markers
+- name: test_thematic_break_case_21
+  input: |-
+    - foo
+    ***
+    - bar
+  output: |-
+    <ul>
+    <li>foo</li>
+    </ul>
+    <hr />
+    <ul>
+    <li>bar</li>
+    </ul>
+  message: should support thematic breaks mixed w/ lists (1)
+- name: test_thematic_break_case_22
+  input: |-
+    * Foo
+    * * *
+    * Bar
+  output: |-
+    <ul>
+    <li>Foo</li>
+    </ul>
+    <hr />
+    <ul>
+    <li>Bar</li>
+    </ul>
+  message: should support thematic breaks mixed w/ lists (2)
+- name: test_thematic_break_case_23
+  input: |-
+    Foo
+    ***
+    bar
+  output: |-
+    <p>Foo</p>
+    <hr />
+    <p>bar</p>
+  message: should support thematic breaks interrupting paragraphs
+- name: test_thematic_break_case_24
+  input: |-
+    Foo
+    ---
+    bar
+  output: |-
+    <h2>Foo</h2>
+    <p>bar</p>
+  message: "should not support thematic breaks w/ dashes interrupting paragraphs (setext heading)"
+- name: test_thematic_break_case_25
+  input: |-
+    - Foo
+    - * * *
+  output: |-
+    <ul>
+    <li>Foo</li>
+    <li>
+    <hr />
+    </li>
+    </ul>
+  message: should support thematic breaks in lists
+- name: test_thematic_break_case_26
+  input: |-
+    > ---
+    a
+  output: |-
+    <blockquote>
+    <hr />
+    </blockquote>
+    <p>a</p>
+  message: should not support lazyness (1)
+- name: test_thematic_break_case_27
+  input: |-
+    > a
+    ---
+  output: |-
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+    <hr />
+  message: should not support lazyness (2)
+to_html_with_options:
+- name: test_thematic_break_case_28
+  input: '***'
+  output: <p>***</p>
+  message: should support turning off thematic breaks
+  options:
+    parse:
+      constructs:
+        thematic_break: false
+to_mdast:
+- name: test_thematic_break_case_29
+  input: '***'
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:thematic_break(#markdown_mdast_thematic_break{
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 4, 3)}
+    })
+  message: "should support thematic breaks as `ThematicBreak`s in mdast"
+  parse_options: {}
+

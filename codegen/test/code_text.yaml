@@ -1,0 +1,215 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: code_text
+  created: 2025-10-27
+  modified: 2025-10-27
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_code_text_case_1
+  input: '`foo`'
+  output: <p><code>foo</code></p>
+  message: should support code
+- name: test_code_text_case_2
+  input: '`` foo ` bar ``'
+  output: <p><code>foo ` bar</code></p>
+  message: should support code w/ more accents
+- name: test_code_text_case_3
+  input: '` `` `'
+  output: <p><code>``</code></p>
+  message: should support code w/ fences inside, and padding
+- name: test_code_text_case_4
+  input: '`  ``  `'
+  output: <p><code> `` </code></p>
+  message: should support code w/ extra padding
+- name: test_code_text_case_5
+  input: '` a`'
+  output: <p><code> a</code></p>
+  message: should support code w/ unbalanced padding
+- name: test_code_text_case_6
+  input: "`\\u{a0}b\\u{a0}`"
+  output: "<p><code>\\u{a0}b\\u{a0}</code></p>"
+  message: should support code w/ non-padding whitespace
+- name: test_code_text_case_7
+  input: |-
+    ` `
+    `  `
+  output: |-
+    <p><code> </code>
+    <code>  </code></p>
+  message: should support code w/o data
+- name: test_code_text_case_8
+  input: "``\nfoo\nbar  \nbaz\n``"
+  output: <p><code>foo bar   baz</code></p>
+  message: should support code w/o line endings (1)
+- name: test_code_text_case_9
+  input: "``\nfoo \n``"
+  output: <p><code>foo </code></p>
+  message: should support code w/o line endings (2)
+- name: test_code_text_case_10
+  input: "`foo   bar \nbaz`"
+  output: <p><code>foo   bar  baz</code></p>
+  message: should not support whitespace collapsing
+- name: test_code_text_case_11
+  input: "`foo\\`bar`"
+  output: "<p><code>foo\\</code>bar`</p>"
+  message: should not support character escapes
+- name: test_code_text_case_12
+  input: '``foo`bar``'
+  output: <p><code>foo`bar</code></p>
+  message: should support more accents
+- name: test_code_text_case_13
+  input: '` foo `` bar `'
+  output: <p><code>foo `` bar</code></p>
+  message: should support less accents
+- name: test_code_text_case_14
+  input: '*foo`*`'
+  output: <p>*foo<code>*</code></p>
+  message: should precede over emphasis
+- name: test_code_text_case_15
+  input: '[not a `link](/foo`)'
+  output: <p>[not a <code>link](/foo</code>)</p>
+  message: should precede over links
+- name: test_code_text_case_16
+  input: "`<a href=\"`\">`"
+  output: <p><code>&lt;a href=&quot;</code>&quot;&gt;`</p>
+  message: should have same precedence as HTML (1)
+- name: test_code_text_case_18
+  input: '`<http://foo.bar.`baz>`'
+  output: <p><code>&lt;http://foo.bar.</code>baz&gt;`</p>
+  message: should have same precedence as autolinks (1)
+- name: test_code_text_case_19
+  input: <http://foo.bar.`baz>`
+  output: "<p><a href=\"http://foo.bar.%60baz\">http://foo.bar.`baz</a>`</p>"
+  message: should have same precedence as autolinks (2)
+- name: test_code_text_case_20
+  input: '```foo``'
+  output: <p>```foo``</p>
+  message: should not support more accents before a fence
+- name: test_code_text_case_21
+  input: '`foo'
+  output: <p>`foo</p>
+  message: should not support no closing fence (1)
+- name: test_code_text_case_22
+  input: '`foo``bar``'
+  output: <p>`foo<code>bar</code></p>
+  message: should not support no closing fence (2)
+- name: test_code_text_case_23
+  input: "`foo\t\tbar`"
+  output: "<p><code>foo\t\tbar</code></p>"
+  message: should support tabs in code
+  comment: 'Extra:'
+- name: test_code_text_case_24
+  input: "\\``x`"
+  output: <p>`<code>x</code></p>
+  message: should support an escaped initial grave accent
+to_html_with_options:
+- name: test_code_text_case_17
+  input: "<a href=\"`\">`"
+  output: "<p><a href=\"`\">`</p>"
+  message: should have same precedence as HTML (2)
+  options: danger
+- name: test_code_text_case_25
+  input: '`a`'
+  output: <p>`a`</p>
+  message: should support turning off code (text)
+  options:
+    parse:
+      constructs:
+        code_text: false
+to_mdast:
+- name: test_code_text_case_26
+  input: a `alpha` b.
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<"a ">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 3, 2)}
+                    }),
+                    markdown_mdast_node:inline_code(#markdown_mdast_inline_code{
+                        value = <<"alpha">>,
+                        position = {some, markdown_unist_position:new(1, 3, 2, 1, 10, 9)}
+                    }),
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<" b.">>,
+                        position = {some, markdown_unist_position:new(1, 10, 9, 1, 13, 12)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 13, 12)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 13, 12)}
+    })
+  message: "should support code (text) as `InlineCode`s in mdast"
+  parse_options: {}
+- name: test_code_text_case_27
+  input: '`  alpha `'
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                children = ?'vec!'([
+                    markdown_mdast_node:inline_code(#markdown_mdast_inline_code{
+                        value = <<" alpha">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 11, 10)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 11, 10)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 11, 10)}
+    })
+  message: "should strip one space from each side of `InlineCode` if the value starts and ends with space"
+  parse_options: {}
+- name: test_code_text_case_28
+  input: '`   `'
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                children = ?'vec!'([
+                    markdown_mdast_node:inline_code(#markdown_mdast_inline_code{
+                        value = <<"   ">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+    })
+  message: "should not strip any whitespace if `InlineCode` is all whitespace"
+  parse_options: {}
+

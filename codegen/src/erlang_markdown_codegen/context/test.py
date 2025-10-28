@@ -436,6 +436,8 @@ class TestSuiteConstructOptions:
     @property
     def as_dict(self) -> OrderedDict[str, Any]:
         out: OrderedDict[str, Any] = OrderedDict()
+        if self.attention is not None:
+            out["attention"] = self.attention
         if self.autolink is not None:
             out["autolink"] = self.autolink
         if self.block_quote is not None:

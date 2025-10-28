@@ -1,0 +1,664 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: attention
+  created: 2025-10-28
+  modified: 2025-10-28
+shared_options:
+  - name: danger
+    options:
+      compile:
+        allow_dangerous_html: true
+        allow_dangerous_protocol: true
+to_html:
+- name: test_attention_case_1
+  input: '*foo bar*'
+  output: <p><em>foo bar</em></p>
+  message: should support emphasis w/ `*`
+  comment: Rule 1.
+- name: test_attention_case_2
+  input: a * foo bar*
+  output: <p>a * foo bar*</p>
+  message: should not support emphasis if the opening is not left flanking (1)
+- name: test_attention_case_3
+  input: "a*\"foo\"*"
+  output: <p>a*&quot;foo&quot;*</p>
+  message: should not support emphasis if the opening is not left flanking (2b)
+- name: test_attention_case_4
+  input: '* a *'
+  output: <p>* a *</p>
+  message: should not support emphasis unicode whitespace either
+- name: test_attention_case_5
+  input: foo*bar*
+  output: <p>foo<em>bar</em></p>
+  message: should support intraword emphasis w/ `*` (1)
+- name: test_attention_case_6
+  input: 5*6*78
+  output: <p>5<em>6</em>78</p>
+  message: should support intraword emphasis w/ `*` (2)
+- name: test_attention_case_7
+  input: _foo bar_
+  output: <p><em>foo bar</em></p>
+  message: should support emphasis w/ `_`
+  comment: Rule 2.
+- name: test_attention_case_8
+  input: _ foo bar_
+  output: <p>_ foo bar_</p>
+  message: should not support emphasis if the opening is followed by whitespace
+- name: test_attention_case_9
+  input: "a_\"foo\"_"
+  output: <p>a_&quot;foo&quot;_</p>
+  message: "should not support emphasis if the opening is preceded by something else and followed by punctuation"
+- name: test_attention_case_10
+  input: foo_bar_
+  output: <p>foo_bar_</p>
+  message: should not support intraword emphasis (1)
+- name: test_attention_case_11
+  input: '5_6_78'
+  output: <p>5_6_78</p>
+  message: should not support intraword emphasis (2)
+- name: test_attention_case_12
+  input: пристаням_стремятся_
+  output: <p>пристаням_стремятся_</p>
+  message: should not support intraword emphasis (3)
+- name: test_attention_case_13
+  input: "aa_\"bb\"_cc"
+  output: <p>aa_&quot;bb&quot;_cc</p>
+  message: "should not support emphasis if the opening is right flanking and the closing is left flanking"
+- name: test_attention_case_14
+  input: foo-_(bar)_
+  output: <p>foo-<em>(bar)</em></p>
+  message: "should support emphasis if the opening is both left and right flanking, if it’s preceded by punctuation"
+- name: test_attention_case_15
+  input: _foo*
+  output: <p>_foo*</p>
+  message: should not support emphasis if opening and closing markers don’t match
+  comment: Rule 3.
+- name: test_attention_case_16
+  input: '*foo bar *'
+  output: <p>*foo bar *</p>
+  message: "should not support emphasis w/ `*` if the closing markers are preceded by whitespace"
+- name: test_attention_case_17
+  input: |-
+    *foo bar
+    *
+  output: |-
+    <p>*foo bar
+    *</p>
+  message: "should not support emphasis w/ `*` if the closing markers are preceded by a line break (also whitespace)"
+- name: test_attention_case_18
+  input: '*(*foo)'
+  output: <p>*(*foo)</p>
+  message: should not support emphasis w/ `*` if the closing markers are not right flanking
+- name: test_attention_case_19
+  input: '*(*foo*)*'
+  output: <p><em>(<em>foo</em>)</em></p>
+  message: should support nested emphasis
+- name: test_attention_case_20
+  input: _foo bar _
+  output: <p>_foo bar _</p>
+  message: should not support emphasis if the closing `_` is preceded by whitespace
+  comment: Rule 4.
+- name: test_attention_case_21
+  input: _(_foo)
+  output: <p>_(_foo)</p>
+  message: should not support emphasis w/ `_` if the closing markers are not right flanking
+- name: test_attention_case_22
+  input: _(_foo_)_
+  output: <p><em>(<em>foo</em>)</em></p>
+  message: should support nested emphasis w/ `_`
+- name: test_attention_case_23
+  input: _foo_bar
+  output: <p>_foo_bar</p>
+  message: should not support intraword emphasis w/ `_` (1)
+- name: test_attention_case_24
+  input: _пристаням_стремятся
+  output: <p>_пристаням_стремятся</p>
+  message: should not support intraword emphasis w/ `_` (2)
+- name: test_attention_case_25
+  input: _foo_bar_baz_
+  output: <p><em>foo_bar_baz</em></p>
+  message: should not support intraword emphasis w/ `_` (3)
+- name: test_attention_case_26
+  input: _(bar)_.
+  output: <p><em>(bar)</em>.</p>
+  message: "should support emphasis if the opening is both left and right flanking, if it’s followed by punctuation"
+- name: test_attention_case_27
+  input: '**foo bar**'
+  output: <p><strong>foo bar</strong></p>
+  message: should support strong emphasis
+  comment: Rule 5.
+- name: test_attention_case_28
+  input: '** foo bar**'
+  output: <p>** foo bar**</p>
+  message: should not support strong emphasis if the opening is followed by whitespace
+- name: test_attention_case_29
+  input: "a**\"foo\"**"
+  output: <p>a**&quot;foo&quot;**</p>
+  message: "should not support strong emphasis if the opening is preceded by something else and followed by punctuation"
+- name: test_attention_case_30
+  input: foo**bar**
+  output: <p>foo<strong>bar</strong></p>
+  message: should support strong intraword emphasis
+- name: test_attention_case_31
+  input: __foo bar__
+  output: <p><strong>foo bar</strong></p>
+  message: should support strong emphasis w/ `_`
+  comment: Rule 6.
+- name: test_attention_case_32
+  input: __ foo bar__
+  output: <p>__ foo bar__</p>
+  message: should not support strong emphasis if the opening is followed by whitespace
+- name: test_attention_case_33
+  input: |-
+    __
+    foo bar__
+  output: |-
+    <p>__
+    foo bar__</p>
+  message: "should not support strong emphasis if the opening is followed by a line ending (also whitespace)"
+- name: test_attention_case_34
+  input: "a__\"foo\"__"
+  output: <p>a__&quot;foo&quot;__</p>
+  message: "should not support strong emphasis if the opening is preceded by something else and followed by punctuation"
+- name: test_attention_case_35
+  input: foo__bar__
+  output: <p>foo__bar__</p>
+  message: should not support strong intraword emphasis w/ `_` (1)
+- name: test_attention_case_36
+  input: '5__6__78'
+  output: <p>5__6__78</p>
+  message: should not support strong intraword emphasis w/ `_` (2)
+- name: test_attention_case_37
+  input: пристаням__стремятся__
+  output: <p>пристаням__стремятся__</p>
+  message: should not support strong intraword emphasis w/ `_` (3)
+- name: test_attention_case_38
+  input: __foo, __bar__, baz__
+  output: <p><strong>foo, <strong>bar</strong>, baz</strong></p>
+  message: should support nested strong emphasis
+- name: test_attention_case_39
+  input: foo-__(bar)__
+  output: <p>foo-<strong>(bar)</strong></p>
+  message: "should support strong emphasis if the opening is both left and right flanking, if it’s preceded by punctuation"
+- name: test_attention_case_40
+  input: '**foo bar **'
+  output: <p>**foo bar **</p>
+  message: "should not support strong emphasis w/ `*` if the closing is preceded by whitespace"
+  comment: Rule 7.
+- name: test_attention_case_41
+  input: '**(**foo)'
+  output: <p>**(**foo)</p>
+  message: "should not support strong emphasis w/ `*` if the closing is preceded by punctuation and followed by something\
+    \ else"
+- name: test_attention_case_42
+  input: '*(**foo**)*'
+  output: <p><em>(<strong>foo</strong>)</em></p>
+  message: should support strong emphasis in emphasis
+- name: test_attention_case_43
+  input: |-
+    **Gomphocarpus (*Gomphocarpus physocarpus*, syn.
+    *Asclepias physocarpa*)**
+  output: |-
+    <p><strong>Gomphocarpus (<em>Gomphocarpus physocarpus</em>, syn.
+    <em>Asclepias physocarpa</em>)</strong></p>
+  message: should support emphasis in strong emphasis (1)
+- name: test_attention_case_44
+  input: "**foo \"*bar*\" foo**"
+  output: <p><strong>foo &quot;<em>bar</em>&quot; foo</strong></p>
+  message: should support emphasis in strong emphasis (2)
+- name: test_attention_case_45
+  input: '**foo**bar'
+  output: <p><strong>foo</strong>bar</p>
+  message: should support strong intraword emphasis
+- name: test_attention_case_46
+  input: __foo bar __
+  output: <p>__foo bar __</p>
+  message: "should not support strong emphasis w/ `_` if the closing is preceded by whitespace"
+  comment: Rule 8.
+- name: test_attention_case_47
+  input: __(__foo)
+  output: <p>__(__foo)</p>
+  message: "should not support strong emphasis w/ `_` if the closing is preceded by punctuation and followed by something\
+    \ else"
+- name: test_attention_case_48
+  input: _(__foo__)_
+  output: <p><em>(<strong>foo</strong>)</em></p>
+  message: should support strong emphasis w/ `_` in emphasis
+- name: test_attention_case_49
+  input: __foo__bar
+  output: <p>__foo__bar</p>
+  message: should not support strong intraword emphasis w/ `_` (1)
+- name: test_attention_case_50
+  input: __пристаням__стремятся
+  output: <p>__пристаням__стремятся</p>
+  message: should not support strong intraword emphasis w/ `_` (2)
+- name: test_attention_case_51
+  input: __foo__bar__baz__
+  output: <p><strong>foo__bar__baz</strong></p>
+  message: should not support strong intraword emphasis w/ `_` (3)
+- name: test_attention_case_52
+  input: __(bar)__.
+  output: <p><strong>(bar)</strong>.</p>
+  message: "should support strong emphasis if the opening is both left and right flanking, if it’s followed by punctuation"
+- name: test_attention_case_53
+  input: '*foo [bar](/url)*'
+  output: "<p><em>foo <a href=\"/url\">bar</a></em></p>"
+  message: should support content in emphasis
+  comment: Rule 9.
+- name: test_attention_case_54
+  input: |-
+    *foo
+    bar*
+  output: |-
+    <p><em>foo
+    bar</em></p>
+  message: should support line endings in emphasis
+- name: test_attention_case_55
+  input: _foo __bar__ baz_
+  output: <p><em>foo <strong>bar</strong> baz</em></p>
+  message: should support nesting emphasis and strong (1)
+- name: test_attention_case_56
+  input: _foo _bar_ baz_
+  output: <p><em>foo <em>bar</em> baz</em></p>
+  message: should support nesting emphasis and strong (2)
+- name: test_attention_case_57
+  input: __foo_ bar_
+  output: <p><em><em>foo</em> bar</em></p>
+  message: should support nesting emphasis and strong (3)
+- name: test_attention_case_58
+  input: '*foo *bar**'
+  output: <p><em>foo <em>bar</em></em></p>
+  message: should support nesting emphasis and strong (4)
+- name: test_attention_case_59
+  input: '*foo **bar** baz*'
+  output: <p><em>foo <strong>bar</strong> baz</em></p>
+  message: should support nesting emphasis and strong (5)
+- name: test_attention_case_60
+  input: '*foo**bar**baz*'
+  output: <p><em>foo<strong>bar</strong>baz</em></p>
+  message: should support nesting emphasis and strong (6)
+- name: test_attention_case_61
+  input: '*foo**bar*'
+  output: <p><em>foo**bar</em></p>
+  message: should not support adjacent emphasis in certain cases
+- name: test_attention_case_62
+  input: '***foo** bar*'
+  output: <p><em><strong>foo</strong> bar</em></p>
+  message: complex (1)
+- name: test_attention_case_63
+  input: '*foo **bar***'
+  output: <p><em>foo <strong>bar</strong></em></p>
+  message: complex (2)
+- name: test_attention_case_64
+  input: '*foo**bar***'
+  output: <p><em>foo<strong>bar</strong></em></p>
+  message: complex (3)
+- name: test_attention_case_65
+  input: foo***bar***baz
+  output: <p>foo<em><strong>bar</strong></em>baz</p>
+  message: complex (a)
+- name: test_attention_case_66
+  input: foo******bar*********baz
+  output: <p>foo<strong><strong><strong>bar</strong></strong></strong>***baz</p>
+  message: complex (b)
+- name: test_attention_case_67
+  input: '*foo **bar *baz* bim** bop*'
+  output: <p><em>foo <strong>bar <em>baz</em> bim</strong> bop</em></p>
+  message: should support indefinite nesting of emphasis (1)
+- name: test_attention_case_68
+  input: '*foo [*bar*](/url)*'
+  output: "<p><em>foo <a href=\"/url\"><em>bar</em></a></em></p>"
+  message: should support indefinite nesting of emphasis (2)
+- name: test_attention_case_69
+  input: '** is not an empty emphasis'
+  output: <p>** is not an empty emphasis</p>
+  message: should not support empty emphasis
+- name: test_attention_case_70
+  input: '**** is not an empty emphasis'
+  output: <p>**** is not an empty emphasis</p>
+  message: should not support empty strong emphasis
+- name: test_attention_case_71
+  input: '**foo [bar](/url)**'
+  output: "<p><strong>foo <a href=\"/url\">bar</a></strong></p>"
+  message: should support content in strong emphasis
+  comment: Rule 10.
+- name: test_attention_case_72
+  input: |-
+    **foo
+    bar**
+  output: |-
+    <p><strong>foo
+    bar</strong></p>
+  message: should support line endings in emphasis
+- name: test_attention_case_73
+  input: __foo _bar_ baz__
+  output: <p><strong>foo <em>bar</em> baz</strong></p>
+  message: should support nesting emphasis and strong (1)
+- name: test_attention_case_74
+  input: __foo __bar__ baz__
+  output: <p><strong>foo <strong>bar</strong> baz</strong></p>
+  message: should support nesting emphasis and strong (2)
+- name: test_attention_case_75
+  input: ____foo__ bar__
+  output: <p><strong><strong>foo</strong> bar</strong></p>
+  message: should support nesting emphasis and strong (3)
+- name: test_attention_case_76
+  input: '**foo **bar****'
+  output: <p><strong>foo <strong>bar</strong></strong></p>
+  message: should support nesting emphasis and strong (4)
+- name: test_attention_case_77
+  input: '**foo *bar* baz**'
+  output: <p><strong>foo <em>bar</em> baz</strong></p>
+  message: should support nesting emphasis and strong (5)
+- name: test_attention_case_78
+  input: '**foo*bar*baz**'
+  output: <p><strong>foo<em>bar</em>baz</strong></p>
+  message: should support nesting emphasis and strong (6)
+- name: test_attention_case_79
+  input: '***foo* bar**'
+  output: <p><strong><em>foo</em> bar</strong></p>
+  message: should support nesting emphasis and strong (7)
+- name: test_attention_case_80
+  input: '**foo *bar***'
+  output: <p><strong>foo <em>bar</em></strong></p>
+  message: should support nesting emphasis and strong (8)
+- name: test_attention_case_81
+  input: |-
+    **foo *bar **baz**
+    bim* bop**
+  output: |-
+    <p><strong>foo <em>bar <strong>baz</strong>
+    bim</em> bop</strong></p>
+  message: should support indefinite nesting of emphasis (1)
+- name: test_attention_case_82
+  input: '**foo [*bar*](/url)**'
+  output: "<p><strong>foo <a href=\"/url\"><em>bar</em></a></strong></p>"
+  message: should support indefinite nesting of emphasis (2)
+- name: test_attention_case_83
+  input: __ is not an empty emphasis
+  output: <p>__ is not an empty emphasis</p>
+  message: should not support empty emphasis
+- name: test_attention_case_84
+  input: ____ is not an empty emphasis
+  output: <p>____ is not an empty emphasis</p>
+  message: should not support empty strong emphasis
+- name: test_attention_case_85
+  input: foo ***
+  output: <p>foo ***</p>
+  message: should not support emphasis around the same marker
+  comment: Rule 11.
+- name: test_attention_case_86
+  input: "foo *\\**"
+  output: <p>foo <em>*</em></p>
+  message: should support emphasis around an escaped marker
+- name: test_attention_case_87
+  input: foo *_*
+  output: <p>foo <em>_</em></p>
+  message: should support emphasis around the other marker
+- name: test_attention_case_88
+  input: foo *****
+  output: <p>foo *****</p>
+  message: should not support strong emphasis around the same marker
+- name: test_attention_case_89
+  input: "foo **\\***"
+  output: <p>foo <strong>*</strong></p>
+  message: should support strong emphasis around an escaped marker
+- name: test_attention_case_90
+  input: foo **_**
+  output: <p>foo <strong>_</strong></p>
+  message: should support strong emphasis around the other marker
+- name: test_attention_case_91
+  input: '**foo*'
+  output: <p>*<em>foo</em></p>
+  message: should support a superfluous marker at the start of emphasis
+- name: test_attention_case_92
+  input: '*foo**'
+  output: <p><em>foo</em>*</p>
+  message: should support a superfluous marker at the end of emphasis
+- name: test_attention_case_93
+  input: '***foo**'
+  output: <p>*<strong>foo</strong></p>
+  message: should support a superfluous marker at the start of strong
+- name: test_attention_case_94
+  input: '****foo*'
+  output: <p>***<em>foo</em></p>
+  message: should support multiple superfluous markers at the start of strong
+- name: test_attention_case_95
+  input: '**foo***'
+  output: <p><strong>foo</strong>*</p>
+  message: should support a superfluous marker at the end of strong
+- name: test_attention_case_96
+  input: '*foo****'
+  output: <p><em>foo</em>***</p>
+  message: should support multiple superfluous markers at the end of strong
+- name: test_attention_case_97
+  input: foo ___
+  output: <p>foo ___</p>
+  message: should not support emphasis around the same marker
+  comment: Rule 12.
+- name: test_attention_case_98
+  input: "foo _\\__"
+  output: <p>foo <em>_</em></p>
+  message: should support emphasis around an escaped marker
+- name: test_attention_case_99
+  input: foo _X_
+  output: <p>foo <em>X</em></p>
+  message: should support emphasis around the other marker
+- name: test_attention_case_100
+  input: foo _____
+  output: <p>foo _____</p>
+  message: should not support strong emphasis around the same marker
+- name: test_attention_case_101
+  input: "foo __\\___"
+  output: <p>foo <strong>_</strong></p>
+  message: should support strong emphasis around an escaped marker
+- name: test_attention_case_102
+  input: foo __X__
+  output: <p>foo <strong>X</strong></p>
+  message: should support strong emphasis around the other marker
+- name: test_attention_case_103
+  input: __foo_
+  output: <p>_<em>foo</em></p>
+  message: should support a superfluous marker at the start of emphasis
+- name: test_attention_case_104
+  input: _foo__
+  output: <p><em>foo</em>_</p>
+  message: should support a superfluous marker at the end of emphasis
+- name: test_attention_case_105
+  input: ___foo__
+  output: <p>_<strong>foo</strong></p>
+  message: should support a superfluous marker at the start of strong
+- name: test_attention_case_106
+  input: ____foo_
+  output: <p>___<em>foo</em></p>
+  message: should support multiple superfluous markers at the start of strong
+- name: test_attention_case_107
+  input: __foo___
+  output: <p><strong>foo</strong>_</p>
+  message: should support a superfluous marker at the end of strong
+- name: test_attention_case_108
+  input: _foo____
+  output: <p><em>foo</em>___</p>
+  message: should support multiple superfluous markers at the end of strong
+- name: test_attention_case_109
+  input: '**foo**'
+  output: <p><strong>foo</strong></p>
+  message: should support strong w/ `*`
+  comment: Rule 13.
+- name: test_attention_case_110
+  input: '*_foo_*'
+  output: <p><em><em>foo</em></em></p>
+  message: should support emphasis directly in emphasis w/ `_` in `*`
+- name: test_attention_case_111
+  input: __foo__
+  output: <p><strong>foo</strong></p>
+  message: should support strong w/ `_`
+- name: test_attention_case_112
+  input: _*foo*_
+  output: <p><em><em>foo</em></em></p>
+  message: should support emphasis directly in emphasis w/ `*` in `_`
+- name: test_attention_case_113
+  input: '****foo****'
+  output: <p><strong><strong>foo</strong></strong></p>
+  message: should support strong emphasis directly in strong emphasis w/ `*`
+- name: test_attention_case_114
+  input: ____foo____
+  output: <p><strong><strong>foo</strong></strong></p>
+  message: should support strong emphasis directly in strong emphasis w/ `_`
+- name: test_attention_case_115
+  input: '******foo******'
+  output: <p><strong><strong><strong>foo</strong></strong></strong></p>
+  message: should support indefinite strong emphasis
+- name: test_attention_case_116
+  input: '***foo***'
+  output: <p><em><strong>foo</strong></em></p>
+  message: should support strong directly in emphasis w/ `*`
+  comment: Rule 14.
+- name: test_attention_case_117
+  input: ___foo___
+  output: <p><em><strong>foo</strong></em></p>
+  message: should support strong directly in emphasis w/ `_`
+- name: test_attention_case_118
+  input: '*foo _bar* baz_'
+  output: <p><em>foo _bar</em> baz_</p>
+  message: should not support mismatched emphasis
+  comment: Rule 15.
+- name: test_attention_case_119
+  input: '*foo __bar *baz bim__ bam*'
+  output: <p><em>foo <strong>bar *baz bim</strong> bam</em></p>
+  message: should not support mismatched strong emphasis
+- name: test_attention_case_120
+  input: '**foo **bar baz**'
+  output: <p>**foo <strong>bar baz</strong></p>
+  message: should not shortest strong possible
+  comment: Rule 16.
+- name: test_attention_case_121
+  input: '*foo *bar baz*'
+  output: <p>*foo <em>bar baz</em></p>
+  message: should not shortest emphasis possible
+- name: test_attention_case_122
+  input: '*[bar*](/url)'
+  output: "<p>*<a href=\"/url\">bar*</a></p>"
+  message: should not mismatch inside links (1)
+  comment: Rule 17.
+- name: test_attention_case_123
+  input: _[bar_](/url)
+  output: "<p>_<a href=\"/url\">bar_</a></p>"
+  message: should not mismatch inside links (1)
+- name: test_attention_case_128
+  input: '*a `*`*'
+  output: <p><em>a <code>*</code></em></p>
+  message: should not end emphasis inside code (1)
+- name: test_attention_case_129
+  input: _a `_`_
+  output: <p><em>a <code>_</code></em></p>
+  message: should not end emphasis inside code (2)
+- name: test_attention_case_130
+  input: '**a<http://foo.bar/?q=**>'
+  output: "<p>**a<a href=\"http://foo.bar/?q=**\">http://foo.bar/?q=**</a></p>"
+  message: should not end strong emphasis inside autolinks (1)
+- name: test_attention_case_131
+  input: __a<http://foo.bar/?q=__>
+  output: "<p>__a<a href=\"http://foo.bar/?q=__\">http://foo.bar/?q=__</a></p>"
+  message: should not end strong emphasis inside autolinks (2)
+to_html_with_options:
+- name: test_attention_case_124
+  input: "*<img src=\"foo\" title=\"*\"/>"
+  output: "<p>*<img src=\"foo\" title=\"*\"/></p>"
+  message: should not end inside HTML
+  options: danger
+- name: test_attention_case_125
+  input: "*<img src=\"foo\" title=\"*\"/>"
+  output: "<p>*<img src=\"foo\" title=\"*\"/></p>"
+  message: should not end emphasis inside HTML
+  options: danger
+- name: test_attention_case_126
+  input: "**<a href=\"**\">"
+  output: "<p>**<a href=\"**\"></p>"
+  message: should not end strong inside HTML (1)
+  options: danger
+- name: test_attention_case_127
+  input: "__<a href=\"__\">"
+  output: "<p>__<a href=\"__\"></p>"
+  message: should not end strong inside HTML (2)
+  options: danger
+- name: test_attention_case_132
+  input: '*a*'
+  output: <p>*a*</p>
+  message: should support turning off attention
+  options:
+    parse:
+      constructs:
+        attention: false
+to_mdast:
+- name: test_attention_case_133
+  input: a *alpha* b **bravo** c.
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                children = ?'vec!'([
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<"a ">>,
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 3, 2)}
+                    }),
+                    markdown_mdast_node:emphasis(#markdown_mdast_emphasis{
+                        children = ?'vec!'([
+                            markdown_mdast_node:text(#markdown_mdast_text{
+                                value = <<"alpha">>,
+                                position = {some, markdown_unist_position:new(1, 4, 3, 1, 9, 8)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 3, 2, 1, 10, 9)}
+                    }),
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<" b ">>,
+                        position = {some, markdown_unist_position:new(1, 10, 9, 1, 13, 12)}
+                    }),
+                    markdown_mdast_node:strong(#markdown_mdast_strong{
+                        children = ?'vec!'([
+                            markdown_mdast_node:text(#markdown_mdast_text{
+                                value = <<"bravo">>,
+                                position = {some, markdown_unist_position:new(1, 15, 14, 1, 20, 19)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 13, 12, 1, 22, 21)}
+                    }),
+                    markdown_mdast_node:text(#markdown_mdast_text{
+                        value = <<" c.">>,
+                        position = {some, markdown_unist_position:new(1, 22, 21, 1, 25, 24)}
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 25, 24)}
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 25, 24)}
+    })
+  message: "should support attention as `Emphasis`, `Strong`s in mdast"
+  parse_options: {}
+

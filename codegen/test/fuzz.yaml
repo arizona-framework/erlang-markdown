@@ -1,0 +1,199 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: fuzz
+  created: 2025-10-28
+  modified: 2025-10-28
+to_html:
+- name: test_fuzz_case_1
+  input: |+
+    [
+    ~
+    a
+    -
+
+  output: |
+    <h2>[
+    ~
+    a</h2>
+  message: '1: label, blank lines, and code'
+- name: test_fuzz_case_3
+  input: "    x\n*    "
+  output: |-
+    <pre><code>x
+    </code></pre>
+    <ul>
+    <li></li>
+    </ul>
+  message: '3-a: containers should not pierce into indented code'
+- name: test_fuzz_case_4
+  input: |2-
+        a
+    *     b
+  output: |-
+    <pre><code>a
+    </code></pre>
+    <ul>
+    <li>
+    <pre><code>b
+    </code></pre>
+    </li>
+    </ul>
+  message: '3-b: containers should not pierce into indented code'
+- name: test_fuzz_case_5
+  input: 'a * '
+  output: <p>a *</p>
+  message: '4-a: trailing whitespace and broken data'
+- name: test_fuzz_case_6
+  input: '_  '
+  output: <p>_</p>
+  message: '4-b: trailing whitespace and broken data (GH-13)'
+- name: test_fuzz_case_9
+  input: |
+    > ```
+  output: |-
+    <blockquote>
+    <pre><code>
+    </code></pre>
+    </blockquote>
+  message: '6-a: container close after unclosed fenced code, with eol (block quote, GH-16)'
+- name: test_fuzz_case_10
+  input: |
+    - ```
+  output: |-
+    <ul>
+    <li>
+    <pre><code>
+    </code></pre>
+    </li>
+    </ul>
+  message: '6-b: container close after unclosed fenced code, with eol (list, GH-16)'
+to_html_with_options:
+- name: test_fuzz_case_2
+  input: a@b.c+d@e.f
+  output: "<p><a href=\"mailto:a@b.c\">a@b.c</a><a href=\"mailto:+d@e.f\">+d@e.f</a></p>"
+  message: '2: gfm: email autolink literals running into each other'
+  comment: "The first link is stopped by the `+` (so it’s `a@b.c`), but the next link overlaps it (`b.c+d@e.f`)."
+  options:
+    extend: gfm
+- name: test_fuzz_case_7
+  input: 'a ~ '
+  output: <p>a ~</p>
+  message: '4-c: trailing whitespace and broken data (GH-14)'
+  options:
+    extend: gfm
+- name: test_fuzz_case_11
+  input: |-
+    > x
+    ``
+  output: |-
+    <blockquote>
+    <p>x</p>
+    </blockquote>
+    <p>``</p>
+  message: '7: lazy container lines almost starting fenced code (GH-19)'
+  options:
+    extend: gfm
+- name: test_fuzz_case_12
+  input: "a\tb@c.d"
+  output: "<p>a\t<a href=\"mailto:b@c.d\">b@c.d</a></p>"
+  message: '8-a: autolink literals after tabs (GH-18)'
+  options:
+    extend: gfm
+- name: test_fuzz_case_13
+  input: "aa\tb@c.d"
+  output: "<p>aa\t<a href=\"mailto:b@c.d\">b@c.d</a></p>"
+  message: '8-b: autolink literals after tabs (GH-18)'
+  options:
+    extend: gfm
+- name: test_fuzz_case_14
+  input: "aaa\tb@c.d"
+  output: "<p>aaa\t<a href=\"mailto:b@c.d\">b@c.d</a></p>"
+  message: '8-c: autolink literals after tabs (GH-18)'
+  options:
+    extend: gfm
+- name: test_fuzz_case_15
+  input: "aaaa\tb@c.d"
+  output: "<p>aaaa\t<a href=\"mailto:b@c.d\">b@c.d</a></p>"
+  message: '8-d: autolink literals after tabs (GH-18)'
+  options:
+    extend: gfm
+- name: test_fuzz_case_16
+  input: |-
+    | a |
+    | - |
+    | www.a|
+  output: |-
+    <table>
+    <thead>
+    <tr>
+    <th>a</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><a href="http://www.a">www.a</a></td>
+    </tr>
+    </tbody>
+    </table>
+  message: '9: autolink literals that end in table cell delimiter (GH-20)'
+  options:
+    extend: gfm
+- name: test_fuzz_case_17
+  input: '[*]() [*]()'
+  output: "<p><a href=\"\">*</a> <a href=\"\">*</a></p>"
+  message: '10: attention in different links (GH-21)'
+  options:
+    extend: gfm
+- name: test_fuzz_case_19
+  input: <
+  output: <p>&lt;</p>
+  message: '12: mdx: handle invalid mdx without panic (GH-26)'
+  options:
+    extend: mdx
+to_mdast:
+- name: test_fuzz_case_8
+  input: 123456789. ok
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+    })
+  message: '5: lists should support high start numbers (GH-17)'
+  parse_options: {}
+- name: test_fuzz_case_18
+  input: |-
+    * [ ]
+    a
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+    })
+  message: '11: gfm task list items followed by eols (GH-24)'
+  parse_options: {}
+
