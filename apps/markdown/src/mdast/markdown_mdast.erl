@@ -1303,9 +1303,11 @@ exit(CompileContext1 = #markdown_mdast_compile_context{events = Events, index = 
             on_exit_data(CompileContext1);
         mdx_jsx_tag_attribute_value_literal_value ->
             on_exit_data(CompileContext1);
-        % %% on_exit_drop
-        % mdx_jsx_tag_attribute_expression -> on_exit_drop(CompileContext1);
-        % mdx_jsx_tag_attribute_value_expression -> on_exit_drop(CompileContext1);
+        %% on_exit_drop
+        mdx_jsx_tag_attribute_expression ->
+            on_exit_drop(CompileContext1);
+        mdx_jsx_tag_attribute_value_expression ->
+            on_exit_drop(CompileContext1);
         %% on_exit_autolink_protocol
         autolink_protocol ->
             on_exit_autolink_protocol(CompileContext1);
@@ -1694,6 +1696,16 @@ on_exit_data__node_mut_func(
     {Node2, none};
 on_exit_data__node_mut_func(_Node = #markdown_mdast_node{}, {some, _Value}) ->
     ?'unreachable!'("expected text on stack", []).
+
+%% @private
+-doc """
+Handle [`Exit`][Kind::Exit]:*, by dropping the current buffer.
+""".
+-spec on_exit_drop(CompileContext) -> {ok, CompileContext} when
+    CompileContext :: markdown_mdast_compile_context:t().
+on_exit_drop(CompileContext1 = #markdown_mdast_compile_context{}) ->
+    {CompileContext2, _Node} = markdown_mdast_compile_context:resume(CompileContext1),
+    {ok, CompileContext2}.
 
 %% @private
 -doc """
