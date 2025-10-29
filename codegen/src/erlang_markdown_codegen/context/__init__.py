@@ -177,6 +177,7 @@ class Context:
     resolve: "Resolve" = field(init=False)
     state: "State" = field(init=False)
     test: OrderedDict[str, "TestSuite"] = field(init=False)
+    unicode: "Unicode" = field(init=False)
     atoms: OrderedDict[str, Atom] = field(init=False, default_factory=OrderedDict)
     exports: OrderedDict[tuple[Atom, Atom, int], Export] = field(init=False, default_factory=OrderedDict)
 
@@ -187,6 +188,7 @@ class Context:
         from .resolve import Resolve
         from .state import State
         from .test import Test
+        from .unicode import Unicode
 
         self.commonmark = CommonMark(ctx=self, schema=self.schema.commonmark)
         self.event = Event(ctx=self, schema=self.schema.event)
@@ -194,6 +196,7 @@ class Context:
         self.resolve = Resolve(ctx=self, schema=self.schema.resolve)
         self.state = State(ctx=self, schema=self.schema.state)
         self.test = OrderedDict()
+        self.unicode = Unicode(ctx=self, schema=self.schema.unicode)
         for test_config_file in glob.iglob("*.yaml", root_dir=self.schema.test_path, recursive=True):
             with open(f"{self.schema.test_path}/{test_config_file}", "r", encoding="utf-8") as f:
                 data: Any = yaml.safe_load(f)
@@ -230,6 +233,12 @@ class Context:
 
     def erlang_binary(self, value: str) -> str:
         return f'<<"{self.escape_string_for_erlang(value)}"/utf8>>'
+
+    def erlang_boolean(self, value: bool) -> str:
+        if value:
+            return "true"
+        else:
+            return "false"
 
     def erlang_comment(self, original_str: str) -> str:
         comment: str = original_str.strip()

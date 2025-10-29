@@ -6,15 +6,10 @@
         "spec": {
           "title": "Spec",
           "type": "string"
-        },
-        "unicode": {
-          "title": "Unicode",
-          "type": "string"
         }
       },
       "required": [
-        "spec",
-        "unicode"
+        "spec"
       ],
       "title": "CommonMark",
       "type": "object"
@@ -213,6 +208,25 @@
       ],
       "title": "StaticRecord",
       "type": "object"
+    },
+    "Unicode": {
+      "additionalProperties": false,
+      "properties": {
+        "data": {
+          "title": "Data",
+          "type": "string"
+        },
+        "derived_core_properties": {
+          "title": "Derived Core Properties",
+          "type": "string"
+        }
+      },
+      "required": [
+        "data",
+        "derived_core_properties"
+      ],
+      "title": "Unicode",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -246,6 +260,9 @@
     "test_path": {
       "title": "Test Path",
       "type": "string"
+    },
+    "unicode": {
+      "$ref": "#/$defs/Unicode"
     }
   },
   "required": [
@@ -253,7 +270,8 @@
     "event",
     "resolve",
     "state",
-    "test_path"
+    "test_path",
+    "unicode"
   ],
   "title": "Root",
   "type": "object"

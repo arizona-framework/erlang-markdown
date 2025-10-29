@@ -21,31 +21,43 @@
 %%% %CopyrightEnd%
 %%%-----------------------------------------------------------------------------
 %%% % @format
--module(markdown_test_utils_swc).
+-module(markdown_util_identifier).
 -moduledoc """
-
+Info on JavaScript identifiers.
 """.
 -moduledoc #{author => ["Andrew Bennett <potatosaladx@meta.com>"]}.
--moduledoc #{created => "2025-09-27", modified => "2025-09-27"}.
+-moduledoc #{created => "2025-03-04", modified => "2025-03-04"}.
 -moduledoc #{copyright => "Meta Platforms, Inc. and affiliates."}.
 -compile(warn_missing_spec_all).
 -oncall("whatsapp_clr").
 
 %% API
 -export([
-    parse_esm/1,
-    parse_expression/2
+    id_start/1,
+    id_cont/2
 ]).
 
 %%%=============================================================================
 %%% API functions
 %%%=============================================================================
 
--spec parse_esm(Value) -> Signal when Value :: unicode:unicode_binary(), Signal :: markdown_mdx:signal().
-parse_esm(_Value) ->
-    markdown_mdx_signal:ok().
+-spec id_start(Char) -> boolean() when Char :: char().
+id_start(Char) ->
+    case Char of
+        $$ -> true;
+        $_ -> true;
+        _ -> markdown_util_unicode:is_id_start(Char)
+    end.
 
--spec parse_expression(Value, Kind) -> Signal when
-    Value :: unicode:unicode_binary(), Kind :: markdown_mdx:expression_kind(), Signal :: markdown_mdx:signal().
-parse_expression(_Value, _Kind) ->
-    markdown_mdx_signal:ok().
+-spec id_cont(Char, Jsx) -> boolean() when Char :: char(), Jsx :: boolean().
+id_cont(Char, Jsx) ->
+    case Char of
+        16#200c -> true;
+        16#200d -> true;
+        $- when Jsx =:= true -> true;
+        _ -> markdown_util_unicode:is_id_continue(Char)
+    end.
+
+%%%-----------------------------------------------------------------------------
+%%% Internal functions
+%%%-----------------------------------------------------------------------------

@@ -49,13 +49,19 @@ One such difference is if those characters are Unicode punctuation.
 
 %% API
 -export([
+    is_id_start/1,
+    is_id_start_ascii/1,
+    is_id_start_unicode/1,
+    is_id_continue/1,
+    is_id_continue_ascii/1,
+    is_id_continue_unicode/1,
     is_punctuation/1,
     is_whitespace/1
 ]).
 
 %% Macros
 %% erlfmt-ignore
--define(WHITESPACE_LUT(), {
+-define(WHITESPACE_LUT, {
     2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -66,13 +72,115 @@ One such difference is if those characters are Unicode punctuation.
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0
 }).
+%% erlfmt-ignore
+-define(ASCII_START, {
+~J{ set row_continue = joiner(",\n") }.
+~J{ for row in ctx.unicode.ascii_start_rows() }.
+~J{ set col_continue = joiner(", ") }.
+~J< row_continue() >.    ~J{ for col in ctx.unicode.ascii_start_cols(row) }.~J< col_continue() >.~J{ if col }.1~J{ else }.0~J{ endif }.~J{ endfor }.
+~J{ endfor }.
+
+}).
+%% erlfmt-ignore
+-define(ASCII_CONTINUE, {
+~J{ set row_continue = joiner(",\n") }.
+~J{ for row in ctx.unicode.ascii_continue_rows() }.
+~J{ set col_continue = joiner(", ") }.
+~J< row_continue() >.    ~J{ for col in ctx.unicode.ascii_continue_cols(row) }.~J< col_continue() >.~J{ if col }.1~J{ else }.0~J{ endif }.~J{ endfor }.
+~J{ endfor }.
+
+}).
+-define(CHUNK, ~J< ctx.unicode.chunk >.).
+%% erlfmt-ignore
+-define(TRIE_START, {
+~J{ set row_continue = joiner(",\n") }.
+~J{ for row in ctx.unicode.index_start | batch(16) }.
+~J{ set col_continue = joiner(", ") }.
+~J< row_continue() >.    ~J{ for col in row }.~J< col_continue() >.16#~J< '%02X' | format(col) >.~J{ endfor }.
+~J{ endfor }.
+
+}).
+%% erlfmt-ignore
+-define(TRIE_CONTINUE, {
+~J{ set row_continue = joiner(",\n") }.
+~J{ for row in ctx.unicode.index_continue | batch(16) }.
+~J{ set col_continue = joiner(", ") }.
+~J< row_continue() >.    ~J{ for col in row }.~J< col_continue() >.16#~J< '%02X' | format(col) >.~J{ endfor }.
+~J{ endfor }.
+
+}).
+%% erlfmt-ignore
+-define(LEAF, {
+~J{ set row_continue = joiner(",\n") }.
+~J{ for row in ctx.unicode.halfdense | batch(16) }.
+~J{ set col_continue = joiner(", ") }.
+~J< row_continue() >.    ~J{ for col in row }.~J< col_continue() >.16#~J< '%02X' | format(col) >.~J{ endfor }.
+~J{ endfor }.
+
+}).
 
 %%%=============================================================================
 %%% API functions
 %%%=============================================================================
 
+-spec is_id_start(char()) -> boolean().
+is_id_start(Char) ->
+    case is_id_start_ascii(Char) of
+        true ->
+            true;
+        false ->
+            is_id_start_unicode(Char)
+    end.
+
+-compile({inline, [is_id_start_ascii/1]}).
+-spec is_id_start_ascii(char()) -> boolean().
+is_id_start_ascii(Char) when element(Char + 1, ?ASCII_START) =:= 1 -> true;
+is_id_start_ascii(_) -> false.
+
+-compile({inline, [is_id_start_unicode/1]}).
+-spec is_id_start_unicode(char()) -> boolean().
+is_id_start_unicode(Char) when is_integer(Char) andalso Char >= 0 ->
+    Chunk =
+        case Char of
+            _ when (Char div 8 div ?CHUNK) + 1 =< ~J< ctx.unicode.index_start | length >. ->
+                element((Char div 8 div ?CHUNK) + 1, ?TRIE_START);
+            _ ->
+                0
+        end,
+    Offset = Chunk * ?CHUNK div 2 + Char div 8 rem ?CHUNK,
+    element(Offset + 1, ?LEAF) bsr (Char band 7) band 1 =/= 0;
+is_id_start_unicode(_) -> false.
+
+-spec is_id_continue(char()) -> boolean().
+is_id_continue(Char) ->
+    case is_id_continue_ascii(Char) of
+        true ->
+            true;
+        false ->
+            is_id_continue_unicode(Char)
+    end.
+
+-compile({inline, [is_id_continue_ascii/1]}).
+-spec is_id_continue_ascii(char()) -> boolean().
+is_id_continue_ascii(Char) when element(Char + 1, ?ASCII_CONTINUE) =:= 1 -> true;
+is_id_continue_ascii(_) -> false.
+
+-compile({inline, [is_id_continue_unicode/1]}).
+-spec is_id_continue_unicode(char()) -> boolean().
+is_id_continue_unicode(Char) when is_integer(Char) andalso Char >= 0 ->
+    Chunk =
+        case Char of
+            _ when (Char div 8 div ?CHUNK) + 1 =< ~J< ctx.unicode.index_continue | length >. ->
+                element((Char div 8 div ?CHUNK) + 1, ?TRIE_CONTINUE);
+            _ ->
+                0
+        end,
+    Offset = Chunk * ?CHUNK div 2 + Char div 8 rem ?CHUNK,
+    element(Offset + 1, ?LEAF) bsr (Char band 7) band 1 =/= 0;
+is_id_continue_unicode(_) -> false.
+
 -spec is_punctuation(char()) -> boolean().
-~J{ for punctuation in ctx.commonmark.punctuation_list }.
+~J{ for punctuation in ctx.unicode.punctuation_list }.
 is_punctuation(16#~J< punctuation.char_code >.) -> true;
 ~J{ endfor }.
 is_punctuation(_) -> false.
@@ -84,9 +192,9 @@ is_whitespace($\s) ->
 is_whitespace(C) when C >= 16#09 andalso C =< 16#0D -> true;
 is_whitespace(C) when C > 16#7F ->
     case C bsr 8 of
-        0 -> (element((C band 16#FF) + 1, ?WHITESPACE_LUT()) band 1) =/= 0;
+        0 -> (element((C band 16#FF) + 1, ?WHITESPACE_LUT) band 1) =/= 0;
         22 -> C =:= 16#1680;
-        32 -> (element((C band 16#FF) + 1, ?WHITESPACE_LUT()) band 2) =/= 0;
+        32 -> (element((C band 16#FF) + 1, ?WHITESPACE_LUT) band 2) =/= 0;
         48 -> C =:= 16#3000;
         _ -> false
     end;

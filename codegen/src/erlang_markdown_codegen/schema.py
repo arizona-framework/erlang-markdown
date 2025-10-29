@@ -38,11 +38,11 @@ class Root(Model):
     resolve: "Resolve"
     state: "State"
     test_path: str
+    unicode: "Unicode"
 
 
 class CommonMark(Model):
     spec: str
-    unicode: str
 
 
 class Event(Model):
@@ -94,3 +94,8 @@ class StateName(Model):
     key: str
     mod: str
     fun: str
+
+
+class Unicode(Model):
+    data: str
+    derived_core_properties: str

@@ -45,7 +45,9 @@ Deal with bytes, chars, and kinds.
     after_index/2,
     kind_after_index/2,
     classify/1,
-    classify_opt/1
+    classify_opt/1,
+    format_byte/1,
+    format_opt/1
 ]).
 
 %% Types
@@ -206,3 +208,33 @@ classify_opt(none) ->
     whitespace;
 classify_opt({some, Char}) ->
     classify(Char).
+
+-doc """
+Format a byte (`u8`).
+""".
+-spec format_byte(Byte) -> String when Byte :: byte(), String :: unicode:unicode_binary().
+format_byte(Byte) when Byte >= 0 andalso Byte =< 255 ->
+    Representation = <<"U+00", (binary:encode_hex(<<Byte:8>>, uppercase))/bytes>>,
+    Printable =
+        case Byte of
+            $` ->
+                {some, <<"`` ` ``">>};
+            _ when Byte >= $! andalso Byte =< $~ ->
+                {some, <<"`", Byte/utf8, "`">>};
+            _ ->
+                none
+        end,
+    case Printable of
+        {some, Char} ->
+            <<Char/bytes, " (", Representation/bytes, ")">>;
+        none ->
+            Representation
+    end.
+
+-doc """
+Format an optional `char` (`none` means eof).
+""".
+-spec format_opt(CharOpt) -> String when
+    CharOpt :: markdown_option:t(Char), Char :: char(), String :: unicode:unicode_binary().
+format_opt(none) -> <<"end of file"/utf8>>;
+format_opt({some, Char}) -> <<"character ", Char/utf8>>.

@@ -56,7 +56,7 @@ is available.
 markdown_mdx_signal:eof(<<"Unexpected end of file in string literal">>, <<"source">>, <<"rule_id">>)
 ```
 """.
--type eof() :: {error, unicode:unicode_binary(), unicode:unicode_binary(), unicode:unicode_binary()}.
+-type eof() :: {eof, unicode:unicode_binary(), unicode:unicode_binary(), unicode:unicode_binary()}.
 -doc """
 A syntax error.
 

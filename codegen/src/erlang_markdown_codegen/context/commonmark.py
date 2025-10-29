@@ -35,22 +35,13 @@ from . import Context
 class CommonMark:
     ctx: Context = field(repr=False)
     schema: CommonMarkSchema = field(repr=False)
-    punctuation_list: list["CommonMarkPuncuation"] = field(init=False)
     test_case_list: list["CommonMarkTestCase"] = field(init=False)
 
     def commonmark_spec(self) -> str:
         with open(self.schema.spec, "r", encoding="utf-8") as f:
             return f.read()
 
-    def unicode_data(self) -> str:
-        with open(self.schema.unicode, "r", encoding="utf-8") as f:
-            return f.read()
-
     def __post_init__(self) -> None:
-        self.__post_init_commonmark__()
-        self.__post_init_punctuation__()
-
-    def __post_init_commonmark__(self) -> None:
         self.test_case_list = []
 
         content: str = self.commonmark_spec()
@@ -97,42 +88,6 @@ class CommonMark:
 
                 self.test_case_list.append(test_case)
                 test_number += 1
-
-    def __post_init_punctuation__(self) -> None:
-        self.punctuation_list = []
-
-        content: str = self.unicode_data()
-
-        # Unicode categories for punctuation and symbols
-        search_categories: set[str] = {
-            "Pc",  # Punctuation, Connector
-            "Pd",  # Punctuation, Dash
-            "Pe",  # Punctuation, Close
-            "Pf",  # Punctuation, FinalQuote
-            "Pi",  # Punctuation, InitialQuote
-            "Po",  # Punctuation, Other
-            "Ps",  # Punctuation, Open
-            "Sc",  # Symbol, Currency
-            "Sk",  # Symbol, Modifier
-            "Sm",  # Symbol, Math
-            "So",  # Symbol, Other
-        }
-
-        for line in content.splitlines():
-            cells: list[str] = line.split(";")
-            if len(cells) > 2:
-                char_code: str = cells[0]
-                category: str = cells[2]
-
-                if category in search_categories:
-                    punctuation: CommonMarkPuncuation = CommonMarkPuncuation(ctx=self.ctx, char_code=char_code)
-                    self.punctuation_list.append(punctuation)
-
-
-@dataclass
-class CommonMarkPuncuation:
-    ctx: Context = field(repr=False)
-    char_code: str
 
 
 @dataclass

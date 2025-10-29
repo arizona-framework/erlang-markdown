@@ -1,0 +1,401 @@
+# yaml-language-server: $schema=./schema.json
+
+###-----------------------------------------------------------------------------
+### %CopyrightBegin%
+###
+### SPDX-License-Identifier: Apache-2.0
+###
+### Copyright (c) Meta Platforms, Inc. and affiliates.
+### Copyright (c) WhatsApp LLC
+###
+### Licensed under the Apache License, Version 2.0 (the "License");
+### you may not use this file except in compliance with the License.
+### You may obtain a copy of the License at
+###
+###     http://www.apache.org/licenses/LICENSE-2.0
+###
+### Unless required by applicable law or agreed to in writing, software
+### distributed under the License is distributed on an "AS IS" BASIS,
+### WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+### See the License for the specific language governing permissions and
+### limitations under the License.
+###
+### %CopyrightEnd%
+###-----------------------------------------------------------------------------
+
+---
+suite:
+  name: mdx_expression_flow
+  created: 2025-10-28
+  modified: 2025-10-28
+shared_options:
+  - name: mdx
+    options:
+      extend: mdx
+  - name: swc
+    options:
+      extend: mdx
+      parse:
+        mdx_esm_parse: fun markdown_test_utils_swc:parse_esm/1
+        mdx_expression_parse: fun markdown_test_utils_swc:parse_expression/2
+shared_parse_options:
+  - name: mdx_parse
+    parse_options:
+      extend: mdx
+  - name: swc_parse
+    parse_options:
+      extend: mdx
+      mdx_esm_parse: fun markdown_test_utils_swc:parse_esm/1
+      mdx_expression_parse: fun markdown_test_utils_swc:parse_expression/2
+to_html: []
+to_html_with_options:
+- name: test_mdx_expression_flow_case_1
+  input: '{a}'
+  output: ''
+  message: should support an expression
+  options: mdx
+- name: test_mdx_expression_flow_case_2
+  input: '{}'
+  output: ''
+  message: should support an empty expression
+  options: mdx
+- name: test_mdx_expression_flow_case_3
+  input: '    {}'
+  output: |-
+    <pre><code>{}
+    </code></pre>
+  message: should prefer indented code over expressions if it’s enabled
+  comment: 'Note: in MDX, indented code is turned off:'
+  options:
+    parse:
+      constructs:
+        mdx_expression_flow: true
+- name: test_mdx_expression_flow_case_4
+  input: '   {}'
+  output: ''
+  message: should support indented expressions if indented code is enabled
+  options:
+    parse:
+      constructs:
+        mdx_expression_flow: true
+- name: test_mdx_expression_flow_case_5
+  input: |-
+    {
+    }
+    a
+  output: <p>a</p>
+  message: should support a line ending in an expression
+  options: mdx
+- name: test_mdx_expression_flow_case_6
+  input: "{ a } \t\nb"
+  output: <p>b</p>
+  message: should support expressions followed by spaces
+  options: mdx
+- name: test_mdx_expression_flow_case_7
+  input: |2-
+      { a }
+    b
+  output: <p>b</p>
+  message: should support expressions preceded by spaces
+  options: mdx
+- name: test_mdx_expression_flow_case_8
+  input: |-
+    a
+
+    * b
+  output: |-
+    <p>a</p>
+    <ul>
+    <li>b</li>
+    </ul>
+  message: should support lists after non-expressions (wooorm/markdown-rs#11)
+  options: mdx
+- name: test_mdx_expression_flow_case_9
+  input: |-
+    > a
+    {b}
+  output: |
+    <blockquote>
+    <p>a</p>
+    </blockquote>
+  message: should not support lazyness (2)
+  options: mdx
+- name: test_mdx_expression_flow_case_10
+  input: |-
+    > {a}
+    b
+  output: |-
+    <blockquote>
+    </blockquote>
+    <p>b</p>
+  message: should not support lazyness (3)
+  options: mdx
+- name: test_mdx_expression_flow_case_13
+  input: '{a}'
+  output: ''
+  message: should support an expression
+  options: swc
+- name: test_mdx_expression_flow_case_14
+  input: '{}'
+  output: ''
+  message: should support an empty expression
+  options: swc
+- name: test_mdx_expression_flow_case_15
+  input: |-
+    {
+    }
+    a
+  output: <p>a</p>
+  message: should support a line ending in an expression
+  options: swc
+- name: test_mdx_expression_flow_case_16
+  input: "{ a } \t\nb"
+  output: <p>b</p>
+  message: should support expressions followed by spaces
+  options: swc
+- name: test_mdx_expression_flow_case_17
+  input: |2-
+      { a }
+    b
+  output: <p>b</p>
+  message: should support expressions preceded by spaces
+  options: swc
+- name: test_mdx_expression_flow_case_18
+  input: |2-
+      {`
+        a
+      `}
+  output: ''
+  message: should support indented expressions
+  options: swc
+- name: test_mdx_expression_flow_case_19
+  input: a{(b)}c
+  output: <p>ac</p>
+  message: should support expressions padded w/ parens
+  options: swc
+- name: test_mdx_expression_flow_case_20
+  input: a{/* b */ ( (c) /* d */ + (e) )}f
+  output: <p>af</p>
+  message: should support expressions padded w/ parens and comments
+  options: swc
+- name: test_mdx_expression_flow_case_27
+  input: <a {...b} />
+  output: ''
+  message: should support a spread
+  options: swc
+to_mdast:
+- name: test_mdx_expression_flow_case_11
+  input: |-
+    {alpha +
+    bravo}
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:mdx_flow_expression(#markdown_mdast_mdx_flow_expression{
+                value = <<"alpha +\nbravo">>,
+                position = {some, markdown_unist_position:new(1, 1, 0, 2, 7, 15)},
+                stops = ?'vec!'([
+                    markdown_mdast_stop:new(0, 1),
+                    markdown_mdast_stop:new(7, 8),
+                    markdown_mdast_stop:new(8, 9)
+                ])
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 2, 7, 15)}
+    })
+  message: "should support mdx expressions (flow) as `MdxFlowExpression`s in mdast"
+  parse_options: mdx_parse
+- name: test_mdx_expression_flow_case_12
+  input: |2-
+      {`
+        a
+      `}
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:mdx_flow_expression(#markdown_mdast_mdx_flow_expression{
+                value = <<"`\n  a\n`">>,
+                position = {some, markdown_unist_position:new(1, 3, 2, 3, 5, 15)},
+                stops = ?'vec!'([
+                    markdown_mdast_stop:new(0, 3),
+                    markdown_mdast_stop:new(1, 4),
+                    markdown_mdast_stop:new(2, 7),
+                    markdown_mdast_stop:new(5, 10),
+                    markdown_mdast_stop:new(6, 13)
+                ])
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 3, 5, 15)}
+    })
+  message: "should support indent in `MdxFlowExpression` in mdast"
+  parse_options: mdx_parse
+- name: test_mdx_expression_flow_case_21
+  input: "{`\n\t`}"
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:mdx_flow_expression(#markdown_mdast_mdx_flow_expression{
+                value = <<"`\n  `">>,
+                position = {some, markdown_unist_position:new(1, 1, 0, 2, 7, 6)},
+                stops = ?'vec!'([
+                    markdown_mdast_stop:new(0, 1),
+                    markdown_mdast_stop:new(1, 2),
+                    markdown_mdast_stop:new(2, 3)
+                ])
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 2, 7, 6)}
+    })
+  message: "should use correct positional info when tabs are used (1, indent)"
+  parse_options: swc_parse
+- name: test_mdx_expression_flow_case_22
+  input: "{`\nalpha\t`}"
+  output: |-
+    markdown_mdast_node:root(#markdown_mdast_root{
+        children = ?'vec!'([
+            markdown_mdast_node:mdx_flow_expression(#markdown_mdast_mdx_flow_expression{
+                value = <<"`\nalpha\t`">>,
+                position = {some, markdown_unist_position:new(1, 1, 0, 2, 11, 11)},
+                stops = ?'vec!'([
+                    markdown_mdast_stop:new(0, 1),
+                    markdown_mdast_stop:new(1, 2),
+                    markdown_mdast_stop:new(2, 3)
+                ])
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 2, 11, 11)}
+    })
+  message: "should use correct positional info when tabs are used (2, content)"
+  parse_options: swc_parse
+# - name: test_mdx_expression_flow_case_23
+#   input: |-
+#     >  aaa <b c={`
+#     >      d
+#     >  `} /> eee
+#   output: |-
+#     Node::Root(Root {
+#         children: vec![Node::Blockquote(Blockquote {
+#             children: vec![Node::Paragraph(Paragraph {
+#                 children: vec![
+#                     Node::Text(Text {
+#                         value: "aaa ".into(),
+#                         position: Some(Position::new(1, 4, 3, 1, 8, 7))
+#                     }),
+#                     Node::MdxJsxTextElement(MdxJsxTextElement {
+#                         children: vec![],
+#                         name: Some("b".into()),
+#                         attributes: vec![AttributeContent::Property(MdxJsxAttribute {
+#                             name: "c".into(),
+#                             value: Some(AttributeValue::Expression(AttributeValueExpression {
+#                                 value: "`\n   d\n`".into(),
+#                                 stops: vec![(0, 13), (1, 14), (2, 19), (6, 23), (7, 27)]
+#                             }))
+#                         })],
+#                         position: Some(Position::new(1, 8, 7, 3, 9, 32))
+#                     }),
+#                     Node::Text(Text {
+#                         value: " eee".into(),
+#                         position: Some(Position::new(3, 9, 32, 3, 13, 36))
+#                     })
+#                 ],
+#                 position: Some(Position::new(1, 3, 2, 3, 13, 36))
+#             })],
+#             position: Some(Position::new(1, 1, 0, 3, 13, 36))
+#         })],
+#         position: Some(Position::new(1, 1, 0, 3, 13, 36))
+#     })
+#   message: "should support template strings in JSX (text) in block quotes"
+#   parse_options: swc_parse
+# - name: test_mdx_expression_flow_case_24
+#   input: "> ab {`\n>\t`}"
+#   output: |-
+#     Node::Root(Root {
+#         children: vec![Node::Blockquote(Blockquote {
+#             children: vec![Node::Paragraph(Paragraph {
+#                 children: vec![
+#                     Node::Text(Text {
+#                         value: "ab ".into(),
+#                         position: Some(Position::new(1, 3, 2, 1, 6, 5))
+#                     }),
+#                     Node::MdxTextExpression(MdxTextExpression {
+#                         value: "`\n`".into(),
+#                         stops: vec![(0, 6), (1, 7), (2, 10)],
+#                         position: Some(Position::new(1, 6, 5, 2, 7, 12))
+#                     })
+#                 ],
+#                 position: Some(Position::new(1, 3, 2, 2, 7, 12))
+#             })],
+#             position: Some(Position::new(1, 1, 0, 2, 7, 12))
+#         })],
+#         position: Some(Position::new(1, 1, 0, 2, 7, 12))
+#     })
+#   message: "should use correct positional when there are virtual spaces due to a block quote"
+#   parse_options: swc_parse
+# - name: test_mdx_expression_flow_case_25
+#   input: |-
+#     > {`
+#     > alpha
+#     >  bravo
+#     >   charlie
+#     >    delta
+#     > `}
+#   output: |-
+#     Node::Root(Root {
+#         children: vec![Node::Blockquote(Blockquote {
+#             children: vec![Node::MdxFlowExpression(MdxFlowExpression {
+#                 value: "`\nalpha\nbravo\ncharlie\n delta\n`".into(),
+#                 position: Some(Position::new(1, 3, 2, 6, 5, 49)),
+#                 stops: vec![
+#                     (0, 3),
+#                     (1, 4),
+#                     (2, 7),
+#                     (7, 12),
+#                     (8, 16),
+#                     (13, 21),
+#                     (14, 26),
+#                     (21, 33),
+#                     (22, 38),
+#                     (28, 44),
+#                     (29, 47)
+#                 ]
+#             })],
+#             position: Some(Position::new(1, 1, 0, 6, 5, 49))
+#         })],
+#         position: Some(Position::new(1, 1, 0, 6, 5, 49))
+#     })
+#   message: "should keep the correct number of spaces in a blockquote (flow)"
+#   parse_options: swc_parse
+# - name: test_mdx_expression_flow_case_26
+#   input: |-
+#     > {`
+#     > alpha
+#     >  bravo
+#     >   charlie
+#     >    delta
+#     > `}
+#   output: |-
+#     Node::Root(Root {
+#         children: vec![Node::Blockquote(Blockquote {
+#             children: vec![Node::MdxFlowExpression(MdxFlowExpression {
+#                 value: "`\nalpha\nbravo\ncharlie\n delta\n`".into(),
+#                 position: Some(Position::new(1, 3, 2, 6, 5, 49)),
+#                 stops: vec![
+#                     (0, 3),
+#                     (1, 4),
+#                     (2, 7),
+#                     (7, 12),
+#                     (8, 16),
+#                     (13, 21),
+#                     (14, 26),
+#                     (21, 33),
+#                     (22, 38),
+#                     (28, 44),
+#                     (29, 47)
+#                 ]
+#             })],
+#             position: Some(Position::new(1, 1, 0, 6, 5, 49))
+#         })],
+#         position: Some(Position::new(1, 1, 0, 6, 5, 49))
+#     })
+#   message: "should keep the correct number of spaces in a blockquote (flow)"
+#   parse_options: swc_parse

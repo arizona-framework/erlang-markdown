@@ -37,6 +37,7 @@ codegen: docker-codegen
 [working-directory: '/project/codegen']
 commonmark:
     curl -Lfo /project/codegen/commonmark-spec.txt https://raw.githubusercontent.com/commonmark/commonmark-spec/0.31.2/spec.txt
+    curl -Lfo /project/codegen/DerivedCoreProperties.txt https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt
     curl -Lfo /project/codegen/UnicodeData.txt https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
 
 [macos]

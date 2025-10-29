@@ -26,7 +26,6 @@
 ---
 commonmark:
   spec: /project/codegen/commonmark-spec.txt
-  unicode: /project/codegen/UnicodeData.txt
 event:
   name:
     - key: attention_sequence
@@ -4990,3 +4989,6 @@ state:
       mod: partial_title
       fun: nok
 test_path: /project/codegen/test
+unicode:
+  data: /project/codegen/UnicodeData.txt
+  derived_core_properties: /project/codegen/DerivedCoreProperties.txt
