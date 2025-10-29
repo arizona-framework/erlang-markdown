@@ -1257,7 +1257,7 @@ es_whitespace_start(
         parse_state = #markdown_parse_state{bytes = Bytes}, point = #markdown_point{offset = Index}
     }
 ) ->
-    Kind = markdown_util_char:after_index(Bytes, Index),
+    Kind = markdown_util_char:kind_after_index(Bytes, Index),
     case Kind =:= whitespace of
         true ->
             Tokenizer2 = markdown_tokenizer:enter(Tokenizer1, mdx_jsx_es_whitespace),

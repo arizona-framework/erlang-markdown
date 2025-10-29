@@ -180,8 +180,33 @@ to_mdast:
   input: 123456789. ok
   output: |-
     markdown_mdast_node:root(#markdown_mdast_root{
-        children = ?'vec!'([]),
-        position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+        children = ?'vec!'([
+            markdown_mdast_node:list(#markdown_mdast_list{
+                children = ?'vec!'([
+                    markdown_mdast_node:list_item(#markdown_mdast_list_item{
+                        children = ?'vec!'([
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"ok">>,
+                                        position = {some, markdown_unist_position:new(1, 12, 11, 1, 14, 13)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(1, 12, 11, 1, 14, 13)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 1, 14, 13)},
+                        spread = false,
+                        checked = none
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 1, 14, 13)},
+                ordered = true,
+                start = {some, 123456789},
+                spread = false
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 1, 14, 13)}
     })
   message: '5: lists should support high start numbers (GH-17)'
   parse_options: {}
@@ -191,8 +216,33 @@ to_mdast:
     a
   output: |-
     markdown_mdast_node:root(#markdown_mdast_root{
-        children = ?'vec!'([]),
-        position = {some, markdown_unist_position:new(1, 1, 0, 1, 6, 5)}
+        children = ?'vec!'([
+            markdown_mdast_node:list(#markdown_mdast_list{
+                children = ?'vec!'([
+                    markdown_mdast_node:list_item(#markdown_mdast_list_item{
+                        children = ?'vec!'([
+                            markdown_mdast_node:paragraph(#markdown_mdast_paragraph{
+                                children = ?'vec!'([
+                                    markdown_mdast_node:text(#markdown_mdast_text{
+                                        value = <<"[ ]\na">>,
+                                        position = {some, markdown_unist_position:new(1, 3, 2, 2, 2, 7)}
+                                    })
+                                ]),
+                                position = {some, markdown_unist_position:new(1, 3, 2, 2, 2, 7)}
+                            })
+                        ]),
+                        position = {some, markdown_unist_position:new(1, 1, 0, 2, 2, 7)},
+                        spread = false,
+                        checked = none
+                    })
+                ]),
+                position = {some, markdown_unist_position:new(1, 1, 0, 2, 2, 7)},
+                ordered = false,
+                start = none,
+                spread = false
+            })
+        ]),
+        position = {some, markdown_unist_position:new(1, 1, 0, 2, 2, 7)}
     })
   message: '11: gfm task list items followed by eols (GH-24)'
   parse_options: {}
