@@ -70,32 +70,76 @@ parse_expression_impl(Value, attribute_expression) ->
     end;
 parse_expression_impl(Value, _Kind) ->
     % For regular expressions and attribute value expressions
-    % Special case: empty value should be treated as valid (return ok)
-    % Actually, looking at tests, empty value with Kind=expression for `{}` should
-    % still return an error, but we can't tell if it's empty JSX or empty expression context
-    % So we'll treat truly empty as OK for non-attribute contexts
     ValueLen = byte_size(Value),
     case ValueLen of
         0 ->
-            % Empty value - just return OK, the attribute_expression handler will deal with validation
+            % Empty value - just return OK
             markdown_mdx_signal:ok();
         _ ->
-            % Non-empty, check for content after expression
-            case check_for_content_after_expression(Value) of
-                ok ->
-                    % No issues found, check if balanced
-                    case is_balanced(Value) of
-                        true -> markdown_mdx_signal:ok();
-                        false -> markdown_mdx_signal:eof(<<"Unexpected end of file">>, <<"mdx">>, <<"mdx">>)
-                    end;
+            % First check for invalid syntax like '<'
+            case check_for_invalid_syntax(Value) of
                 {error, Offset} ->
-                    % Found content after a complete expression
+                    % Invalid syntax - return EOF error
                     markdown_mdx_signal:error(
-                        <<"Could not parse expression with swc: Unexpected content after expression">>,
-                        Offset,
+                        <<"Could not parse expression with swc: Unexpected eof">>,
+                        Offset + 4,
                         <<"mdx">>,
                         <<"swc">>
-                    )
+                    );
+                ok ->
+                    % Check for line comments without newline (causes EOF)
+                    case check_line_comment_eof(Value) of
+                        {error, _Offset} ->
+                            % For line comment EOF, offset points to end of input
+                            % Offset is relative to start of expression value
+                            markdown_mdx_signal:error(
+                                <<"Could not parse expression with swc: Unexpected eof">>,
+                                ValueLen + 3,
+                                <<"mdx">>,
+                                <<"swc">>
+                            );
+                        ok ->
+                            % Check for invalid statements (var, let, const, etc.)
+                            case check_for_statement(Value) of
+                                {error, Offset} ->
+                                    markdown_mdx_signal:error(
+                                        <<"Could not parse expression with swc: Expression expected">>,
+                                        Offset,
+                                        <<"mdx">>,
+                                        <<"swc">>
+                                    );
+                                ok ->
+                                    % Check for invalid incomplete expressions
+                                    case check_for_incomplete_expression(Value) of
+                                        {error, _Offset} ->
+                                            % For incomplete expression EOF
+                                            markdown_mdx_signal:error(
+                                                <<"Could not parse expression with swc: Unexpected eof">>,
+                                                ValueLen + 3,
+                                                <<"mdx">>,
+                                                <<"swc">>
+                                            );
+                                        ok ->
+                                            % Check for content after expression
+                                            case check_for_content_after_expression(Value) of
+                                                ok ->
+                                                    % No issues found, check if balanced
+                                                    case is_balanced_with_comments(Value) of
+                                                        true -> markdown_mdx_signal:ok();
+                                                        false -> markdown_mdx_signal:eof(<<"Unexpected eof">>, <<"mdx">>, <<"mdx">>)
+                                                    end;
+                                                {error, Offset} ->
+                                                    % Found content after a complete expression
+                                                    markdown_mdx_signal:error(
+                                                        <<"Could not parse expression with swc: Unexpected content after expression">>,
+                                                        Offset,
+                                                        <<"mdx">>,
+                                                        <<"swc">>
+                                                    )
+                                            end
+                                    end
+                            end
+                    end
             end
     end.
 
@@ -104,18 +148,287 @@ parse_expression_impl(Value, _Kind) ->
 %%%-----------------------------------------------------------------------------
 
 %% @private
+%% Check if expression has a line comment without a newline before the end
+%% This causes EOF because the closing brace is consumed by the comment
+-spec check_line_comment_eof(Value) -> ok | {error, Offset} when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer().
+check_line_comment_eof(Value) ->
+    check_line_comment_eof_impl(Value, 0, false).
+
+%% @private
+-spec check_line_comment_eof_impl(Value, Offset, InLineComment) -> ok | {error, Offset} when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer(),
+    InLineComment :: boolean().
+check_line_comment_eof_impl(<<>>, Offset, true) ->
+    % Reached end while in a line comment - this is EOF error
+    {error, Offset};
+check_line_comment_eof_impl(<<>>, _Offset, false) ->
+    ok;
+% Start of line comment
+check_line_comment_eof_impl(<<"//", Rest/binary>>, Offset, false) ->
+    check_line_comment_eof_impl(Rest, Offset + 2, true);
+% Newline ends line comment
+check_line_comment_eof_impl(<<"\n", Rest/binary>>, Offset, true) ->
+    check_line_comment_eof_impl(Rest, Offset + 1, false);
+check_line_comment_eof_impl(<<"\r\n", Rest/binary>>, Offset, true) ->
+    check_line_comment_eof_impl(Rest, Offset + 2, false);
+check_line_comment_eof_impl(<<"\r", Rest/binary>>, Offset, true) ->
+    check_line_comment_eof_impl(Rest, Offset + 1, false);
+% Skip multiline comments completely (they don't cause EOF)
+check_line_comment_eof_impl(<<"/*", Rest/binary>>, Offset, false) ->
+    case skip_multiline_comment(Rest, Offset + 2) of
+        {ok, NewRest, NewOffset} ->
+            check_line_comment_eof_impl(NewRest, NewOffset, false);
+        eof ->
+            ok  % Multiline comment EOF is handled by is_balanced
+    end;
+% Skip other characters
+check_line_comment_eof_impl(<<_:8, Rest/binary>>, Offset, InLineComment) ->
+    check_line_comment_eof_impl(Rest, Offset + 1, InLineComment).
+
+%% @private
+-spec skip_multiline_comment(Value, Offset) -> {ok, Rest, NewOffset} | eof when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer(),
+    Rest :: unicode:unicode_binary(),
+    NewOffset :: non_neg_integer().
+skip_multiline_comment(<<>>, _Offset) ->
+    eof;
+skip_multiline_comment(<<"*/", Rest/binary>>, Offset) ->
+    {ok, Rest, Offset + 2};
+skip_multiline_comment(<<_:8, Rest/binary>>, Offset) ->
+    skip_multiline_comment(Rest, Offset + 1).
+
+%% @private
+%% Check if the value starts with a JavaScript statement keyword
+-spec check_for_statement(Value) -> ok | {error, Offset} when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer().
+check_for_statement(Value) ->
+    % Remove leading whitespace
+    Trimmed = string:trim(Value, leading),
+    LeadingWSSize = byte_size(Value) - byte_size(Trimmed),
+    % Check for statement keywords
+    Statements = [<<"var ">>, <<"let ">>, <<"const ">>, <<"if ">>, <<"for ">>,
+                  <<"while ">>, <<"do ">>, <<"switch ">>, <<"return ">>,
+                  <<"throw ">>, <<"break">>, <<"continue">>, <<"debugger">>],
+    case lists:any(fun(Keyword) -> starts_with_keyword(Trimmed, Keyword) end, Statements) of
+        true ->
+            {error, LeadingWSSize};
+        false ->
+            ok
+    end.
+
+%% @private
+-spec starts_with_keyword(Value, Keyword) -> boolean() when
+    Value :: unicode:unicode_binary(),
+    Keyword :: unicode:unicode_binary().
+starts_with_keyword(Value, Keyword) ->
+    KeywordSize = byte_size(Keyword),
+    case Value of
+        <<Keyword:KeywordSize/binary, _/binary>> ->
+            true;
+        _ ->
+            false
+    end.
+
+%% @private
+%% Check for incomplete expressions like "??" without operands
+-spec check_for_incomplete_expression(Value) -> ok | {error, Offset} when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer().
+check_for_incomplete_expression(Value) ->
+    % Remove comments first to get clean expression
+    NoComments = remove_all_comments(Value),
+    Trimmed = string:trim(NoComments, both),
+    case Trimmed of
+        <<"??", Rest/binary>> ->
+            % Check if there's anything after ??
+            RestTrimmed = string:trim(Rest, both),
+            case byte_size(RestTrimmed) of
+                0 -> {error, byte_size(Value)};
+                _ -> ok
+            end;
+        _ ->
+            ok
+    end.
+
+%% @private
+-spec remove_all_comments(Value) -> Result when
+    Value :: unicode:unicode_binary(),
+    Result :: unicode:unicode_binary().
+remove_all_comments(Value) ->
+    remove_all_comments_impl(Value, <<>>).
+
+%% @private
+-spec remove_all_comments_impl(Value, Acc) -> Result when
+    Value :: unicode:unicode_binary(),
+    Acc :: unicode:unicode_binary(),
+    Result :: unicode:unicode_binary().
+remove_all_comments_impl(<<>>, Acc) ->
+    Acc;
+remove_all_comments_impl(<<"/*", Rest/binary>>, Acc) ->
+    case binary:split(Rest, <<"*/">>) of
+        [_Comment, AfterComment] ->
+            remove_all_comments_impl(AfterComment, <<Acc/binary, " ">>);
+        [_Comment] ->
+            Acc
+    end;
+remove_all_comments_impl(<<"//", Rest/binary>>, Acc) ->
+    case binary:split(Rest, <<"\n">>) of
+        [_Comment, AfterComment] ->
+            remove_all_comments_impl(AfterComment, <<Acc/binary, "\n">>);
+        [_Comment] ->
+            Acc
+    end;
+remove_all_comments_impl(<<C:8, Rest/binary>>, Acc) ->
+    remove_all_comments_impl(Rest, <<Acc/binary, C:8>>).
+
+%% @private
 -spec check_for_content_after_expression(Value) -> ok | {error, Offset} when
     Value :: unicode:unicode_binary(),
     Offset :: non_neg_integer().
 check_for_content_after_expression(Value) ->
+    % Remove comments first to properly analyze the expression
+    NoComments = remove_all_comments(Value),
     % Check if there's a simple identifier followed by more content
     % e.g., "b { c }" should be detected as having content after "b"
-    case find_identifier_then_brace(Value) of
-        {found, Offset} ->
-            {error, Offset};
+    % But "function () {}" should be OK
+    case check_content_pattern(NoComments) of
+        {found, _FoundOffset} ->
+            % Found content after expression - return offset at end
+            % Offset should account for { and } braces: ValueLen + 3
+            {error, byte_size(Value) + 3};
         not_found ->
             ok
     end.
+
+%% @private
+%% Check for invalid syntax characters like '<'
+-spec check_for_invalid_syntax(Value) -> ok | {error, Offset} when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer().
+check_for_invalid_syntax(Value) ->
+    check_for_invalid_syntax_impl(Value, 0, false, false).
+
+%% @private
+-spec check_for_invalid_syntax_impl(Value, Offset, InString, InComment) -> ok | {error, Offset} when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer(),
+    InString :: boolean(),
+    InComment :: boolean() | multiline | line.
+check_for_invalid_syntax_impl(<<>>, _Offset, _InString, _InComment) ->
+    ok;
+% Skip strings
+check_for_invalid_syntax_impl(<<"\"", Rest/binary>>, Offset, false, false) ->
+    check_for_invalid_syntax_impl(Rest, Offset + 1, true, false);
+check_for_invalid_syntax_impl(<<"\"", Rest/binary>>, Offset, true, false) ->
+    check_for_invalid_syntax_impl(Rest, Offset + 1, false, false);
+% Skip escape sequences in strings
+check_for_invalid_syntax_impl(<<"\\", _:8, Rest/binary>>, Offset, true, false) ->
+    check_for_invalid_syntax_impl(Rest, Offset + 2, true, false);
+% Skip multiline comments
+check_for_invalid_syntax_impl(<<"/*", Rest/binary>>, Offset, false, false) ->
+    check_for_invalid_syntax_impl(Rest, Offset + 2, false, multiline);
+check_for_invalid_syntax_impl(<<"*/", Rest/binary>>, Offset, false, multiline) ->
+    check_for_invalid_syntax_impl(Rest, Offset + 2, false, false);
+% Skip line comments
+check_for_invalid_syntax_impl(<<"//", Rest/binary>>, Offset, false, false) ->
+    check_for_invalid_syntax_impl(Rest, Offset + 2, false, line);
+check_for_invalid_syntax_impl(<<"\n", Rest/binary>>, Offset, false, line) ->
+    check_for_invalid_syntax_impl(Rest, Offset + 1, false, false);
+% Check for invalid '<' outside strings and comments
+check_for_invalid_syntax_impl(<<"<", _/binary>>, Offset, false, false) ->
+    {error, Offset};
+% Skip other characters
+check_for_invalid_syntax_impl(<<_:8, Rest/binary>>, Offset, InString, InComment) ->
+    check_for_invalid_syntax_impl(Rest, Offset + 1, InString, InComment).
+
+%% @private
+%% Check for pattern: identifier/simple-expr followed by more complex content
+-spec check_content_pattern(Value) -> {found, Offset} | not_found when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer().
+check_content_pattern(Value) ->
+    Trimmed = string:trim(Value, both),
+    % Check for "function" keyword - this is OK as it's a function expression
+    case Trimmed of
+        <<"function", _/binary>> ->
+            not_found;
+        _ ->
+            % Check for multiple identifiers across lines (invalid)
+            case check_multiple_identifiers(Trimmed) of
+                {found, Offset} ->
+                    {found, Offset};
+                not_found ->
+                    % Look for identifier followed by brace/content
+                    find_identifier_then_brace(Value)
+            end
+    end.
+
+%% @private
+%% Check for multiple identifiers separated by newlines
+-spec check_multiple_identifiers(Value) -> {found, Offset} | not_found when
+    Value :: unicode:unicode_binary(),
+    Offset :: non_neg_integer().
+check_multiple_identifiers(Value) ->
+    % Split by newlines and check if we have multiple non-empty identifiers
+    Lines = binary:split(Value, [<<"\n">>, <<"\r\n">>, <<"\r">>], [global]),
+    NonEmptyLines = [Line || Line <- Lines, byte_size(string:trim(Line, both)) > 0],
+    case length(NonEmptyLines) of
+        N when N >= 2 ->
+            % Multiple non-empty lines - check if they look like separate identifiers
+            case check_if_separate_identifiers(NonEmptyLines) of
+                true -> {found, 0};
+                false -> not_found
+            end;
+        _ ->
+            not_found
+    end.
+
+%% @private
+-spec check_if_separate_identifiers(Lines) -> boolean() when
+    Lines :: [binary()].
+check_if_separate_identifiers([First | Rest]) ->
+    FirstTrimmed = string:trim(First, both),
+    % Check if first line is just an identifier (letters/numbers/underscore)
+    case is_simple_identifier(FirstTrimmed) of
+        true ->
+            % Check if any remaining lines are also identifiers
+            lists:any(fun(Line) ->
+                Trimmed = string:trim(Line, both),
+                is_simple_identifier(Trimmed)
+            end, Rest);
+        false ->
+            false
+    end;
+check_if_separate_identifiers([]) ->
+    false.
+
+%% @private
+-spec is_simple_identifier(Value) -> boolean() when
+    Value :: binary().
+is_simple_identifier(<<>>) ->
+    false;
+is_simple_identifier(Value) ->
+    % Check if value contains only identifier characters (alphanumeric + underscore)
+    is_simple_identifier_impl(Value).
+
+%% @private
+-spec is_simple_identifier_impl(Value) -> boolean() when
+    Value :: binary().
+is_simple_identifier_impl(<<>>) ->
+    true;
+is_simple_identifier_impl(<<C:8, Rest/binary>>) when
+    (C >= $a andalso C =< $z) orelse
+    (C >= $A andalso C =< $Z) orelse
+    (C >= $0 andalso C =< $9) orelse
+    C =:= $_ ->
+    is_simple_identifier_impl(Rest);
+is_simple_identifier_impl(_) ->
+    false.
 
 %% @private
 -spec find_identifier_then_brace(Value) -> {found, Offset} | not_found when
@@ -436,6 +749,74 @@ remove_comments(<<C:8, Rest/binary>>, Acc) ->
 is_balanced(Value) ->
     % Check if braces, brackets, and parentheses are balanced
     is_balanced(Value, 0, 0, 0, false).
+
+%% @private
+%% Check if braces are balanced while properly handling comments
+-spec is_balanced_with_comments(Value) -> boolean() when Value :: unicode:unicode_binary().
+is_balanced_with_comments(Value) ->
+    is_balanced_with_comments_impl(Value, 0, 0, 0, false, false).
+
+%% @private
+-spec is_balanced_with_comments_impl(Value, BraceCount, BracketCount, ParenCount, InString, InComment) -> boolean() when
+    Value :: unicode:unicode_binary(),
+    BraceCount :: integer(),
+    BracketCount :: integer(),
+    ParenCount :: integer(),
+    InString :: boolean() | quote,
+    InComment :: boolean() | multiline | line.
+is_balanced_with_comments_impl(<<>>, BraceCount, BracketCount, ParenCount, InString, InComment) ->
+    % All brackets must be balanced (count = 0) and we must not be in a string or comment
+    BraceCount =:= 0 andalso BracketCount =:= 0 andalso ParenCount =:= 0 andalso InString =:= false andalso InComment =:= false;
+% Handle escape sequences in strings
+is_balanced_with_comments_impl(<<"\\", _:8, Rest/binary>>, BraceCount, BracketCount, ParenCount, InString, InComment) when InString =/= false ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, InString, InComment);
+% Start of multiline comment (not in string)
+is_balanced_with_comments_impl(<<"/*", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, multiline);
+% End of multiline comment
+is_balanced_with_comments_impl(<<"*/", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, multiline) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, false);
+% Start of line comment (not in string or multiline comment)
+is_balanced_with_comments_impl(<<"//", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, line);
+% Newline ends line comment
+is_balanced_with_comments_impl(<<"\n", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, line) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, false);
+is_balanced_with_comments_impl(<<"\r\n", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, line) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, false);
+is_balanced_with_comments_impl(<<"\r", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, line) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, false);
+% Handle double quotes (not in comment)
+is_balanced_with_comments_impl(<<"\"", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, quote, false);
+is_balanced_with_comments_impl(<<"\"", Rest/binary>>, BraceCount, BracketCount, ParenCount, quote, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, false);
+% Handle single quotes (not in comment)
+is_balanced_with_comments_impl(<<"'", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, quote, false);
+is_balanced_with_comments_impl(<<"'", Rest/binary>>, BraceCount, BracketCount, ParenCount, quote, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, false);
+% Handle backticks (not in comment)
+is_balanced_with_comments_impl(<<"`", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, quote, false);
+is_balanced_with_comments_impl(<<"`", Rest/binary>>, BraceCount, BracketCount, ParenCount, quote, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, false, false);
+% Handle brackets only when not in a string or comment
+is_balanced_with_comments_impl(<<"{", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount + 1, BracketCount, ParenCount, false, false);
+is_balanced_with_comments_impl(<<"}", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount - 1, BracketCount, ParenCount, false, false);
+is_balanced_with_comments_impl(<<"[", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount + 1, ParenCount, false, false);
+is_balanced_with_comments_impl(<<"]", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount - 1, ParenCount, false, false);
+is_balanced_with_comments_impl(<<"(", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount + 1, false, false);
+is_balanced_with_comments_impl(<<")", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount - 1, false, false);
+% Skip other characters
+is_balanced_with_comments_impl(<<_:8, Rest/binary>>, BraceCount, BracketCount, ParenCount, InString, InComment) ->
+    is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, InString, InComment).
 
 %% @private
 -spec is_balanced(Value, BraceCount, BracketCount, ParenCount, InString) -> boolean() when
