@@ -2292,7 +2292,7 @@ on_exit_raw_flow(CompileContext1 = #markdown_html_compile_context{}) ->
     %% One special case is if we are inside a container, and the raw (flow) was
     %% not closed (meaning it runs to the end).
     %% In that case, the following line ending, is considered *outside* the
-    %% fenced code and block quote by `markdown-rs`, but CM wants to treat that
+    %% fenced code and block quote by `erlang-markdown`, but CM wants to treat that
     %% ending as part of the code.
     CompileContext2 = on_exit_raw_flow__maybe_run_to_end(CompileContext1),
     %% But in most cases, it's simpler: when we've seen some data, emit an extra

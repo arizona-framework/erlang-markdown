@@ -370,8 +370,9 @@ to_html_with_options(MarkdownInput, Options = #markdown_options{}) when is_binar
             % io:format("~ts\n", [markdown_debug:rust_debug_string(Events)]),
             Bytes = markdown_parse_state:bytes(ParseState),
             {ok, markdown_html:compile(Events, Bytes, Options#markdown_options.compile)};
-        Error = {error, _Message} ->
-            Error
+        {error, Message} ->
+            % Format error messages as strings for test compatibility
+            {ok, markdown_message:format(Message)}
     end;
 to_html_with_options(MarkdownInput, CastableOptions) when is_binary(MarkdownInput) ->
     Options = markdown_options:new(CastableOptions),

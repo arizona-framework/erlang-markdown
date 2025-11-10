@@ -32,11 +32,13 @@ Message.
 -oncall("whatsapp_clr").
 
 -include_lib("markdown/include/markdown_parser.hrl").
+-include_lib("markdown/include/markdown_unist.hrl").
 -include_lib("markdown/include/markdown_util.hrl").
 
 %% API
 -export([
-    new/4
+    new/4,
+    format/1
 ]).
 
 %% Types
@@ -70,3 +72,29 @@ new(OptionPlace, Reason, RuleId, Source) when
         rule_id = RuleId,
         source = Source
     }.
+
+-doc """
+Format a message as a binary string.
+
+The format is: `<line>:<column>: <reason> (<source>:<rule_id>)`
+
+## Examples
+
+```erlang
+Message = markdown_message:new(
+    {some, markdown_place:new(markdown_unist_point:new(1, 3, 2))},
+    <<"Unexpected end of file">>,
+    <<"unexpected-eof">>,
+    <<"erlang-markdown">>
+),
+FormattedMessage = markdown_message:format(Message),
+%% => <<"1:3: Unexpected end of file (erlang-markdown:unexpected-eof)">>
+```
+""".
+-spec format(Message) -> FormattedMessage when
+    Message :: t(),
+    FormattedMessage :: unicode:unicode_binary().
+format(#markdown_message{place = {some, #markdown_place{inner = #markdown_unist_point{line = Line, column = Column}}}, reason = Reason, rule_id = RuleId, source = Source}) ->
+    iolist_to_binary(io_lib:format("~w:~w: ~ts (~ts:~ts)", [Line, Column, Reason, Source, RuleId]));
+format(#markdown_message{place = none, reason = Reason, rule_id = RuleId, source = Source}) ->
+    iolist_to_binary(io_lib:format("~ts (~ts:~ts)", [Reason, Source, RuleId])).

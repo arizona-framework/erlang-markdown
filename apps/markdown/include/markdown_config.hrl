@@ -381,7 +381,7 @@
     %% == Examples ==
     %%
     %% ```
-    %% % `markdown-rs` follows CommonMark by default:
+    %% % `erlang-markdown` follows CommonMark by default:
     %% <<"<pre><code>indented code?\n</code></pre>">> =
     %%     to_html(<<"    indented code?">>),
     %%
@@ -414,7 +414,7 @@
     %% == Examples ==
     %%
     %% ```
-    %% % `markdown-rs` supports single tildes by default:
+    %% % `erlang-markdown` supports single tildes by default:
     %% <<"<p><del>a</del></p>">> =
     %%     to_html_with_options(
     %%         <<"~a~">>,
@@ -456,7 +456,7 @@
     %% == Examples ==
     %%
     %% ```
-    %% % `markdown-rs` supports single dollars by default:
+    %% % `erlang-markdown` supports single dollars by default:
     %% <<"<p><code class=\"language-math math-inline\">a</code></p>">> =
     %%     to_html_with_options(
     %%         <<"$a$">>,

@@ -79,6 +79,16 @@ to_html_with_options:
       constructs:
         mdx_expression_flow: true
 - name: test_mdx_expression_flow_case_5
+  input: '{a'
+  output: "1:3: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  message: should crash if no closing brace is found (1)
+  options: mdx
+- name: test_mdx_expression_flow_case_6
+  input: '{b { c }'
+  output: "1:9: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  message: should crash if no closing brace is found (2)
+  options: mdx
+- name: test_mdx_expression_flow_case_7
   input: |-
     {
     }
@@ -86,19 +96,19 @@ to_html_with_options:
   output: <p>a</p>
   message: should support a line ending in an expression
   options: mdx
-- name: test_mdx_expression_flow_case_6
+- name: test_mdx_expression_flow_case_8
   input: "{ a } \t\nb"
   output: <p>b</p>
   message: should support expressions followed by spaces
   options: mdx
-- name: test_mdx_expression_flow_case_7
+- name: test_mdx_expression_flow_case_9
   input: |2-
       { a }
     b
   output: <p>b</p>
   message: should support expressions preceded by spaces
   options: mdx
-- name: test_mdx_expression_flow_case_8
+- name: test_mdx_expression_flow_case_10
   input: |-
     a
 
@@ -110,7 +120,15 @@ to_html_with_options:
     </ul>
   message: should support lists after non-expressions (wooorm/markdown-rs#11)
   options: mdx
-- name: test_mdx_expression_flow_case_9
+- name: test_mdx_expression_flow_case_11
+  input: |-
+    > {a
+    b}
+  output: "2:1: Unexpected lazy line in expression in container, expected line to be prefixed with `>` when in a block quote,\
+    \ whitespace when in a list, etc (markdown-rs:unexpected-lazy)"
+  message: should not support lazyness (1)
+  options: mdx
+- name: test_mdx_expression_flow_case_12
   input: |-
     > a
     {b}
@@ -120,7 +138,7 @@ to_html_with_options:
     </blockquote>
   message: should not support lazyness (2)
   options: mdx
-- name: test_mdx_expression_flow_case_10
+- name: test_mdx_expression_flow_case_13
   input: |-
     > {a}
     b
@@ -130,17 +148,36 @@ to_html_with_options:
     <p>b</p>
   message: should not support lazyness (3)
   options: mdx
-- name: test_mdx_expression_flow_case_13
+- name: test_mdx_expression_flow_case_14
+  input: |-
+    > {
+    > a
+    b}
+  output: "3:1: Unexpected lazy line in expression in container, expected line to be prefixed with `>` when in a block quote,\
+    \ whitespace when in a list, etc (markdown-rs:unexpected-lazy)"
+  message: should not support lazyness (4)
+  options: mdx
+- name: test_mdx_expression_flow_case_17
   input: '{a}'
   output: ''
   message: should support an expression
   options: swc
-- name: test_mdx_expression_flow_case_14
+- name: test_mdx_expression_flow_case_18
   input: '{}'
   output: ''
   message: should support an empty expression
   options: swc
-- name: test_mdx_expression_flow_case_15
+- name: test_mdx_expression_flow_case_19
+  input: '{a'
+  output: "1:3: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  message: should crash if no closing brace is found (1)
+  options: swc
+- name: test_mdx_expression_flow_case_20
+  input: '{b { c }'
+  output: "1:9: Could not parse expression with swc: Unexpected content after expression (mdx:swc)"
+  message: should crash if no closing brace is found (2)
+  options: swc
+- name: test_mdx_expression_flow_case_21
   input: |-
     {
     }
@@ -148,19 +185,19 @@ to_html_with_options:
   output: <p>a</p>
   message: should support a line ending in an expression
   options: swc
-- name: test_mdx_expression_flow_case_16
+- name: test_mdx_expression_flow_case_22
   input: "{ a } \t\nb"
   output: <p>b</p>
   message: should support expressions followed by spaces
   options: swc
-- name: test_mdx_expression_flow_case_17
+- name: test_mdx_expression_flow_case_23
   input: |2-
       { a }
     b
   output: <p>b</p>
   message: should support expressions preceded by spaces
   options: swc
-- name: test_mdx_expression_flow_case_18
+- name: test_mdx_expression_flow_case_24
   input: |2-
       {`
         a
@@ -168,23 +205,60 @@ to_html_with_options:
   output: ''
   message: should support indented expressions
   options: swc
-- name: test_mdx_expression_flow_case_19
+- name: test_mdx_expression_flow_case_25
   input: a{(b)}c
   output: <p>ac</p>
   message: should support expressions padded w/ parens
   options: swc
-- name: test_mdx_expression_flow_case_20
+- name: test_mdx_expression_flow_case_26
   input: a{/* b */ ( (c) /* d */ + (e) )}f
   output: <p>af</p>
   message: should support expressions padded w/ parens and comments
   options: swc
-- name: test_mdx_expression_flow_case_27
+- name: test_mdx_expression_flow_case_33
   input: <a {...b} />
   output: ''
   message: should support a spread
   options: swc
+- name: test_mdx_expression_flow_case_34
+  input: <a {b} />
+  output: "1:5: Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`) (mdx:swc)"
+  message: should crash if not a spread
+  options: swc
+- name: test_mdx_expression_flow_case_35
+  input: <a {...?} />
+  output: '1:13: Could not parse expression with swc: Expression expected (mdx:swc)'
+  message: should crash on an incorrect spread
+  options: swc
+- name: test_mdx_expression_flow_case_36
+  input: <a {b=c}={} d>
+  output: "1:5: Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`) (mdx:swc)"
+  message: should crash on an incorrect spread that looks like an assignment
+  options: swc
+- name: test_mdx_expression_flow_case_37
+  input: <a {...b,c} d>
+  output: "1:5: Unexpected extra content in spread (such as `{...x,y}`): only a single spread is supported (such as `{...x}`)\
+    \ (mdx:swc)"
+  message: should crash if a spread and other things
+  options: swc
+- name: test_mdx_expression_flow_case_38
+  input: <a {b=c} />
+  output: "1:12: Could not parse expression with swc: assignment property is invalid syntax (mdx:swc)"
+  message: should crash if not an identifier
+  options: swc
+- name: test_mdx_expression_flow_case_39
+  input: <a {} />
+  output: "1:9: Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`) (mdx:swc)"
+  message: should crash on an empty spread
+  comment: 'Note: `markdown-rs` has no `allowEmpty`.'
+  options: swc
+- name: test_mdx_expression_flow_case_40
+  input: <a {/* b */} />
+  output: "1:5: Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`) (mdx:swc)"
+  message: should crash on a comment spread
+  options: swc
 to_mdast:
-- name: test_mdx_expression_flow_case_11
+- name: test_mdx_expression_flow_case_15
   input: |-
     {alpha +
     bravo}
@@ -205,7 +279,7 @@ to_mdast:
     })
   message: "should support mdx expressions (flow) as `MdxFlowExpression`s in mdast"
   parse_options: mdx_parse
-- name: test_mdx_expression_flow_case_12
+- name: test_mdx_expression_flow_case_16
   input: |2-
       {`
         a
@@ -229,7 +303,7 @@ to_mdast:
     })
   message: "should support indent in `MdxFlowExpression` in mdast"
   parse_options: mdx_parse
-- name: test_mdx_expression_flow_case_21
+- name: test_mdx_expression_flow_case_27
   input: "{`\n\t`}"
   output: |-
     markdown_mdast_node:root(#markdown_mdast_root{
@@ -248,7 +322,7 @@ to_mdast:
     })
   message: "should use correct positional info when tabs are used (1, indent)"
   parse_options: swc_parse
-- name: test_mdx_expression_flow_case_22
+- name: test_mdx_expression_flow_case_28
   input: "{`\nalpha\t`}"
   output: |-
     markdown_mdast_node:root(#markdown_mdast_root{
@@ -267,7 +341,7 @@ to_mdast:
     })
   message: "should use correct positional info when tabs are used (2, content)"
   parse_options: swc_parse
-- name: test_mdx_expression_flow_case_23
+- name: test_mdx_expression_flow_case_29
   input: |-
     >  aaa <b c={`
     >      d
@@ -318,7 +392,7 @@ to_mdast:
     })
   message: "should support template strings in JSX (text) in block quotes"
   parse_options: swc_parse
-- name: test_mdx_expression_flow_case_24
+- name: test_mdx_expression_flow_case_30
   input: "> ab {`\n>\t`}"
   output: |-
     markdown_mdast_node:root(#markdown_mdast_root{
@@ -351,7 +425,7 @@ to_mdast:
     })
   message: "should use correct positional when there are virtual spaces due to a block quote"
   parse_options: swc_parse
-- name: test_mdx_expression_flow_case_25
+- name: test_mdx_expression_flow_case_31
   input: |-
     > {`
     > alpha
@@ -389,7 +463,7 @@ to_mdast:
     })
   message: "should keep the correct number of spaces in a blockquote (flow)"
   parse_options: swc_parse
-- name: test_mdx_expression_flow_case_26
+- name: test_mdx_expression_flow_case_32
   input: |-
     > {`
     > alpha

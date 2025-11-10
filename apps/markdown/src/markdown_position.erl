@@ -80,7 +80,7 @@ This does not support nested events (such as lists in lists).
 ## Panics
 
 This function panics if an enter event is given.
-When `markdown-rs` is used, this function never panics.
+When `erlang-markdown` is used, this function never panics.
 """.
 -spec from_exit_event(Events, Index) -> Position when
     Events :: markdown_vec:t(Event), Event :: markdown_event:t(), Index :: markdown_types:usize(), Position :: t().

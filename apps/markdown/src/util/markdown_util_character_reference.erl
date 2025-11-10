@@ -135,7 +135,7 @@ This function panics if a invalid string or an out of bounds valid string
 is given.
 It is expected that figuring out whether a number is allowed is handled in
 the parser.
-When `markdown-rs` is used, this function never panics.
+When `erlang-markdown` is used, this function never panics.
 
 ## References
 

@@ -94,7 +94,7 @@
     %% use markdown::{to_html, to_html_with_options, CompileOptions, Options};
     %% # fn main() -> Result<(), markdown::message::Message> {
     %%
-    %% // `markdown-rs` is safe by default:
+    %% // `erlang-markdown` is safe by default:
     %% assert_eq!(
     %%     to_html("Hi, <i>venus</i>!"),
     %%     "<p>Hi, &lt;i&gt;venus&lt;/i&gt;!</p>"
@@ -148,7 +148,7 @@
     %% use markdown::{to_html, to_html_with_options, CompileOptions, Options};
     %% # fn main() -> Result<(), markdown::message::Message> {
     %%
-    %% // `markdown-rs` is safe by default:
+    %% // `erlang-markdown` is safe by default:
     %% assert_eq!(
     %%     to_html("<javascript:alert(1)>"),
     %%     "<p><a href=\"\">javascript:alert(1)</a></p>"
@@ -225,7 +225,7 @@
     %% Default line ending to use when compiling to HTML, for line endings not
     %% in `value`.
     %%
-    %% Generally, `markdown-rs` copies line endings (`\r`, `\n`, `\r\n`) in
+    %% Generally, `erlang-markdown` copies line endings (`\r`, `\n`, `\r\n`) in
     %% the markdown document over to the compiled HTML.
     %% In some cases, such as `> a`, CommonMark requires that extra line
     %% endings are added: `<blockquote>\n<p>a</p>\n</blockquote>`.
@@ -241,7 +241,7 @@
     %% use markdown::{to_html, to_html_with_options, CompileOptions, LineEnding, Options};
     %% # fn main() -> Result<(), markdown::message::Message> {
     %%
-    %% // `markdown-rs` uses `\n` by default:
+    %% // `erlang-markdown` uses `\n` by default:
     %% assert_eq!(
     %%     to_html("> a"),
     %%     "<blockquote>\n<p>a</p>\n</blockquote>"
@@ -551,7 +551,7 @@
     %% use markdown::{to_html_with_options, CompileOptions, Options, ParseOptions};
     %% # fn main() -> Result<(), markdown::message::Message> {
     %%
-    %% // With `allow_dangerous_html`, `markdown-rs` passes HTML through untouched:
+    %% // With `allow_dangerous_html`, `erlang-markdown` passes HTML through untouched:
     %% assert_eq!(
     %%     to_html_with_options(
     %%         "<iframe>",
@@ -1079,7 +1079,7 @@
     %% == Examples ==
     %%
     %% ```
-    %% % `markdown-rs` follows CommonMark by default:
+    %% % `erlang-markdown` follows CommonMark by default:
     %% <<"<pre><code>indented code?\n</code></pre>">> =
     %%     to_html(<<"    indented code?">>),
     %%
@@ -1112,7 +1112,7 @@
     %% == Examples ==
     %%
     %% ```
-    %% % `markdown-rs` supports single tildes by default:
+    %% % `erlang-markdown` supports single tildes by default:
     %% <<"<p><del>a</del></p>">> =
     %%     to_html_with_options(
     %%         <<"~a~">>,
@@ -1154,7 +1154,7 @@
     %% == Examples ==
     %%
     %% ```
-    %% % `markdown-rs` supports single dollars by default:
+    %% % `erlang-markdown` supports single dollars by default:
     %% <<"<p><code class=\"language-math math-inline\">a</code></p>">> =
     %%     to_html_with_options(
     %%         <<"$a$">>,
