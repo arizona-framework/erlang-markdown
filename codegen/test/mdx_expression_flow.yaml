@@ -80,12 +80,12 @@ to_html_with_options:
         mdx_expression_flow: true
 - name: test_mdx_expression_flow_case_5
   input: '{a'
-  output: "1:3: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  output: "1:3: Unexpected end of file in expression, expected a corresponding closing brace for `{` (erlang-markdown:unexpected-eof)"
   message: should crash if no closing brace is found (1)
   options: mdx
 - name: test_mdx_expression_flow_case_6
   input: '{b { c }'
-  output: "1:9: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  output: "1:9: Unexpected end of file in expression, expected a corresponding closing brace for `{` (erlang-markdown:unexpected-eof)"
   message: should crash if no closing brace is found (2)
   options: mdx
 - name: test_mdx_expression_flow_case_7
@@ -125,7 +125,7 @@ to_html_with_options:
     > {a
     b}
   output: "2:1: Unexpected lazy line in expression in container, expected line to be prefixed with `>` when in a block quote,\
-    \ whitespace when in a list, etc (markdown-rs:unexpected-lazy)"
+    \ whitespace when in a list, etc (erlang-markdown:unexpected-lazy)"
   message: should not support lazyness (1)
   options: mdx
 - name: test_mdx_expression_flow_case_12
@@ -154,7 +154,7 @@ to_html_with_options:
     > a
     b}
   output: "3:1: Unexpected lazy line in expression in container, expected line to be prefixed with `>` when in a block quote,\
-    \ whitespace when in a list, etc (markdown-rs:unexpected-lazy)"
+    \ whitespace when in a list, etc (erlang-markdown:unexpected-lazy)"
   message: should not support lazyness (4)
   options: mdx
 - name: test_mdx_expression_flow_case_17
@@ -169,12 +169,12 @@ to_html_with_options:
   options: swc
 - name: test_mdx_expression_flow_case_19
   input: '{a'
-  output: "1:3: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  output: "1:3: Unexpected end of file in expression, expected a corresponding closing brace for `{` (erlang-markdown:unexpected-eof)"
   message: should crash if no closing brace is found (1)
   options: swc
 - name: test_mdx_expression_flow_case_20
   input: '{b { c }'
-  output: "1:9: Could not parse expression with swc: Unexpected content after expression (mdx:swc)"
+  output: "1:8: Could not parse expression with swc: Unexpected content after expression (mdx:swc)"
   message: should crash if no closing brace is found (2)
   options: swc
 - name: test_mdx_expression_flow_case_21
@@ -232,7 +232,7 @@ to_html_with_options:
   options: swc
 - name: test_mdx_expression_flow_case_36
   input: <a {b=c}={} d>
-  output: "1:5: Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`) (mdx:swc)"
+  output: "1:12: Could not parse expression with swc: assignment property is invalid syntax (mdx:swc)"
   message: should crash on an incorrect spread that looks like an assignment
   options: swc
 - name: test_mdx_expression_flow_case_37
@@ -248,9 +248,9 @@ to_html_with_options:
   options: swc
 - name: test_mdx_expression_flow_case_39
   input: <a {} />
-  output: "1:9: Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`) (mdx:swc)"
+  output: "1:5: Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`) (mdx:swc)"
   message: should crash on an empty spread
-  comment: 'Note: `markdown-rs` has no `allowEmpty`.'
+  comment: 'Note: `erlang-markdown` has no `allowEmpty`.'
   options: swc
 - name: test_mdx_expression_flow_case_40
   input: <a {/* b */} />

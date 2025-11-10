@@ -94,7 +94,12 @@ FormattedMessage = markdown_message:format(Message),
 -spec format(Message) -> FormattedMessage when
     Message :: t(),
     FormattedMessage :: unicode:unicode_binary().
-format(#markdown_message{place = {some, #markdown_place{inner = #markdown_unist_point{line = Line, column = Column}}}, reason = Reason, rule_id = RuleId, source = Source}) ->
+format(#markdown_message{
+    place = {some, #markdown_place{inner = #markdown_unist_point{line = Line, column = Column}}},
+    reason = Reason,
+    rule_id = RuleId,
+    source = Source
+}) ->
     iolist_to_binary(io_lib:format("~w:~w: ~ts (~ts:~ts)", [Line, Column, Reason, Source, RuleId]));
 format(#markdown_message{place = none, reason = Reason, rule_id = RuleId, source = Source}) ->
     iolist_to_binary(io_lib:format("~ts (~ts:~ts)", [Reason, Source, RuleId])).

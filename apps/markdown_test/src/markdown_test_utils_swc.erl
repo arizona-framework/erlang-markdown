@@ -125,8 +125,12 @@ parse_expression_impl(Value, _Kind) ->
                                                 ok ->
                                                     % No issues found, check if balanced
                                                     case is_balanced_with_comments(Value) of
-                                                        true -> markdown_mdx_signal:ok();
-                                                        false -> markdown_mdx_signal:eof(<<"Unexpected eof">>, <<"mdx">>, <<"mdx">>)
+                                                        true ->
+                                                            markdown_mdx_signal:ok();
+                                                        false ->
+                                                            markdown_mdx_signal:eof(
+                                                                <<"Unexpected eof">>, <<"mdx">>, <<"mdx">>
+                                                            )
                                                     end;
                                                 {error, Offset} ->
                                                     % Found content after a complete expression
@@ -182,7 +186,8 @@ check_line_comment_eof_impl(<<"/*", Rest/binary>>, Offset, false) ->
         {ok, NewRest, NewOffset} ->
             check_line_comment_eof_impl(NewRest, NewOffset, false);
         eof ->
-            ok  % Multiline comment EOF is handled by is_balanced
+            % Multiline comment EOF is handled by is_balanced
+            ok
     end;
 % Skip other characters
 check_line_comment_eof_impl(<<_:8, Rest/binary>>, Offset, InLineComment) ->
@@ -211,9 +216,21 @@ check_for_statement(Value) ->
     Trimmed = string:trim(Value, leading),
     LeadingWSSize = byte_size(Value) - byte_size(Trimmed),
     % Check for statement keywords
-    Statements = [<<"var ">>, <<"let ">>, <<"const ">>, <<"if ">>, <<"for ">>,
-                  <<"while ">>, <<"do ">>, <<"switch ">>, <<"return ">>,
-                  <<"throw ">>, <<"break">>, <<"continue">>, <<"debugger">>],
+    Statements = [
+        <<"var ">>,
+        <<"let ">>,
+        <<"const ">>,
+        <<"if ">>,
+        <<"for ">>,
+        <<"while ">>,
+        <<"do ">>,
+        <<"switch ">>,
+        <<"return ">>,
+        <<"throw ">>,
+        <<"break">>,
+        <<"continue">>,
+        <<"debugger">>
+    ],
     case lists:any(fun(Keyword) -> starts_with_keyword(Trimmed, Keyword) end, Statements) of
         true ->
             {error, LeadingWSSize};
@@ -397,10 +414,13 @@ check_if_separate_identifiers([First | Rest]) ->
     case is_simple_identifier(FirstTrimmed) of
         true ->
             % Check if any remaining lines are also identifiers
-            lists:any(fun(Line) ->
-                Trimmed = string:trim(Line, both),
-                is_simple_identifier(Trimmed)
-            end, Rest);
+            lists:any(
+                fun(Line) ->
+                    Trimmed = string:trim(Line, both),
+                    is_simple_identifier(Trimmed)
+                end,
+                Rest
+            );
         false ->
             false
     end;
@@ -423,9 +443,10 @@ is_simple_identifier_impl(<<>>) ->
     true;
 is_simple_identifier_impl(<<C:8, Rest/binary>>) when
     (C >= $a andalso C =< $z) orelse
-    (C >= $A andalso C =< $Z) orelse
-    (C >= $0 andalso C =< $9) orelse
-    C =:= $_ ->
+        (C >= $A andalso C =< $Z) orelse
+        (C >= $0 andalso C =< $9) orelse
+        C =:= $_
+->
     is_simple_identifier_impl(Rest);
 is_simple_identifier_impl(_) ->
     false.
@@ -456,10 +477,14 @@ find_identifier_then_brace(<<"{", Rest/binary>>, Offset, true, true) ->
             {found, Offset}
     end;
 % Track non-whitespace characters (potential identifier)
-find_identifier_then_brace(<<C:8, Rest/binary>>, Offset, _SeenNonWS, SeenWS) when C =/= $\s andalso C =/= $\t andalso C =/= $\n andalso C =/= $\r ->
+find_identifier_then_brace(<<C:8, Rest/binary>>, Offset, _SeenNonWS, SeenWS) when
+    C =/= $\s andalso C =/= $\t andalso C =/= $\n andalso C =/= $\r
+->
     find_identifier_then_brace(Rest, Offset + 1, true, SeenWS);
 % Track whitespace after identifier
-find_identifier_then_brace(<<C:8, Rest/binary>>, Offset, true, _SeenWS) when C =:= $\s orelse C =:= $\t orelse C =:= $\n orelse C =:= $\r ->
+find_identifier_then_brace(<<C:8, Rest/binary>>, Offset, true, _SeenWS) when
+    C =:= $\s orelse C =:= $\t orelse C =:= $\n orelse C =:= $\r
+->
     find_identifier_then_brace(Rest, Offset + 1, true, true);
 % Skip leading whitespace
 find_identifier_then_brace(<<_:8, Rest/binary>>, Offset, false, false) ->
@@ -499,17 +524,19 @@ validate_attribute_expression(Value) ->
 
     % Special handling for empty or malformed expressions
     % Check various conditions that indicate an empty spread
-    IsEmptySpread = TrimmedLen =:= 0 orelse
-                    ValueLen =:= 0 orelse
-                    (ValueLen =:= 1 andalso (Value =:= <<" ">> orelse Value =:= <<0>>)),
+    IsEmptySpread =
+        TrimmedLen =:= 0 orelse
+            ValueLen =:= 0 orelse
+            (ValueLen =:= 1 andalso (Value =:= <<" ">> orelse Value =:= <<0>>)),
 
     % Special check for malformed assignment-like patterns in JSX attributes
     % If the trimmed value is exactly "b=c" (3 chars) or similar simple assignments,
     % it might be part of a malformed larger expression like {b=c}={}
     % In such cases, we should still return "not a spread" error
-    IsMalformedContext = TrimmedLen =:= 3 andalso
-                         binary:match(Trimmed, <<"=">>) =/= nomatch andalso
-                         binary:match(Value, <<"}">>) =/= nomatch,
+    IsMalformedContext =
+        TrimmedLen =:= 3 andalso
+            binary:match(Trimmed, <<"=">>) =/= nomatch andalso
+            binary:match(Value, <<"}">>) =/= nomatch,
 
     case {IsEmptySpread, IsMalformedContext} of
         {true, _} ->
@@ -540,17 +567,22 @@ case_not_empty_spread(Trimmed, Value, ValueLen) ->
             case AllWhitespace of
                 true ->
                     % Treat as empty
-                    {error, <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>, 4};
+                    {error,
+                        <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>,
+                        4};
                 false ->
                     % Not a spread - determine if it's a simple assignment
                     IsCleanAssignment = is_clean_assignment(Trimmed, Value),
                     case IsCleanAssignment of
                         true ->
                             % Simple assignment like "b=c"
-                            {error, <<"Could not parse expression with swc: assignment property is invalid syntax">>, 7};
+                            {error, <<"Could not parse expression with swc: assignment property is invalid syntax">>,
+                                7};
                         false ->
                             % Not a spread - offset at start
-                            {error, <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>, 0}
+                            {error,
+                                <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>,
+                                0}
                     end
             end
     end.
@@ -559,9 +591,10 @@ case_not_empty_spread(Trimmed, Value, ValueLen) ->
 case_not_empty_spread_old(Trimmed, Value, ValueLen) ->
     % Check if effectively empty (empty, whitespace, or very short)
     TrimmedLen = byte_size(Trimmed),
-    IsEffectivelyEmpty = TrimmedLen =:= 0 orelse
-                         (ValueLen < 2 andalso TrimmedLen =:= 0) orelse
-                         (ValueLen =:= 0),
+    IsEffectivelyEmpty =
+        TrimmedLen =:= 0 orelse
+            (ValueLen < 2 andalso TrimmedLen =:= 0) orelse
+            (ValueLen =:= 0),
 
     case IsEffectivelyEmpty of
         true ->
@@ -578,17 +611,23 @@ case_not_empty_spread_old(Trimmed, Value, ValueLen) ->
                     case AllWhitespace of
                         true ->
                             % Treat as empty
-                            {error, <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>, 4};
+                            {error,
+                                <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>,
+                                4};
                         false ->
                             % Not a spread - determine if it's a simple assignment
                             IsCleanAssignment = is_clean_assignment(Trimmed, Value),
                             case IsCleanAssignment of
                                 true ->
                                     % Simple assignment like "b=c"
-                                    {error, <<"Could not parse expression with swc: assignment property is invalid syntax">>, 7};
+                                    {error,
+                                        <<"Could not parse expression with swc: assignment property is invalid syntax">>,
+                                        7};
                                 false ->
                                     % Not a spread - offset at start
-                                    {error, <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>, 0}
+                                    {error,
+                                        <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>,
+                                        0}
                             end
                     end
             end
@@ -614,10 +653,11 @@ is_clean_assignment(Trimmed, Original) ->
     % 1. Has exactly one = sign
     % 2. No braces in either trimmed or original
     % 3. No closing brace } in original (would indicate malformed syntax like {b=c}={})
-    HasBraces = binary:match(Trimmed, <<"{">>)  =/= nomatch orelse
-                binary:match(Trimmed, <<"}">>)  =/= nomatch orelse
-                binary:match(Original, <<"{">>)  =/= nomatch orelse
-                binary:match(Original, <<"}">>)  =/= nomatch,
+    HasBraces =
+        binary:match(Trimmed, <<"{">>) =/= nomatch orelse
+            binary:match(Trimmed, <<"}">>) =/= nomatch orelse
+            binary:match(Original, <<"{">>) =/= nomatch orelse
+            binary:match(Original, <<"}">>) =/= nomatch,
 
     case HasBraces of
         true ->
@@ -642,7 +682,7 @@ is_simple_assignment(Value) ->
     % Check if this is a simple assignment pattern: identifier = value
     % Must have = but no braces
     case {binary:match(Value, <<"=">>), binary:match(Value, <<"{">>), binary:match(Value, <<"}">>)} of
-        {{_,_}, nomatch, nomatch} ->
+        {{_, _}, nomatch, nomatch} ->
             % Has equals but no braces - it's a simple assignment
             true;
         _ ->
@@ -672,11 +712,16 @@ validate_spread(Rest, ValueLen) ->
                     ok;
                 {error, Type} when Type =:= assignment ->
                     % For assignment errors, offset at end
-                    {error, <<"Could not parse expression with swc: assignment property is invalid syntax">>, ValueLen + 7};
+                    {error, <<"Could not parse expression with swc: assignment property is invalid syntax">>,
+                        ValueLen + 7};
                 {error, Type} when Type =:= extra_content ->
-                    {error, <<"Unexpected extra content in spread (such as `{...x,y}`): only a single spread is supported (such as `{...x}`)">>, 0};
+                    {error,
+                        <<"Unexpected extra content in spread (such as `{...x,y}`): only a single spread is supported (such as `{...x}`)">>,
+                        0};
                 {error, Type} when Type =:= comment_only ->
-                    {error, <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>, 0}
+                    {error,
+                        <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>,
+                        0}
             end
     end.
 
@@ -766,9 +811,12 @@ is_balanced_with_comments(Value) ->
     InComment :: boolean() | multiline | line.
 is_balanced_with_comments_impl(<<>>, BraceCount, BracketCount, ParenCount, InString, InComment) ->
     % All brackets must be balanced (count = 0) and we must not be in a string or comment
-    BraceCount =:= 0 andalso BracketCount =:= 0 andalso ParenCount =:= 0 andalso InString =:= false andalso InComment =:= false;
+    BraceCount =:= 0 andalso BracketCount =:= 0 andalso ParenCount =:= 0 andalso InString =:= false andalso
+        InComment =:= false;
 % Handle escape sequences in strings
-is_balanced_with_comments_impl(<<"\\", _:8, Rest/binary>>, BraceCount, BracketCount, ParenCount, InString, InComment) when InString =/= false ->
+is_balanced_with_comments_impl(
+    <<"\\", _:8, Rest/binary>>, BraceCount, BracketCount, ParenCount, InString, InComment
+) when InString =/= false ->
     is_balanced_with_comments_impl(Rest, BraceCount, BracketCount, ParenCount, InString, InComment);
 % Start of multiline comment (not in string)
 is_balanced_with_comments_impl(<<"/*", Rest/binary>>, BraceCount, BracketCount, ParenCount, false, false) ->

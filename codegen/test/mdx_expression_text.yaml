@@ -179,12 +179,12 @@ to_html_with_options:
   options: mdx
 - name: test_mdx_expression_text_case_23
   input: a {b c
-  output: "1:7: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  output: "1:7: Unexpected end of file in expression, expected a corresponding closing brace for `{` (erlang-markdown:unexpected-eof)"
   message: should crash if no closing brace is found (1)
   options: mdx
 - name: test_mdx_expression_text_case_24
   input: a {b { c } d
-  output: "1:13: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  output: "1:13: Unexpected end of file in expression, expected a corresponding closing brace for `{` (erlang-markdown:unexpected-eof)"
   message: should crash if no closing brace is found (2)
   options: mdx
 - name: test_mdx_expression_text_case_25
@@ -221,7 +221,7 @@ to_html_with_options:
   options: swc
 - name: test_mdx_expression_text_case_32
   input: a {b c
-  output: "1:7: Unexpected end of file in expression, expected a corresponding closing brace for `{` (markdown-rs:unexpected-eof)"
+  output: "1:7: Unexpected end of file in expression, expected a corresponding closing brace for `{` (erlang-markdown:unexpected-eof)"
   message: should crash if no closing brace is found (1)
   options: swc
 - name: test_mdx_expression_text_case_33
