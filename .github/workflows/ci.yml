@@ -17,13 +17,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: 1.18.4
-            otp: 28.0.2
+          - elixir: 1.19.2
+            otp: 28.1.1
             rebar3: 3.25.1
             lint: true
 
-          - elixir: 1.18.4
-            otp: 27.3
+          - elixir: 1.19.2
+            otp: 27.3.4.4
             rebar3: 3.25.1
 
     steps:
@@ -36,11 +36,11 @@ jobs:
           otp-version: ${{ matrix.otp }}
           rebar3-version: ${{ matrix.rebar3 }}
 
-      # - name: (Erlang) Check Formatting
-      #   if: ${{ matrix.lint }}
-      #   run: |
-      #     clang-format --version
-      #     make lint-format
+      - name: (Erlang) Check Formatting
+        if: ${{ matrix.lint }}
+        run: |
+          clang-format --version
+          make lint-format
 
       # - name: (Erlang) eqWAlizer
       #   if: ${{ matrix.lint }}
