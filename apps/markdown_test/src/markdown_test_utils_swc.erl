@@ -55,6 +55,9 @@ parse_esm(Value) ->
 parse_expression(Value, Kind) ->
     parse_expression_impl(Value, Kind).
 
+%% @private
+-spec parse_expression_impl(Value, Kind) -> Signal when
+    Value :: unicode:unicode_binary(), Kind :: markdown_mdx:expression_kind(), Signal :: markdown_mdx:signal().
 parse_expression_impl(Value, attribute_expression) ->
     % For attribute expressions like <a {...b}>, we need to validate:
     % 1. Must be a spread (start with ...)
@@ -503,7 +506,7 @@ find_matching_brace(<<>>, Offset, _Depth) ->
     {found, Offset + 1};
 find_matching_brace(<<"{", Rest/binary>>, Offset, Depth) ->
     find_matching_brace(Rest, Offset + 1, Depth + 1);
-find_matching_brace(<<"}", Rest/binary>>, Offset, 1) ->
+find_matching_brace(<<"}", _Rest/binary>>, Offset, 1) ->
     % Found the matching closing brace - return offset + 1 to point after it
     {found, Offset + 1};
 find_matching_brace(<<"}", Rest/binary>>, Offset, Depth) ->
@@ -587,52 +590,6 @@ case_not_empty_spread(Trimmed, Value, ValueLen) ->
             end
     end.
 
-%% Old version kept for reference
-case_not_empty_spread_old(Trimmed, Value, ValueLen) ->
-    % Check if effectively empty (empty, whitespace, or very short)
-    TrimmedLen = byte_size(Trimmed),
-    IsEffectivelyEmpty =
-        TrimmedLen =:= 0 orelse
-            (ValueLen < 2 andalso TrimmedLen =:= 0) orelse
-            (ValueLen =:= 0),
-
-    case IsEffectivelyEmpty of
-        true ->
-            % Empty expression - offset should be 4 to point after {}
-            {error, <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>, 4};
-        false ->
-            case Trimmed of
-                <<"...", Rest/binary>> ->
-                    % It's a spread, validate the rest
-                    validate_spread(Rest, ValueLen);
-                _ ->
-                    % Check if value is all whitespace (another way to detect empty)
-                    AllWhitespace = is_all_whitespace(Value),
-                    case AllWhitespace of
-                        true ->
-                            % Treat as empty
-                            {error,
-                                <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>,
-                                4};
-                        false ->
-                            % Not a spread - determine if it's a simple assignment
-                            IsCleanAssignment = is_clean_assignment(Trimmed, Value),
-                            case IsCleanAssignment of
-                                true ->
-                                    % Simple assignment like "b=c"
-                                    {error,
-                                        <<"Could not parse expression with swc: assignment property is invalid syntax">>,
-                                        7};
-                                false ->
-                                    % Not a spread - offset at start
-                                    {error,
-                                        <<"Unexpected prop in spread (such as `{x}`): only a spread is supported (such as `{...x}`)">>,
-                                        0}
-                            end
-                    end
-            end
-    end.
-
 %% @private
 -spec is_all_whitespace(Value) -> boolean() when
     Value :: unicode:unicode_binary().
@@ -673,20 +630,6 @@ is_clean_assignment(Trimmed, Original) ->
                     % Zero or multiple = signs - not a clean assignment
                     false
             end
-    end.
-
-%% @private
--spec is_simple_assignment(Value) -> boolean() when
-    Value :: unicode:unicode_binary().
-is_simple_assignment(Value) ->
-    % Check if this is a simple assignment pattern: identifier = value
-    % Must have = but no braces
-    case {binary:match(Value, <<"=">>), binary:match(Value, <<"{">>), binary:match(Value, <<"}">>)} of
-        {{_, _}, nomatch, nomatch} ->
-            % Has equals but no braces - it's a simple assignment
-            true;
-        _ ->
-            false
     end.
 
 %% @private

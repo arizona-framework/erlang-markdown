@@ -55,13 +55,13 @@ Context used to compile markdown.
 ]).
 
 %% Types
--type node() :: markdown_mdast_node:t().
+-type mdast_node() :: markdown_mdast_node:t().
 -type node_mut_func() :: node_mut_func(dynamic(), dynamic()).
--type node_mut_func(AccIn, AccOut) :: fun((Node :: node(), AccIn) -> {NewNode :: node(), AccOut}).
+-type node_mut_func(AccIn, AccOut) :: fun((Node :: mdast_node(), AccIn) -> {NewNode :: mdast_node(), AccOut}).
 -type t() :: #markdown_mdast_compile_context{}.
 
 -export_type([
-    node/0,
+    mdast_node/0,
     node_mut_func/0,
     node_mut_func/2,
     t/0
