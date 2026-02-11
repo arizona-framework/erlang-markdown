@@ -29,9 +29,19 @@ ProjectDir = rebar_file_utils:absolute_path(filename:join([AppDir, "..", ".."]))
 
 FileNameList = ["CHANGELOG.md", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md", "LICENSE.md", "README.md"],
 
-Sources = [filename:join([ProjectDir, FileName]) || FileName <- FileNameList],
-Dest = AppDir,
-Options = [{dereference, true}],
-ok = rebar_file_utils:cp_r(Sources, Dest, Options),
+%% Filter to existing files only. When this app is used as a
+%% git_subdir dependency, the umbrella root files are not available.
+%%
+%% Original code:
+%% Sources = [filename:join([ProjectDir, FileName]) || FileName <- FileNameList],
+%% Dest = AppDir,
+%% Options = [{dereference, true}],
+%% ok = rebar_file_utils:cp_r(Sources, Dest, Options),
+Sources = [S || S <- [filename:join([ProjectDir, FN]) || FN <- FileNameList],
+               filelib:is_file(S)],
+case Sources of
+    [] -> ok;
+    _ -> ok = rebar_file_utils:cp_r(Sources, AppDir, [{dereference, true}])
+end,
 
 CONFIG.
